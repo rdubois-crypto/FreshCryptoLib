@@ -1,9 +1,10 @@
-# Fresh Crypto Lib (FCL) : Examples
+# Fresh Crypto Lib (FCL) : tests
 
+A set of examples of integration of the FCL.
 
 ## Content
 ### WebAuthn: 
-Implementation of the ECDSA P256
+Implementation of the ECDSA P256 for WebAuthn using hardhat.
 Forked from https://github.com/btchip/Webauthn.sol
 
 Optimization of ecdsa verification using FCL_elliptic.sol library.
