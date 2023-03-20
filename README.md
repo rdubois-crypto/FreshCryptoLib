@@ -11,7 +11,8 @@ The implemented content is:
 
 
 ### Directory solidity:
-FCL_elliptic.sol: an EVM optimized implementation of sec256r1, using language hacks and specificities
+FCL_elliptic.sol: an EVM optimized implementation of sec256r1, using language hacks and specificities.
+
 FCL_ecdaa.sol: an EVM version of the ECDAA anonymous attestation for anonymous airdrops
 
 ### Directory cairo:
