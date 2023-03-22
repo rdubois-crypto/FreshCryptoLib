@@ -7,7 +7,7 @@
 #///* Copyright (C) 2022 - Renaud Dubois - This file is part of FCL (Fresh CryptoLib) project */
 #///* License: This software is licensed under MIT License 	 */
 #///* See LICENSE file at the root folder of the project.				 */
-#///* FILE: Webauthn_precompute.sage						         */
+#///* FILE: FCL_ecdsa_precompute.sage						         */
 #///* 											 */
 #///* 											 */
 #///* DESCRIPTION: precompute a 8 dimensional table for Shamir's trick from a public key
@@ -15,13 +15,8 @@
 #//**************************************************************************************/
 
 
-def Init_Curve(curve_characteristic,curve_a, curve_b,Gx, Gy, curve_Order):    
-	Fp=GF(curve_characteristic); 				#Initialize Prime field of Point
-	Fq=GF(curve_Order);					#Initialize Prime field of scalars
-	Curve=EllipticCurve(Fp, [curve_a, curve_b]);		#Initialize Elliptic curve
-	curve_Generator=Curve([Gx, Gy]);
-	
-	return [Curve,curve_Generator];
+load('../FCL_common/FCL_elliptic.sage');
+
 	
 #//Curve secp256r1, aka p256	
 #//curve prime field modulus

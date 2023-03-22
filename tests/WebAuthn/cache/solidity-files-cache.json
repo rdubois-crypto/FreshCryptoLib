@@ -264,8 +264,8 @@
         "FCL_Elliptic_ZZ"
       ]
     },
-    "/home/dubois/FCL/examples/WebAuthn/contracts/Base64URL.sol": {
-      "lastModificationDate": 1678892465478,
+    "/home/dubois/FCL/tests/WebAuthn/contracts/Base64URL.sol": {
+      "lastModificationDate": 1679319528633,
       "contentHash": "e75f6ac2363d2b794b39fa3b2d1ef41a",
       "sourceName": "contracts/Base64URL.sol",
       "solcConfig": {
@@ -299,8 +299,8 @@
         "Base64URL"
       ]
     },
-    "/home/dubois/FCL/examples/WebAuthn/contracts/Webauthn_prec.sol": {
-      "lastModificationDate": 1679064234621,
+    "/home/dubois/FCL/tests/WebAuthn/contracts/Webauthn_prec.sol": {
+      "lastModificationDate": 1679319528633,
       "contentHash": "f437b81e0ff5f85070a5c9abf65b3d49",
       "sourceName": "contracts/Webauthn_prec.sol",
       "solcConfig": {
@@ -344,8 +344,8 @@
         "replaceable"
       ]
     },
-    "/home/dubois/FCL/examples/WebAuthn/contracts/Elliptic_ZZ.sol": {
-      "lastModificationDate": 1678892465478,
+    "/home/dubois/FCL/tests/WebAuthn/contracts/Elliptic_ZZ.sol": {
+      "lastModificationDate": 1679319528633,
       "contentHash": "29c5885ef99c2576efabc729c10258f5",
       "sourceName": "contracts/Elliptic_ZZ.sol",
       "solcConfig": {
@@ -383,8 +383,8 @@
         "Ec_ZZ"
       ]
     },
-    "/home/dubois/FCL/examples/WebAuthn/contracts/FCL_elliptic.sol": {
-      "lastModificationDate": 1679064116836,
+    "/home/dubois/FCL/tests/WebAuthn/contracts/FCL_elliptic.sol": {
+      "lastModificationDate": 1679319528633,
       "contentHash": "a65c5870be8dca326940d3feee1571d3",
       "sourceName": "contracts/FCL_elliptic.sol",
       "solcConfig": {
@@ -418,8 +418,8 @@
         "FCL_Elliptic_ZZ"
       ]
     },
-    "/home/dubois/FCL/examples/WebAuthn/node_modules/hardhat/console.sol": {
-      "lastModificationDate": 1678892465870,
+    "/home/dubois/FCL/tests/WebAuthn/node_modules/hardhat/console.sol": {
+      "lastModificationDate": 1679319528725,
       "contentHash": "4ff3cd2f6272c9a6516e9ee4f2b967d3",
       "sourceName": "hardhat/console.sol",
       "solcConfig": {
@@ -453,8 +453,8 @@
         "console"
       ]
     },
-    "/home/dubois/FCL/examples/WebAuthn/node_modules/solmate/src/utils/SSTORE2.sol": {
-      "lastModificationDate": 1678892467374,
+    "/home/dubois/FCL/tests/WebAuthn/node_modules/solmate/src/utils/SSTORE2.sol": {
+      "lastModificationDate": 1679319529381,
       "contentHash": "8c39a32d85cfad44e775d7a3f0e428cb",
       "sourceName": "solmate/src/utils/SSTORE2.sol",
       "solcConfig": {
@@ -488,8 +488,8 @@
         "SSTORE2"
       ]
     },
-    "/home/dubois/FCL/examples/WebAuthn/contracts/Webauthn.sol": {
-      "lastModificationDate": 1679064235781,
+    "/home/dubois/FCL/tests/WebAuthn/contracts/Webauthn.sol": {
+      "lastModificationDate": 1679319528633,
       "contentHash": "530a904f97a9e6cf8b64e8573620045b",
       "sourceName": "contracts/Webauthn.sol",
       "solcConfig": {
