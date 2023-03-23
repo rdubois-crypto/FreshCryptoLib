@@ -11,7 +11,8 @@ Little routines common to all projects.
 
 
 ### Directory FCL_ethereum:
-Implementations of Ethereum precompiles
+Implementations of Ethereum precompiles:
+- ecrecover
 
 ### Directory FCL_ecdsa_precompute:
 Contains the precomputation of contract bytecode to be used by FCL_elliptic.sol.
