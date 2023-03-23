@@ -66,28 +66,34 @@ def FCL_ecRecover(v,r,s,msg):
   
   return FCL_ethereum_PubkeyToAddress(Q); #the 20 LSB bytes of keccak hash used as address
  
-def examples(): 
+def examples():
+ print("\n***** FCL_ethereum_PubkeyToAddress() \n Example extracted from https://www.npmjs.com/package/ethereum-public-key-to-address:");
+ 
+ #https://www.npmjs.com/package/ethereum-public-key-to-address
+ Qx=0xe68acfc0253a10620dff706b0a1b1f1f5833ea3beb3bde2250d5f271f3563606;
+ Qy=0x672ebc45e0b7ea2e816ecb70ca03137b1c9476eec63d4632e990020b7b6fba39;
+ Qt=_CURVE_256K1([Qx,Qy]);
+ print(" PubKey raw:",Qt);
+
+ hQt=FCL_ethereum_PubkeyToAddress(Qt);
+ print(" PubKey address:",hex(hQt));
+
+ print("\n ***** FCL_ecRecover() \n Example extracted from https://cryptobook.nakov.com/digital-signatures/ecdsa-sign-verify-examples");
+ 
 #example extracted from https://cryptobook.nakov.com/digital-signatures/ecdsa-sign-verify-examples
- msg="Message for signing".encode('iso-8859-1');
- print("m:\n",msg);
+ msg=" Message for signing".encode('iso-8859-1');
+ print("input message:",msg);
  sk=0x68abc765746a33272e47b0a96a0b4184048f70354221e04219fbc223bfe79794
  pk=sk*_G_256K1;
- print("pub:",hex(pk[0]), hex(pk[1])); 	
+ print(" public key:",hex(pk[0]), hex(pk[1])); 	
  r = 0x4cddf146c578d20a31fa6128e5d9afe6ac666e5ef5899f2767cacb56a42703cc;
  s = 0x3847036857aa3f077a2e142eee707e5af2653baa99b9d10764a0be3d61595dbb;
  v = 0x0;
 
  Q=FCL_ecRecoverPoint(28, r,s,msg);
- print("pre recovery:",hex(pk[0]), hex(pk[1])); 	
+ print(" pre recovery:",hex(pk[0]), hex(pk[1])); 	
  h=FCL_ecRecover(28, r,s,msg);
- print("recovery hash:",hex(h)); 	
-
- #https://www.npmjs.com/package/ethereum-public-key-to-address
- Qx=0xe68acfc0253a10620dff706b0a1b1f1f5833ea3beb3bde2250d5f271f3563606;
- Qy=0x672ebc45e0b7ea2e816ecb70ca03137b1c9476eec63d4632e990020b7b6fba39;
- Qt=_CURVE_256K1([Qx,Qy]);
- hQt=FCL_ethereum_PubkeyToAddress(Qt);
- print("PubKey address;",hex(hQt));
+ print(" recovery hash:",hex(h)); 	
 
  return 0;
 
