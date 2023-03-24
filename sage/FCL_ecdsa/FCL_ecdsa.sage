@@ -53,23 +53,37 @@ def FCL_ecdsa_keygen(random_k):
  sk=random_k %_G_ORDER;
  
  return pk ,sk;
- 
+
+
+#//ecdsa signature with external randomness
+def FCL_ecdsa_sign_hash(curve, G, hash, seckey, k):
+ #e=H(msg)
+ e=hash;
+ kG=k*G;
+
+ r=int(kG[0])% _G_ORDER;
+ v=int(kG[1])&1;
+ s=(e+r*seckey)*Fq(k)^-1   
+ return int(r),int(s), v;
+  
 #//ecdsa signature with external randomness
 def FCL_ecdsa_sign_core(curve, G, msg, seckey, k):
  #e=H(msg)
  e=int('0x'+_G_HASH(msg).hexdigest(),16);
- kG=k*G;
- print("R=",kG);
- r=int(kG[0])% _G_ORDER;
- s=(e+r*seckey)*Fq(k)^-1   
- return int(r),int(s);
+
+ r,s,v=FCL_ecdsa_sign_hash(curve, G, e, seckey, k);
+ 
+ return int(r),int(s), v;
 
 #canonization bip, BIP62
 def FCL_ecdsa_sign_canonic(curve, G, msg, seckey, k):
- r,s=FCL_ecdsa_sign_core(curve, G, msg, seckey, k);
+ r,s, v=FCL_ecdsa_sign_core(curve, G, msg, seckey, k);
  if s>(_G_ORDER>>1):
-  s=_G_ORDER-s
- return r,s;
+  s=_G_ORDER-s;
+  v=1-v;
+ return r,s, v;
+
+
 
 def FCL_ecdsa_verify(curve, G, msg, Q, r,s):
  e=int('0x'+_G_HASH(msg).hexdigest(),16);
@@ -92,7 +106,7 @@ def FCL_ecdsa_recovery(curve, G, hash, parity,r,s):
  #in ethereum 
  y=FCL_ec_decompress(curve, r, parity);
  R=curve([r,y]);
- print("rec R=",R);
+ #print("rec R=",R);
  rm1=(Fq(r)^-1)
  u1=int(hash*(rm1*-1));
  u2=int(s*rm1);
@@ -101,28 +115,26 @@ def FCL_ecdsa_recovery(curve, G, hash, parity,r,s):
  	
  return Q;
 
-
+_NTESTS=10;
+	
 def test_consistency():
- pubkey, seckey=FCL_ecdsa_keygen(randint(0,_G_ORDER-1));
- print("sk, pk:",seckey,pubkey);
+ for i in [0.._NTESTS]: 
+   pubkey, seckey=FCL_ecdsa_keygen(randint(0,_G_ORDER-1)); 
+   k=randint(0,_G_ORDER-1);
+   m=randint(0,_G_ORDER-1);
+   msg=FCL_BN_to_bytes(m,_G_BYTESIZE);
+   h=int('0x'+_G_HASH(msg).hexdigest(),16);
+   r,s,v=FCL_ecdsa_sign_canonic(_G_CURVE, _G_POINT, msg, seckey, k);
+   flag=FCL_ecdsa_verify(_G_CURVE, _G_POINT, msg, pubkey, r,s);
+   Q=FCL_ecdsa_recovery(_G_CURVE, _G_POINT,h, v ,r,s  );
+   if(flag!=True):
+    print("Verification failed !!"); 
+    return False;
+   if(Q!=pubkey):
+    print("Recovery failed !!"); 
+    return False;
  
- k=randint(0,_G_ORDER-1);
- m=randint(0,_G_ORDER-1);
- 
- msg=FCL_BN_to_bytes(m,_G_BYTESIZE);
- h=int('0x'+_G_HASH(msg).hexdigest(),16);
-
- r,s=FCL_ecdsa_sign_canonic(_G_CURVE, _G_POINT, msg, seckey, k);
- flag=FCL_ecdsa_verify(_G_CURVE, _G_POINT, msg, pubkey, r,s);
- #for the canonical version, you need to test two possible values
- Q=FCL_ecdsa_recovery(_G_CURVE, _G_POINT,h, 0 ,r,s  );
- Q2=FCL_ecdsa_recovery(_G_CURVE, _G_POINT,h, 1 ,r,_G_ORDER-s  );
- 
- print("r,s,msg, hash",hex(r),hex(s),hex(m), hex(h));
- print("flag:",flag);	
- print("recovery 0:",Q);
- print("recovery 1:",Q2);
- 
+ print("\n Verification and Recovery OK");
  return True;
 
 

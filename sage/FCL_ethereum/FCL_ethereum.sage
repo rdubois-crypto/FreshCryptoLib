@@ -107,7 +107,14 @@ def examples():
  print(" recovery Point:",Q);
  hash=FCL_ecRecover(h,v,r,s);
  print(" recovery address:",hex(hash));
-  	
+ 
+ r=0xe6aa80563d9931d611917eb184059d1eaa287d627406dab4460a319c59c071a2; 	
+ s=0xee535e4c1331c4bcd6ec68ea1d47925237c945f04da908cede4baef0843d0069 
+ h= 0xfeeaf9a319cce6371b255b4db39156d8fbc67fb4b4cd5debc30da0abc69e420b;
+ v= 28;
+
+ hash=FCL_ecRecover(h,v,r,s);
+ print(" recovery address with -s:",hex(hash));
  
  
  return 0;
