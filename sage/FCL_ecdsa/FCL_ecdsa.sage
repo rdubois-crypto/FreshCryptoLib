@@ -118,7 +118,7 @@ def test_consistency():
  Q=FCL_ecdsa_recovery(_G_CURVE, _G_POINT,h, 0 ,r,s  );
  Q2=FCL_ecdsa_recovery(_G_CURVE, _G_POINT,h, 1 ,r,_G_ORDER-s  );
  
- print("r,s,msg, hash",hex(r),hex(s),hex(m), h);
+ print("r,s,msg, hash",hex(r),hex(s),hex(m), hex(h));
  print("flag:",flag);	
  print("recovery 0:",Q);
  print("recovery 1:",Q2);

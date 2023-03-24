@@ -48,7 +48,8 @@ def FCL_ec_decompress_even(curve, pubkey_x):
 def FCL_ec_decompress(curve, pubkey_x, parity):    
   y2=pubkey_x**3+ curve.a4()*pubkey_x+curve.a6();
   y=sqrt(y2);
-  if (int(y)%2):
+  print("y=",y);
+  if ((int(y)%2)!=parity):
    return -y;
   return y;	
     
