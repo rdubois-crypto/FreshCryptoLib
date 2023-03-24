@@ -117,6 +117,9 @@ def FCL_schnorr_verify_bip340(curve, G, msg, pubkey_x, s,rx):
    
     return True;      
 
+
+
+
 pubkey_x, seckey=FCL_schnorr_keygen(randint(0,_G_ORDER-1));
 k=randint(0,_G_ORDER-1);
 msg=FCL_BN_to_bytes(randint(0,_G_ORDER-1),_G_BYTESIZE);

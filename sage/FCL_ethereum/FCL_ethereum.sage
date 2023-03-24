@@ -29,9 +29,8 @@ _256K1_ORDER = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD036414
 _SEC256R1_BYTESIZE=32;
 _MASK20B =2^160-1;
 
-#https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm:public key recovery section
-#in EVM, note that parity is encoded by constants v being equal to 28 (even y) or 27 (odd y)
-def FCL_ecRecoverPoint(v,r,s,msg):
+
+def FCL_ecRecoverPoint_from_hash(hash, v,r,s):
  Fq=GF(_256K1_ORDER);
  if r>_256K1_ORDER:
   return False;
@@ -41,14 +40,29 @@ def FCL_ecRecoverPoint(v,r,s,msg):
  #in ethereum 
  y=FCL_ec_decompress(_CURVE_256K1, r, 28-v);
  R=_CURVE_256K1([r,y]);
- e= int('0x'+keccak_256(msg).hexdigest(),16);
  rm1=(Fq(r)^-1)
- u1=int(e*rm1);
+ u1=int(hash*rm1);
  u2=int(s*rm1);
  
  Q=_G_256K1*u1+R*u2;
  
  return Q;
+
+
+#//the actual precompile 0x05
+def FCL_ecRecover(hash, v,r,s):
+  Q=FCL_ecRecoverPoint_from_hash(hash, v, r, s);
+  return FCL_ethereum_PubkeyToAddress(Q); #the 20 LSB bytes of keccak hash used as address
+ 
+ 
+
+#https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm:public key recovery section
+#in EVM, note that parity is encoded by constants v being equal to 28 (even y) or 27 (odd y)
+def FCL_ecRecoverPoint(v,r,s,msg):
+ h= int('0x'+keccak_256(msg).hexdigest(),16);
+ 
+ return FCL_ecRecoverPoint_from_hash(h,v,r,s);
+
 
 #//Convert Public Key to Address
 def FCL_ethereum_PubkeyToAddress(pk):
@@ -60,11 +74,15 @@ def FCL_ethereum_PubkeyToAddress(pk):
   return h&_MASK20B;
 
 
-#//the actual precompile 0x05
-def FCL_ecRecover(v,r,s,msg):
+def FCL_ecRecover_from_message(v,r,s,msg):
+
+  h= int('0x'+keccak_256(msg).hexdigest(),16);
+
   Q=FCL_ecRecoverPoint(v,r,s,msg);
   
   return FCL_ethereum_PubkeyToAddress(Q); #the 20 LSB bytes of keccak hash used as address
+ 
+
  
 def examples():
  print("\n***** FCL_ethereum_PubkeyToAddress() \n Example extracted from https://www.npmjs.com/package/ethereum-public-key-to-address:");
@@ -85,16 +103,20 @@ def examples():
  print("input message:",msg);
  sk=0x68abc765746a33272e47b0a96a0b4184048f70354221e04219fbc223bfe79794
  pk=sk*_G_256K1;
- print(" public key:",hex(pk[0]), hex(pk[1])); 	
+ print(" public key:",hex(pk[0]), hex(pk[1]));
+ hQt=FCL_ethereum_PubkeyToAddress(pk);
+ print(" PubKey address:",hex(hQt));
+ 	
  r = 0x4cddf146c578d20a31fa6128e5d9afe6ac666e5ef5899f2767cacb56a42703cc;
  s = 0x3847036857aa3f077a2e142eee707e5af2653baa99b9d10764a0be3d61595dbb;
- v = 0x0;
+ v = 0x28;#0
 
  Q=FCL_ecRecoverPoint(28, r,s,msg);
- print(" pre recovery:",hex(pk[0]), hex(pk[1])); 	
- h=FCL_ecRecover(28, r,s,msg);
- print(" recovery hash:",hex(h)); 	
+ print(" pre recovery:",hex(Q[0]), hex(Q[1])); 	
+ h=FCL_ecRecover_from_message(28, r,s,msg);
+ print(" recovery address:",hex(h)); 	
 
+ #tbd: provide example from EVM
  return 0;
 
 
