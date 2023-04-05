@@ -985,7 +985,9 @@ library Ec_ZZ {
       	 }
       if gt(T4,0){
        // inlined EcZZ_AddN
+      //y:=addmod(y,y,1) 
       y:=sub(p, Y)
+      
       let y2:=addmod(mulmod(mload(add(T,32)), zzz,p),y,p)  
       T2:=addmod(mulmod(mload(T), zz,p),sub(p,X),p)  
       T4:=mulmod(T2, T2, p)

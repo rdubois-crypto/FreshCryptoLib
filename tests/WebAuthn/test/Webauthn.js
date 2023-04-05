@@ -224,6 +224,9 @@ const wo2 = await wo_core2.deploy(precomputations_buff);
 console.log("\n***************************************** \n Validating WebAuthn with XYZZ coordinates and Precomputations in precomputed contract with extcodecopy \n*****************************************" );    
   /* IV Validation of Webauthn verification with precomputations */
   
+
+
+
   
 const wo_core3 = await ethers.getContractFactory("Webauthn_prec3");
  
@@ -237,5 +240,13 @@ const wo3 = await wo_core3.deploy(deployed_2.address);
     );
     
  await result4.wait();      
+ 
+    const result5=  wo3.ecdsa_verif_prec(clientChallenge, 
+        [ ethers.BigNumber.from("0x" + signatureParsed[0].toString('hex')), ethers.BigNumber.from("0x" + signatureParsed[1].toString('hex'))]
+        
+    );
   })
+  
+ 
+  
 });

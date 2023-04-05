@@ -18,8 +18,14 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 module.exports = {
   solidity: "0.8.17",
    settings: {
-    viaIR: true, // add this
-  },
+       viaIR: true, // add this
+
+      optimizer: {
+        enabled: true,
+        runs: 100000,
+      },
+    },
+    
 	preprocess: {
     eachLine: removeConsoleLog((hre) => hre.network.name !== 'hardhat' && hre.network.name !== 'localhost'),
   },    
