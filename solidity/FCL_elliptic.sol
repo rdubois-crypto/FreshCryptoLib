@@ -21,7 +21,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-//import "hardhat/console.sol";
+
+
+import "hardhat/console.sol";
+
 
 library FCL_Elliptic_ZZ {
     // Set parameters for curve sec256r1.
@@ -51,7 +54,7 @@ library FCL_Elliptic_ZZ {
     
     /**
     /* inversion mod n via a^(n-2), use of precompiled using little Fermat theorem*/
-    function FCL_nModInv(uint256 u) public  returns (uint256 result) {
+    function FCL_nModInv(uint256 u) internal  returns (uint256 result) {
         uint[6] memory pointer;
         assembly {
             
@@ -74,7 +77,7 @@ library FCL_Elliptic_ZZ {
     }
      /**
     /* @dev inversion mod nusing little Fermat theorem via a^(n-2), use of precompiled*/
-    function FCL_pModInv(uint256 u) public  returns (uint256 result) {
+    function FCL_pModInv(uint256 u)   internal returns (uint256 result) {
         uint[6] memory pointer;
         assembly {  
             // Define length of base, exponent and modulus. 0x20 == 32 bytes
@@ -128,6 +131,7 @@ library FCL_Elliptic_ZZ {
     /**
     /* @dev Sutherland2008 doubling*/
     /* The "dbl-2008-s-1" doubling formulas */
+    
     function ecZZ_Dbl(
     	uint x,
         uint y,
@@ -238,6 +242,7 @@ library FCL_Elliptic_ZZ {
       /**
      * @dev Add two elliptic curve points in affine coordinates.
      */
+     
     function ecAff_add(
         uint x0,
         uint y0,
@@ -270,16 +275,28 @@ library FCL_Elliptic_ZZ {
      uint[6] memory T;
      uint H0;
      uint H1;   
+     
+     unchecked {
+     
      if(scalar_u==0 && scalar_v==0) return 0;
      
      (H0,H1 )=ecAff_add(gx,gy,Q0, Q1);//will not work if Q=P, obvious forbidden private key
    
+   /*
      while( ( ((scalar_u>>index)&1)+2*((scalar_v>>index)&1) ) ==0){
       index=index-1; 
      }
+     */
          
-     unchecked {
       assembly{
+      
+      for{  let T4:=add( shl(1, and(shr(index, scalar_v),1)), and(shr(index, scalar_u),1) )
+      } eq(T4,0) {index := sub(index, 1)}
+      {
+          T4:=add( shl(1, and(shr(index, scalar_v),1)), and(shr(index, scalar_u),1) )
+     
+      }
+      
        zz:=add( shl(1, and(shr(index, scalar_v),1)), and(shr(index, scalar_u),1) )
            
       if eq(zz,1) {
@@ -299,7 +316,7 @@ library FCL_Elliptic_ZZ {
       zz:=1
       zzz:=1
       
-      for {  index := index } gt( minus_1, index) { index := sub(index, 1) } 
+      for {   } gt( minus_1, index) { index := sub(index, 1) } 
       {
       // inlined EcZZ_Dbl
       let T1:=mulmod(2, Y, p) //U = 2*Y1, y free
@@ -317,7 +334,7 @@ library FCL_Elliptic_ZZ {
       //Y:= addmod(T2, sub(p, mulmod(T1, Y ,p)),p  )//Y3= M(S-X3)-W*Y1
       Y:= addmod(mulmod(T1, Y ,p), T2,p  )//-Y3= W*Y1-M(S-X3), we replace Y by -Y to avoid a sub in ecAdd
       
-    
+     { 
       //value of dibit	
       T4:=add( shl(1, and(shr(index, scalar_v),1)), and(shr(index, scalar_u),1) )
       
@@ -325,7 +342,7 @@ library FCL_Elliptic_ZZ {
        Y:=sub(p,Y)//restore the -Y inversion 
        continue
       }// if T4!=0
-      {    
+        
       if eq(T4,1) {
       	T1:=gx
       	T2:=gy
@@ -350,9 +367,9 @@ library FCL_Elliptic_ZZ {
       let TT1:=mulmod(T4,T2,p)//PPP, this one could be spared, but adding this register spare gas
       zz:=mulmod(zz,T4,p) 
       zzz:= mulmod(zzz,TT1,p) //zz3=V*ZZ1
-      T2:=mulmod(X, T4, p)
-      T4:=addmod(addmod(mulmod(y2,y2, p), sub(p,TT1),p ), mulmod(minus_2, T2,p) ,p )
-      Y:=addmod(mulmod(addmod(T2, sub(p,T4),p), y2, p), mulmod(Y, TT1,p),p)
+      let TT2:=mulmod(X, T4, p)
+      T4:=addmod(addmod(mulmod(y2,y2, p), sub(p,TT1),p ), mulmod(minus_2, TT2,p) ,p )
+      Y:=addmod(mulmod(addmod(TT2, sub(p,T4),p), y2, p), mulmod(Y, TT1,p),p)
      
       X:=T4
        }
@@ -393,12 +410,13 @@ library FCL_Elliptic_ZZ {
     function ecZZ_mulmuladd_S8_extcode(uint scalar_u, uint scalar_v, address dataPointer) 
     internal  returns(uint X/*, uint Y*/)
     {
+    
+      unchecked{ 
       uint zz; // third and  coordinates of the point
      
       uint[6] memory T;
       zz=256;//start index
       
-      unchecked{ 
       
       while(T[0]==0)
       {
@@ -411,59 +429,73 @@ library FCL_Elliptic_ZZ {
      assembly{
    
       extcodecopy(dataPointer, T, mload(T), 64)
+      
       X:= mload(T)
       let Y:= mload(add(T,32))
       let zzz:=1
       zz:=1
      
       //loop over 1/4 of scalars thx to Shamir's trick over 8 points
-      for { let index := 254 } gt(index, 191) { index := sub(index, 1) } 
+      for { let index := 254 } gt(index, 191) { index := add(index, 191) } 
       { 
-      let ind:=index
-      // inlined EcZZ_Dbl
-      let y:=mulmod(2, Y, p) //U = 2*Y1, y free
-      let T2:=mulmod(y,y,p)  // V=U^2
+   	{
+      let TT1:=mulmod(2, Y, p) //U = 2*Y1, y free
+      let T2:=mulmod(TT1,TT1,p)  // V=U^2
       let T3:=mulmod(X, T2,p)// S = X1*V
-      let T1:=mulmod(y, T2,p) // W=UV
+      let T1:=mulmod(TT1, T2,p) // W=UV
       let T4:=mulmod(3, mulmod(addmod(X,sub(p,zz),p), addmod(X,zz,p),p) ,p) //M=3*(X1-ZZ1)*(X1+ZZ1)
       zzz:=mulmod(T1,zzz,p)//zzz3=W*zzz1
-    
+      zz:=mulmod(T2, zz, p) //zz3=V*ZZ1, V free
+     
       X:=addmod(mulmod(T4,T4,p), mulmod(minus_2, T3,p),p) //X3=M^2-2S
-      y:=mulmod(T4,addmod(T3, sub(p, X),p),p)//M(S-X3)
-      Y:= addmod(y, sub(p, mulmod(T1, Y ,p)),p  )//Y3= M(S-X3)-W*Y1
-      zz:=mulmod(T2, zz, p) //zz3=V*ZZ1
+      //T2:=mulmod(T4,addmod(T3, sub(p, X),p),p)//M(S-X3)
+      let T5:=mulmod(T4,addmod(X, sub(p, T3),p),p)//-M(S-X3)=M(X3-S)
+      
+      //Y:= addmod(T2, sub(p, mulmod(T1, Y ,p)),p  )//Y3= M(S-X3)-W*Y1
+      Y:= addmod(mulmod(T1, Y ,p), T5,p  )//-Y3= W*Y1-M(S-X3), we replace Y by -Y to avoid a sub in ecAdd
        
       /* compute element to access in precomputed table */
-      T4:= add( shl(13, and(shr(ind, scalar_v),1)), shl(9, and(shr(ind, scalar_u),1)) )
-      ind:=sub(index, 64)
-      T4:=add(T4, add( shl(12, and(shr(ind, scalar_v),1)), shl(8, and(shr(ind, scalar_u),1)) ))
-      ind:=sub(index, 128)
-      T4:=add(T4,add( shl(11, and(shr(ind, scalar_v),1)), shl(7, and(shr(ind, scalar_u),1)) ))
-      ind:=sub(index, 192)
-      T4:=add(T4,add( shl(10, and(shr(ind, scalar_v),1)), shl(6, and(shr(ind, scalar_u),1)) ))
+      }
+      {
+      let T4:= add( shl(13, and(shr(index, scalar_v),1)), shl(9, and(shr(index, scalar_u),1)) )
+      let index2:=sub(index, 64)
+      let T3:=add(T4, add( shl(12, and(shr(index2, scalar_v),1)), shl(8, and(shr(index2, scalar_u),1)) ))
+      let index3:=sub(index2, 64)
+      let T2:=add(T3,add( shl(11, and(shr(index3, scalar_v),1)), shl(7, and(shr(index3, scalar_u),1)) ))
+      index:=sub(index3, 64)
+      let T1:=add(T2,add( shl(10, and(shr(index, scalar_v),1)), shl(6, and(shr(index, scalar_u),1)) ))
+      
+      //index:=add(index,192), restore index, interleaved with loop
       
       //tbd: check validity of formulae with (0,1) to remove conditional jump
-         if iszero(T4){
+         if iszero(T1){
+           Y:=sub(p, Y)
+    
          continue
          }
+       extcodecopy(dataPointer, T,T1, 64)
+     }
+     
      {
+     
          /* Access to precomputed table using extcodecopy hack */
-      extcodecopy(dataPointer, T,T4, 64)
           
       // inlined EcZZ_AddN
-      y:=sub(p, Y)
-      let y2:=addmod(mulmod(mload(add(T,32)), zzz,p),y,p)  
-      T2:=addmod(mulmod(mload(T), zz,p),sub(p,X),p)  
-      T4:=mulmod(T2, T2, p)
-      T1:=mulmod(T4,T2,p)
-      T2:=mulmod(zz,T4,p) // W=UV
-      zzz:= mulmod(zzz,T1,p) //zz3=V*ZZ1
+      
+      
+      let y2:=addmod(mulmod(mload(add(T,32)), zzz,p),Y,p)  
+      let T2:=addmod(mulmod(mload(T), zz,p),sub(p,X),p)  
+      let T4:=mulmod(T2, T2, p)
+      let T1:=mulmod(T4,T2,p)//
+       zz:=mulmod(zz,T4,p) //zzz3=V*ZZ1
+      zzz:= mulmod(zzz,T1,p) // W=UV/
       let zz1:=mulmod(X, T4, p)
-      T4:=addmod(addmod(mulmod(y2,y2, p), sub(p,T1),p ), mulmod(minus_2, zz1,p) ,p )
-      Y:=addmod(mulmod(addmod(zz1, sub(p,T4),p), y2, p), mulmod(y, T1,p),p)
-      zz:=T2
-      X:=T4
+      X:=addmod(addmod(mulmod(y2,y2, p), sub(p,T1),p ), mulmod(minus_2, zz1,p) ,p )
+      Y:=addmod(mulmod(addmod(zz1, sub(p,X),p), y2, p), mulmod(Y, T1,p),p)
+      
+    
       }
+      
      }//end loop
       mstore(add(T, 0x60),zz)
         
@@ -488,14 +520,124 @@ library FCL_Elliptic_ZZ {
        }       
       }//end unchecked
     }
-            
+
+   
+     
+      // improving the extcodecopy trick : append array at end of contract
+    function ecZZ_mulmuladd_S8_hackmem(uint scalar_u, uint scalar_v, uint dataPointer) 
+    internal  returns(uint X/*, uint Y*/)
+    {
+      uint zz; // third and  coordinates of the point
+     
+      uint[6] memory T;
+      zz=256;//start index
+      
+      unchecked{ 
+      
+      while(T[0]==0)
+      {
+      zz=zz-1;
+      //tbd case of msb octobit is null
+      T[0]=64*(128*((scalar_v>>zz)&1)+64*((scalar_v>>(zz-64))&1)+
+           32*((scalar_v>>(zz-128))&1)+16*((scalar_v>>(zz-192))&1)+
+               8*((scalar_u>>zz)&1)+4*((scalar_u>>(zz-64))&1)+2*((scalar_u>>(zz-128))&1)+((scalar_u>>(zz-192))&1));
+      }
+     assembly{
+   
+      codecopy( T, add(mload(T), dataPointer), 64)
+      X:= mload(T)
+      let Y:= mload(add(T,32))
+      let zzz:=1
+      zz:=1
+     
+      //loop over 1/4 of scalars thx to Shamir's trick over 8 points
+      for { let index := 254 } gt(index, 191) { index := add(index, 191) } 
+      { 
+   
+      let T1:=mulmod(2, Y, p) //U = 2*Y1, y free
+      let T2:=mulmod(T1,T1,p)  // V=U^2
+      let T3:=mulmod(X, T2,p)// S = X1*V
+      T1:=mulmod(T1, T2,p) // W=UV
+      let T4:=mulmod(3, mulmod(addmod(X,sub(p,zz),p), addmod(X,zz,p),p) ,p) //M=3*(X1-ZZ1)*(X1+ZZ1)
+      zzz:=mulmod(T1,zzz,p)//zzz3=W*zzz1
+      zz:=mulmod(T2, zz, p) //zz3=V*ZZ1, V free
+     
+      X:=addmod(mulmod(T4,T4,p), mulmod(minus_2, T3,p),p) //X3=M^2-2S
+      //T2:=mulmod(T4,addmod(T3, sub(p, X),p),p)//M(S-X3)
+      T2:=mulmod(T4,addmod(X, sub(p, T3),p),p)//-M(S-X3)=M(X3-S)
+     
+      //Y:= addmod(T2, sub(p, mulmod(T1, Y ,p)),p  )//Y3= M(S-X3)-W*Y1
+      Y:= addmod(mulmod(T1, Y ,p), T2,p  )//-Y3= W*Y1-M(S-X3), we replace Y by -Y to avoid a sub in ecAdd
+       
+      /* compute element to access in precomputed table */
+      
+      T4:= add( shl(13, and(shr(index, scalar_v),1)), shl(9, and(shr(index, scalar_u),1)) )
+      index:=sub(index, 64)
+      T4:=add(T4, add( shl(12, and(shr(index, scalar_v),1)), shl(8, and(shr(index, scalar_u),1)) ))
+      index:=sub(index, 64)
+      T4:=add(T4,add( shl(11, and(shr(index, scalar_v),1)), shl(7, and(shr(index, scalar_u),1)) ))
+      index:=sub(index, 64)
+      T4:=add(T4,add( shl(10, and(shr(index, scalar_v),1)), shl(6, and(shr(index, scalar_u),1)) ))
+      //index:=add(index,192), restore index, interleaved with loop
+      
+      //tbd: check validity of formulae with (0,1) to remove conditional jump
+         if iszero(T4){
+           Y:=sub(p, Y)
+    
+         continue
+         }
+     {
+         /* Access to precomputed table using extcodecopy hack */
+      codecopy( T, add(T4, dataPointer), 64)
+          
+      // inlined EcZZ_AddN
+      
+     
+      let y2:=addmod(mulmod(mload(add(T,32)), zzz,p),Y,p)  
+      T2:=addmod(mulmod(mload(T), zz,p),sub(p,X),p)  
+      T4:=mulmod(T2, T2, p)
+      T1:=mulmod(T4,T2,p)
+      T2:=mulmod(zz,T4,p) // W=UV
+      zzz:= mulmod(zzz,T1,p) //zz3=V*ZZ1
+      let zz1:=mulmod(X, T4, p)
+      T4:=addmod(addmod(mulmod(y2,y2, p), sub(p,T1),p ), mulmod(minus_2, zz1,p) ,p )
+      Y:=addmod(mulmod(addmod(zz1, sub(p,T4),p), y2, p), mulmod(Y, T1,p),p)
+      zz:=T2
+      X:=T4
+      }
+      
+     }//end loop
+      mstore(add(T, 0x60),zz)
+        
+      //(X,Y)=ecZZ_SetAff(X,Y,zz, zzz);
+      //T[0] = inverseModp_Hard(T[0], p); //1/zzz, inline modular inversion using precompile:
+     // Define length of base, exponent and modulus. 0x20 == 32 bytes
+      mstore(T, 0x20)
+      mstore(add(T, 0x20), 0x20)
+      mstore(add(T, 0x40), 0x20)
+      // Define variables base, exponent and modulus
+      //mstore(add(pointer, 0x60), u)
+      mstore(add(T, 0x80), minus_2)
+      mstore(add(T, 0xa0), p)
+               
+      // Call the precompiled contract 0x05 = ModExp
+      if iszero(call(not(0), 0x05, 0, T, 0xc0, T, 0x20)) {
+            revert(0, 0)
+      }
+      
+      zz:=mload(T)
+      X:=mulmod(X,zz,p)//X/zz
+       }       
+      }//end unchecked
+    }
+                
     /**
      * @dev ECDSA verification, given , signature, and public key.
      */
     function ecdsa_verify(
         bytes32 message,
-        uint[2] memory rs,
-        uint[2] memory Q
+        uint[2] calldata rs,
+        uint[2] calldata Q
     ) internal  returns (bool) {
         if (rs[0] == 0 || rs[0] >= n || rs[1] == 0) {
             return false;
@@ -507,6 +649,7 @@ library FCL_Elliptic_ZZ {
         }
   	
         uint sInv = FCL_nModInv(rs[1]);
+        
         uint scalar_u=mulmod(uint(message), sInv, n);
         uint scalar_v= mulmod(rs[0], sInv, n);
         uint x1;
@@ -514,7 +657,7 @@ library FCL_Elliptic_ZZ {
        x1=ecZZ_mulmuladd_S_asm(Q[0], Q[1],scalar_u, scalar_v);
        	
         assembly{
-	 x1:=addmod(x1,sub(n,mload(rs)), n)
+	 x1:=addmod(x1,sub(n,calldataload(rs)), n)
 	}
 	//return true; 	
         return x1 == 0;
@@ -529,8 +672,46 @@ library FCL_Elliptic_ZZ {
         
       function ecdsa_precomputed_verify(
         bytes32 message,
-        uint[2] memory rs,
+        uint[2] calldata rs,
         address Shamir8
+    ) internal  returns (bool) {
+     if (rs[0] == 0 || rs[0] >= n || rs[1] == 0) {
+            return false;
+        }
+        /* Q is pushed via bytecode assumed to be correct
+        if (!isOnCurve(Q[0], Q[1])) {
+            return false;
+        }*/
+        
+       uint sInv =FCL_nModInv(rs[1]);
+       //uint sInv =2;
+       
+     	uint X;
+         
+       //Shamir 8 dimensions	
+        X=ecZZ_mulmuladd_S8_extcode(mulmod(uint(message), sInv, n), mulmod(rs[0], sInv, n), Shamir8);
+      
+	assembly{
+	
+	 X:=addmod(X,sub(n,calldataload(rs)), n)
+	}
+	
+	 
+        return X == 0;
+        
+        }//end  ecdsa_precomputed_verify()
+        
+        
+      /**
+      * @dev ECDSA verification using a precomputed table of multiples of P and Q appended at end of contract at address endcontract
+        generation of contract bytecode for precomputations is done using sagemath code 
+        (see sage directory, WebAuthn_precompute.sage)
+      */
+        
+      function ecdsa_precomputed_hackmem(
+        bytes32 message,
+        uint[2] calldata rs,
+        uint256 endcontract
     ) internal  returns (bool) {
      if (rs[0] == 0 || rs[0] >= n || rs[1] == 0) {
             return false;
@@ -544,12 +725,11 @@ library FCL_Elliptic_ZZ {
      	uint X;
          
        //Shamir 8 dimensions	
-        X=ecZZ_mulmuladd_S8_extcode(mulmod(uint(message), sInv, n), mulmod(rs[0], sInv, n), Shamir8);
+        X=ecZZ_mulmuladd_S8_hackmem(mulmod(uint(message), sInv, n), mulmod(rs[0], sInv, n), endcontract);
       
 	assembly{
-	 X:=addmod(X,sub(n,mload(rs)), n)
+	 X:=addmod(X,sub(n,calldataload(rs)), n)
 	}
-	//return true; 	
         return X == 0;
         
         }//end  ecdsa_precomputed_verify()

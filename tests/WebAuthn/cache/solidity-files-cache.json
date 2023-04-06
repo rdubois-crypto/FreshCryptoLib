@@ -341,8 +341,8 @@
       ]
     },
     "/home/dubois/FCL/tests/WebAuthn/contracts/Webauthn_prec.sol": {
-      "lastModificationDate": 1680704296232,
-      "contentHash": "5805e00ff8e501b66df3027f3d1cea6a",
+      "lastModificationDate": 1680773573003,
+      "contentHash": "edd07f5c79d6717ebde011b303cb0302",
       "sourceName": "contracts/Webauthn_prec.sol",
       "solcConfig": {
         "version": "0.8.17",
@@ -427,7 +427,7 @@
       ]
     },
     "/home/dubois/FCL/tests/WebAuthn/contracts/FCL_Webauthn.sol": {
-      "lastModificationDate": 1680704296232,
+      "lastModificationDate": 1680773571635,
       "contentHash": "b6586bed1b5fd5b7090453d5a37a79e2",
       "sourceName": "contracts/FCL_Webauthn.sol",
       "solcConfig": {
@@ -465,8 +465,8 @@
       ]
     },
     "/home/dubois/FCL/tests/WebAuthn/contracts/FCL_elliptic.sol": {
-      "lastModificationDate": 1680704296232,
-      "contentHash": "93536e7e79defeeb24a0c3f281218e39",
+      "lastModificationDate": 1680773570555,
+      "contentHash": "51b0a109e14e975a5611f191bce63135",
       "sourceName": "contracts/FCL_elliptic.sol",
       "solcConfig": {
         "version": "0.8.17",
@@ -491,7 +491,9 @@
           }
         }
       },
-      "imports": [],
+      "imports": [
+        "hardhat/console.sol"
+      ],
       "versionPragmas": [
         "^0.8.0"
       ],
@@ -570,7 +572,7 @@
       ]
     },
     "/home/dubois/FCL/tests/WebAuthn/contracts/Webauthn.sol": {
-      "lastModificationDate": 1680704296232,
+      "lastModificationDate": 1680773572251,
       "contentHash": "f5a20eb6325b365fd5cc9f047b899fed",
       "sourceName": "contracts/Webauthn.sol",
       "solcConfig": {

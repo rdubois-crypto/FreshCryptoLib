@@ -233,7 +233,13 @@ const wo_core3 = await ethers.getContractFactory("Webauthn_prec3");
  
 const wo3 = await wo_core3.deploy(deployed_2.address);
   
+const codebyte = await hre.network.provider.send("eth_getCode", [
+        wo3.address,
+    ]);
+    
+console.log("\n Bytecode size:\n",codebyte.length); 
 
+    
       const result4 = await wo3.validate_prec(authenticatorData, 0x01, clientData, clientChallenge, challengeOffset,
         [ ethers.BigNumber.from("0x" + signatureParsed[0].toString('hex')), ethers.BigNumber.from("0x" + signatureParsed[1].toString('hex'))]
         
@@ -245,8 +251,9 @@ const wo3 = await wo_core3.deploy(deployed_2.address);
         [ ethers.BigNumber.from("0x" + signatureParsed[0].toString('hex')), ethers.BigNumber.from("0x" + signatureParsed[1].toString('hex'))]
         
     );
+   
   })
   
- 
+//console.log("\n Bytecode:\n",codebyte); 
   
 });
