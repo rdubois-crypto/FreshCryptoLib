@@ -11,9 +11,9 @@ The implemented content is:
 
 
 ### Directory solidity:
-FCL_elliptic.sol: an EVM optimized implementation of sec256r1, using language hacks and specificities.
-
-[comment]: <> FCL_ecdaa.sol: an EVM version of the ECDAA anonymous attestation for anonymous airdrops
+FCL_elliptic.sol: an EVM optimized implementation of sec256r1(P256), using language hacks and specificities.
+FLC_Webauthn.sol: implementation of the WebAuthn2/FIDO2 authentication over ECDSA with P256
+<!--- FCL_ecdaa.sol: an EVM version of the ECDAA anonymous attestation for anonymous airdrops -->
 
 ### Directory cairo:
 FCL_ec_mulmuladd.cairo: an implementation of the operation aP+bQ (addition of the results of two distincts point multiplication by scalar a and b). It uses the Shamir's trick with the windowing method.
