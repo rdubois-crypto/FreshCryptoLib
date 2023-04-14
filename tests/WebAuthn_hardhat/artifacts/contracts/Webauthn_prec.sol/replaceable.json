@@ -1,0 +1,10 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "replaceable",
+  "sourceName": "contracts/Webauthn_prec.sol",
+  "abi": [],
+  "bytecode": "0x6080604052348015600f57600080fd5b50603f80601d6000396000f3fe6080604052600080fdfea26469706673582212207cc68f9cad6b00aa68d14831d2115a76b230e1aab1ff739dfaecd6f9456fc6be64736f6c63430008110033",
+  "deployedBytecode": "0x6080604052600080fdfea26469706673582212207cc68f9cad6b00aa68d14831d2115a76b230e1aab1ff739dfaecd6f9456fc6be64736f6c63430008110033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}
