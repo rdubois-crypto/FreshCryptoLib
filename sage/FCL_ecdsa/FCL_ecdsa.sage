@@ -18,7 +18,7 @@
 #//**************************************************************************************/
 
 from hashlib import *
-from sha3 import keccak_256
+#from sha3 import keccak_256
 
 load('../FCL_common/FCL_bn_io.sage');
 load('../FCL_common/FCL_elliptic.sage');
@@ -30,7 +30,7 @@ _ETHER_TAG =  'EIPXXXX/challenge'
 _STARKNET_TAG='SIPXXXX/challenge'
 
 _BITCOIN_HASH=sha256
-_ETHER_HASH=keccak_256
+#_ETHER_HASH=keccak_256
 #_STARKNET_HASH=poseidon
 
 #set global variables to bitcoin settings
@@ -40,10 +40,12 @@ _G_HASH = _BITCOIN_HASH
 _G_CURVE, _G_POINT = FCL_ec_Init_Curve(sec256k_p, sec256k_a, sec256k_b, sec256k_gx, sec256k_gy, sec256k_n);
 _G_ORDER = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141;
 #set global variables to ethereum settings
-_G_HASH = _ETHER_HASH
+#_G_HASH = _ETHER_HASH
 _G_CURVE, _G_POINT = FCL_ec_Init_Curve(sec256k_p, sec256k_a, sec256k_b, sec256k_gx, sec256k_gy, sec256k_n);
 _G_ORDER = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141;
-
+#set global variables to P256 settings
+_G_CURVE, _G_POINT = FCL_ec_Init_Curve(sec256p_p, sec256p_a, sec256p_b, sec256p_gx, sec256p_gy, sec256p_n);
+_G_ORDER=sec256p_n;
 
 Fq=GF(_G_ORDER);
 
@@ -84,17 +86,25 @@ def FCL_ecdsa_sign_canonic(curve, G, msg, seckey, k):
  return r,s, v;
 
 
+def FCL_ecdsa_verify_core(curve, G, e, Q, r,s):
+
+ sm1=Fq(s)^-1;
+ u1=int(Fq(e)*sm1);
+ u2=int(Fq(r)*sm1);
+ kG=u1*G+u2*Q;
+ print("\n u1",u1,"\n u2",u2);
+ 
+ print("\n u1",hex(u1),"\n u2",hex(u2));
+ rc=int(kG[0]);
+ 
+ return (Fq(rc)==Fq(r));
+
 
 def FCL_ecdsa_verify(curve, G, msg, Q, r,s):
  e=int('0x'+_G_HASH(msg).hexdigest(),16);
- sm1=Fq(s)^-1;
- u1=int(e*sm1);
- u2=int(r*sm1);
- kG=u1*G+u2*Q;
- rc=int(kG[0]);
-  
- return (rc==r);
-
+ 
+ return FCL_ecdsa_verify_core(curve, G, e, Q, r,s);
+ 
 
 def FCL_ecdsa_recovery(curve, G, hash, parity,r,s):
  Fq=GF(_G_ORDER);
