@@ -1,8 +1,8 @@
 {
   "_format": "hh-sol-cache-2",
   "files": {
-    "/home/dubois/WebO2/contracts/Base64URL.sol": {
-      "lastModificationDate": 1677076386157,
+    "/home/rdubois/Github/FreshCryptoLib/tests/WebAuthn_hardhat/contracts/Base64URL.sol": {
+      "lastModificationDate": 1681473583577,
       "contentHash": "e75f6ac2363d2b794b39fa3b2d1ef41a",
       "sourceName": "contracts/Base64URL.sol",
       "solcConfig": {
@@ -36,312 +36,8 @@
         "Base64URL"
       ]
     },
-    "/home/dubois/WebO2/contracts/Webauthn_prec.sol": {
-      "lastModificationDate": 1680703706005,
-      "contentHash": "5805e00ff8e501b66df3027f3d1cea6a",
-      "sourceName": "contracts/Webauthn_prec.sol",
-      "solcConfig": {
-        "version": "0.8.17",
-        "settings": {
-          "optimizer": {
-            "enabled": false,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "./Base64URL.sol",
-        "./Elliptic_ZZ.sol",
-        "./FCL_Webauthn.sol",
-        "./FCL_elliptic.sol",
-        "hardhat/console.sol",
-        "solmate/src/utils/SSTORE2.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "BytecodeTable",
-        "Webauthn_prec",
-        "Webauthn_prec2",
-        "Webauthn_prec3",
-        "Webauthn_prec4",
-        "replaceable"
-      ]
-    },
-    "/home/dubois/WebO2/contracts/Elliptic_ZZ.sol": {
-      "lastModificationDate": 1680273903065,
-      "contentHash": "1f55ff6bcac544910bda904caf9b4fcc",
-      "sourceName": "contracts/Elliptic_ZZ.sol",
-      "solcConfig": {
-        "version": "0.8.17",
-        "settings": {
-          "optimizer": {
-            "enabled": false,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "./Base64URL.sol",
-        "solmate/src/utils/SSTORE2.sol",
-        "hardhat/console.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "Ec_ZZ"
-      ]
-    },
-    "/home/dubois/WebO2/node_modules/hardhat/console.sol": {
-      "lastModificationDate": 1677077195485,
-      "contentHash": "4ff3cd2f6272c9a6516e9ee4f2b967d3",
-      "sourceName": "hardhat/console.sol",
-      "solcConfig": {
-        "version": "0.8.17",
-        "settings": {
-          "optimizer": {
-            "enabled": false,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        ">= 0.4.22 <0.9.0"
-      ],
-      "artifacts": [
-        "console"
-      ]
-    },
-    "/home/dubois/WebO2/contracts/Webauthn.sol": {
-      "lastModificationDate": 1680686707317,
-      "contentHash": "f5a20eb6325b365fd5cc9f047b899fed",
-      "sourceName": "contracts/Webauthn.sol",
-      "solcConfig": {
-        "version": "0.8.17",
-        "settings": {
-          "optimizer": {
-            "enabled": false,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "./Base64URL.sol",
-        "./FCL_elliptic.sol",
-        "./FCL_Webauthn.sol",
-        "hardhat/console.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "Webauthn"
-      ]
-    },
-    "/home/dubois/WebO2/node_modules/solmate/src/utils/SSTORE2.sol": {
-      "lastModificationDate": 1678109369849,
-      "contentHash": "8c39a32d85cfad44e775d7a3f0e428cb",
-      "sourceName": "solmate/src/utils/SSTORE2.sol",
-      "solcConfig": {
-        "version": "0.8.17",
-        "settings": {
-          "optimizer": {
-            "enabled": false,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        ">=0.8.0"
-      ],
-      "artifacts": [
-        "SSTORE2"
-      ]
-    },
-    "/home/dubois/WebO2/contracts/FCL_elliptic.sol": {
-      "lastModificationDate": 1680703318594,
-      "contentHash": "93536e7e79defeeb24a0c3f281218e39",
-      "sourceName": "contracts/FCL_elliptic.sol",
-      "solcConfig": {
-        "version": "0.8.17",
-        "settings": {
-          "optimizer": {
-            "enabled": false,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "FCL_Elliptic_ZZ"
-      ]
-    },
-    "/home/dubois/WebO2/contracts/FCL_Webauthn.sol": {
-      "lastModificationDate": 1680703766790,
-      "contentHash": "b6586bed1b5fd5b7090453d5a37a79e2",
-      "sourceName": "contracts/FCL_Webauthn.sol",
-      "solcConfig": {
-        "version": "0.8.17",
-        "settings": {
-          "optimizer": {
-            "enabled": false,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "./Base64URL.sol",
-        "./FCL_elliptic.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "FCL_WebAuthn"
-      ]
-    },
-    "/home/dubois/FCL/tests/WebAuthn_hardhat/contracts/Base64URL.sol": {
-      "lastModificationDate": 1680773568907,
-      "contentHash": "e75f6ac2363d2b794b39fa3b2d1ef41a",
-      "sourceName": "contracts/Base64URL.sol",
-      "solcConfig": {
-        "version": "0.8.17",
-        "settings": {
-          "optimizer": {
-            "enabled": false,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "Base64URL"
-      ]
-    },
-    "/home/dubois/FCL/tests/WebAuthn_hardhat/contracts/Webauthn_prec.sol": {
-      "lastModificationDate": 1680773573003,
+    "/home/rdubois/Github/FreshCryptoLib/tests/WebAuthn_hardhat/contracts/Webauthn_prec.sol": {
+      "lastModificationDate": 1681473583577,
       "contentHash": "edd07f5c79d6717ebde011b303cb0302",
       "sourceName": "contracts/Webauthn_prec.sol",
       "solcConfig": {
@@ -387,47 +83,8 @@
         "replaceable"
       ]
     },
-    "/home/dubois/FCL/tests/WebAuthn_hardhat/contracts/Elliptic_ZZ.sol": {
-      "lastModificationDate": 1680773569811,
-      "contentHash": "1f55ff6bcac544910bda904caf9b4fcc",
-      "sourceName": "contracts/Elliptic_ZZ.sol",
-      "solcConfig": {
-        "version": "0.8.17",
-        "settings": {
-          "optimizer": {
-            "enabled": false,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "./Base64URL.sol",
-        "solmate/src/utils/SSTORE2.sol",
-        "hardhat/console.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "Ec_ZZ"
-      ]
-    },
-    "/home/dubois/FCL/tests/WebAuthn_hardhat/contracts/FCL_Webauthn.sol": {
-      "lastModificationDate": 1681459442638,
+    "/home/rdubois/Github/FreshCryptoLib/tests/WebAuthn_hardhat/contracts/FCL_Webauthn.sol": {
+      "lastModificationDate": 1681473583577,
       "contentHash": "e7ac420e88e56c4e135a3e8f1d09bdf3",
       "sourceName": "contracts/FCL_Webauthn.sol",
       "solcConfig": {
@@ -465,9 +122,9 @@
         "FCL_WebAuthn"
       ]
     },
-    "/home/dubois/FCL/tests/WebAuthn_hardhat/contracts/FCL_elliptic.sol": {
-      "lastModificationDate": 1681459440510,
-      "contentHash": "1f000f2b65e69b0090d78b043c05e96b",
+    "/home/rdubois/Github/FreshCryptoLib/tests/WebAuthn_hardhat/contracts/FCL_elliptic.sol": {
+      "lastModificationDate": 1681918400735,
+      "contentHash": "81ee44801a5dd2ab7c826ec954e4d57d",
       "sourceName": "contracts/FCL_elliptic.sol",
       "solcConfig": {
         "version": "0.8.17",
@@ -500,8 +157,47 @@
         "FCL_Elliptic_ZZ"
       ]
     },
-    "/home/dubois/FCL/tests/WebAuthn_hardhat/node_modules/hardhat/console.sol": {
-      "lastModificationDate": 1680704296640,
+    "/home/rdubois/Github/FreshCryptoLib/tests/WebAuthn_hardhat/contracts/Elliptic_ZZ.sol": {
+      "lastModificationDate": 1681473583577,
+      "contentHash": "1f55ff6bcac544910bda904caf9b4fcc",
+      "sourceName": "contracts/Elliptic_ZZ.sol",
+      "solcConfig": {
+        "version": "0.8.17",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./Base64URL.sol",
+        "solmate/src/utils/SSTORE2.sol",
+        "hardhat/console.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "Ec_ZZ"
+      ]
+    },
+    "/home/rdubois/Github/FreshCryptoLib/tests/WebAuthn_hardhat/node_modules/hardhat/console.sol": {
+      "lastModificationDate": 1681473584597,
       "contentHash": "4ff3cd2f6272c9a6516e9ee4f2b967d3",
       "sourceName": "hardhat/console.sol",
       "solcConfig": {
@@ -535,8 +231,8 @@
         "console"
       ]
     },
-    "/home/dubois/FCL/tests/WebAuthn_hardhat/node_modules/solmate/src/utils/SSTORE2.sol": {
-      "lastModificationDate": 1680704298400,
+    "/home/rdubois/Github/FreshCryptoLib/tests/WebAuthn_hardhat/node_modules/solmate/src/utils/SSTORE2.sol": {
+      "lastModificationDate": 1681473585377,
       "contentHash": "8c39a32d85cfad44e775d7a3f0e428cb",
       "sourceName": "solmate/src/utils/SSTORE2.sol",
       "solcConfig": {
@@ -570,8 +266,8 @@
         "SSTORE2"
       ]
     },
-    "/home/dubois/FCL/tests/WebAuthn_hardhat/contracts/Webauthn.sol": {
-      "lastModificationDate": 1680773572251,
+    "/home/rdubois/Github/FreshCryptoLib/tests/WebAuthn_hardhat/contracts/Webauthn.sol": {
+      "lastModificationDate": 1681473583577,
       "contentHash": "f5a20eb6325b365fd5cc9f047b899fed",
       "sourceName": "contracts/Webauthn.sol",
       "solcConfig": {

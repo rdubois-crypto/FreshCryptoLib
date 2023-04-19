@@ -290,13 +290,13 @@ library FCL_Elliptic_ZZ {
          
       assembly{
       
-      for{  let T4:=add( shl(1, and(shr(index, scalar_v),1)), and(shr(index, scalar_u),1) )
-      } eq(T4,0) {index := sub(index, 1)}
-      {
-          T4:=add( shl(1, and(shr(index, scalar_v),1)), and(shr(index, scalar_u),1) )
      
+      for{  let T4:=add( shl(1, and(shr(index, scalar_v),1)), and(shr(index, scalar_u),1) )
+      } eq(T4,0) {
+        index := sub(index, 1)
+        T4:=add( shl(1, and(shr(index, scalar_v),1)), and(shr(index, scalar_u),1) )
       }
-      
+      {}
        zz:=add( shl(1, and(shr(index, scalar_v),1)), and(shr(index, scalar_u),1) )
            
       if eq(zz,1) {
@@ -360,8 +360,37 @@ library FCL_Elliptic_ZZ {
        // inlined EcZZ_AddN
       //T3:=sub(p, Y)
       //T3:=Y
-      let y2:=addmod(mulmod(T2, zzz,p),Y,p)  
-      T2:=addmod(mulmod(T1, zz,p),sub(p,X),p)  
+      let y2:=addmod(mulmod(T2, zzz,p),Y,p)  //R
+      T2:=addmod(mulmod(T1, zz,p),sub(p,X),p)  //P
+      
+      //special extremely rare case accumulator where EcAdd is replaced by EcDbl, no need to optimize this
+      //todo : construct edge vector case
+      if eq(y2,0){
+       if eq(T2,0){
+       
+       T1:=mulmod(2, Y, p) //U = 2*Y1, y free
+       T2:=mulmod(T1,T1,p)  // V=U^2
+       T3:=mulmod(X, T2,p)// S = X1*V
+      
+      let TT1:=mulmod(T1, T2,p) // W=UV
+      y2:= addmod(X,zz,p)
+      TT1:=addmod(X,sub(p,zz),p)
+      y2:=mulmod(y2,TT1,p)
+      T2:=addmod(X,zz,p)
+      T1:=addmod(X,sub(p,zz),p)
+      T2:=mulmod(T1,T2,p)
+      T4:=mulmod(3,T2,p)
+      zzz:=mulmod(T1,zzz,p)//zzz3=W*zzz1
+       zz:=mulmod(T2, zz, p) //zz3=V*ZZ1, V free
+     
+      X:=addmod(mulmod(T4,T4,p), mulmod(minus_2, T3,p),p) //X3=M^2-2S
+      T2:=mulmod(T4,addmod(T3, sub(p, X),p),p)//M(S-X3)
+      
+      Y:= addmod(T2, sub(p, mulmod(T1, Y ,p)),p  )//Y3= M(S-X3)-W*Y1
+      
+      continue  
+       }
+      }
       
       T4:=mulmod(T2, T2, p)//PP
       let TT1:=mulmod(T4,T2,p)//PPP, this one could be spared, but adding this register spare gas
@@ -485,6 +514,33 @@ library FCL_Elliptic_ZZ {
       
       let y2:=addmod(mulmod(mload(add(T,32)), zzz,p),Y,p)  
       let T2:=addmod(mulmod(mload(T), zz,p),sub(p,X),p)  
+      
+      //special case ecAdd(P,P)=EcDbl
+      if eq(y2,0){
+       if eq(T2,0){
+       let    T1:=mulmod(2, Y, p) //U = 2*Y1, y free
+       T2:=mulmod(T1,T1,p)  // V=U^2
+       let T3:=mulmod(X, T2,p)// S = X1*V
+      
+      let TT1:=mulmod(T1, T2,p) // W=UV
+      y2:= addmod(X,zz,p)
+      TT1:=addmod(X,sub(p,zz),p)
+      y2:=mulmod(y2,TT1,p)
+      T2:=addmod(X,zz,p)
+      T1:=addmod(X,sub(p,zz),p)
+      T2:=mulmod(T1,T2,p)
+      let T4:=mulmod(3,T2,p)
+      zzz:=mulmod(T1,zzz,p)//zzz3=W*zzz1
+       zz:=mulmod(T2, zz, p) //zz3=V*ZZ1, V free
+     
+      X:=addmod(mulmod(T4,T4,p), mulmod(minus_2, T3,p),p) //X3=M^2-2S
+      T2:=mulmod(T4,addmod(T3, sub(p, X),p),p)//M(S-X3)
+      
+      Y:= addmod(T2, sub(p, mulmod(T1, Y ,p)),p  )//Y3= M(S-X3)-W*Y1
+         continue
+       }
+      }
+      
       let T4:=mulmod(T2, T2, p)
       let T1:=mulmod(T4,T2,p)//
        zz:=mulmod(zz,T4,p) //zzz3=V*ZZ1
@@ -639,7 +695,7 @@ library FCL_Elliptic_ZZ {
         uint[2] calldata rs,
         uint[2] calldata Q
     ) internal  returns (bool) {
-        if (rs[0] == 0 || rs[0] >= n || rs[1] == 0) {
+        if (rs[0] == 0 || rs[0] >= n || rs[1] == 0||rs[1]>=n) {
             return false;
         }
         
@@ -648,7 +704,7 @@ library FCL_Elliptic_ZZ {
             return false;
         }
   	
-        uint sInv = FCL_nModInv(rs[1]);
+        uint sInv = FCL_nModInv(n-rs[1]);
         
         uint scalar_u=mulmod(uint(message), sInv, n);
         uint scalar_v= mulmod(rs[0], sInv, n);
