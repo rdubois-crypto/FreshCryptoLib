@@ -19,6 +19,21 @@ function wrap_ecdsa_core( bytes32 message,
  
 }
 
+contract wrap_ecdsa_precal{
+ address precomputations;
+
+function wrap_ecdsa_core( bytes32 message,
+        uint[2] calldata rs,
+        uint[2] calldata Q) public returns (bool)
+ {
+  return FCL_Elliptic_ZZ.ecdsa_precomputed_verify(message,rs, precomputations);
+ }
+ 
+ constructor(address bytecode){
+   precomputations=bytecode;
+ }
+}
+
 contract EcdsaTest is Test {
 
    //curve prime field modulus
@@ -94,6 +109,51 @@ contract EcdsaTest is Test {
  }
  //ecAff_isOnCurve
   
+  function do_precalc() public returns (bool)
+  {
+    bytes memory bytecode ;
+    
+    string[] memory inputs = new string[](1);
+    inputs[0] = "echo toto  ";
+/*    inputs[1] = "114874632398302156264159990279427641021947882640101801130664833947273521181002";
+    inputs[2] = ";C1=";
+    inputs[3] = "32136952818958550240756825111900051564117520891182470183735244184006536587423'";
+    inputs[4] = ";load(\"test/FCL_ecdsa_precompute.sage\")'>>fcl_ecdsa_precbytecode.js" ;*/
+	
+    vm.ffi(inputs);    
+    console.log("precalc done");
+  }
+  
+  function read_precalc() public returns (bool)
+  {
+   
+  }
+  
+  
+  function test_Invariant_edge() public returns (bool)
+  {
+   //choose Q=2P, then verify duplication is ok
+   uint256[4] memory Q;
+   (Q[0], Q[1],Q[2], Q[3])=FCL_Elliptic_ZZ.ecZZ_Dbl(gx, gy,1,1);
+   uint256[4] memory _4P;
+   (_4P[0], _4P[1],_4P[2], _4P[3])=FCL_Elliptic_ZZ.ecZZ_Dbl(Q[0], Q[1],Q[2], Q[3]);
+   uint256 _4P_res1;
+   
+   (_4P_res1,)=FCL_Elliptic_ZZ.ecZZ_SetAff(_4P[0], _4P[1],_4P[2], _4P[3]);
+   
+   
+   uint256  _4P_res2=FCL_Elliptic_ZZ.ecZZ_mulmuladd_S_asm(gx,gy, 4, 0);
+   assertEq(_4P_res1, _4P_res2);
+   
+   uint256[2] memory nQ;
+   (nQ[0],nQ[1])=FCL_Elliptic_ZZ.ecZZ_SetAff(Q[0], Q[1],Q[2], Q[3]);
+   uint256 _4P_res3=FCL_Elliptic_ZZ.ecZZ_mulmuladd_S_asm(nQ[0],nQ[1], 2, 1);
+  
+   assertEq(_4P_res1, _4P_res3);
+   
+  }
+  
+  //testing Wychproof vectors
   function test_Invariant_ecZZ_mulmuladd_S_asm(
        
     ) public returns (bool)
@@ -104,65 +164,70 @@ contract EcdsaTest is Test {
    
     uint256 wx=vm.parseJsonUint(deployData, ".NumberOfTests");
     console.log("NumberOfTests:",wx);
-     uint256[2] memory key;
-     key[0]=vm.parseJsonUint(deployData, ".keyx");
+    uint256[2] memory key;
+    key[0]=vm.parseJsonUint(deployData, ".keyx");
     console.log("key_x:", key[0]);
-       key[1]=vm.parseJsonUint(deployData, ".keyy");
-     console.log("key_y:", key[1]);
-     bool res=FCL_Elliptic_ZZ.ecAff_isOnCurve(key[0],key[1]);
+    key[1]=vm.parseJsonUint(deployData, ".keyy");
+    console.log("key_y:", key[1]);
+    bool res=FCL_Elliptic_ZZ.ecAff_isOnCurve(key[0],key[1]);
+    assertEq(res,true);
+     
      console.log("Is key on curve:",res);
      
      //ReadField_th(deployData,".sigx_",0x1);
      
      
      
-   uint256[2] memory rs;
-   string memory snum="1";
-  for(uint256 i=1;i<10;i++)
-  {
+    uint256[2] memory rs;
+    string memory snum="1";
+    for(uint256 i=1;i<10;i++)
+    {
   
    
    //snum=string(abi.encodePacked(uintToBytes(i)));
   
   
-   string memory title=string(vm.parseJson(deployData, string.concat(".test_", snum)));
-     console.log("\n test:",snum, title);
-
-   
+      string memory title=string(vm.parseJson(deployData, string.concat(".test_", snum)));
+      console.log("\n test:",snum, title);
+       console.log("\n ||");
+    
   
-  rs[0]=vm.parseJsonUint(deployData, string.concat(".sigx_", snum));
-       console.log("sigx:",rs[0]);
-  rs[1]=vm.parseJsonUint(deployData, string.concat(".sigy_", snum));
-       console.log("sigy:",rs[1]);
+      rs[0]=vm.parseJsonUint(deployData, string.concat(".sigx_", snum));
+      console.log("sigx:",rs[0]);
+      rs[1]=vm.parseJsonUint(deployData, string.concat(".sigy_", snum));
+      console.log("sigy:",rs[1]);
   
     
-   uint256 msg=vm.parseJsonUint(deployData, string.concat(".msg_", snum));
+       uint256 msg=vm.parseJsonUint(deployData, string.concat(".msg_", snum));
        console.log("msg:",msg);
        
        
-     vm.prank(vm.addr(5));
-     Wrap_ecdsa wrap=new Wrap_ecdsa();
+       vm.prank(vm.addr(5));
+       Wrap_ecdsa wrap=new Wrap_ecdsa();
      
-      uint sInv = FCL_Elliptic_ZZ.FCL_nModInv(rs[1]);
+       uint sInv = FCL_Elliptic_ZZ.FCL_nModInv(rs[1]);
         
-        uint scalar_u=mulmod(uint(msg), sInv, FCL_Elliptic_ZZ.n);
-        uint scalar_v= mulmod(rs[0], sInv, FCL_Elliptic_ZZ.n);
+       uint scalar_u=mulmod(uint(msg), sInv, FCL_Elliptic_ZZ.n);
+       uint scalar_v= mulmod(rs[0], sInv, FCL_Elliptic_ZZ.n);
     
-    console.log("u1:%x",scalar_u);
-    console.log("u2:%x",scalar_v);
+       console.log("u1:%x",scalar_u);
+       console.log("u2:%x",scalar_v);
     
       
-    res=wrap.wrap_ecdsa_core(bytes32(msg), rs,key );
-     console.log("Sig verif:",res);
+       res=wrap.wrap_ecdsa_core(bytes32(msg), rs,key );
+       console.log("Sig verif:",res);
      
      /*
      console.log("-u2:%x",FCL_Elliptic_ZZ.n-scalar_v); 
      rs[1]=FCL_Elliptic_ZZ.n-rs[1];
      res=ecdsa_verify(bytes32(msg), rs,key );
      console.log("Sig verif:",res);*/
-    assembly{
-     mstore(add(snum,32),add(0x0100000000000000000000000000000000000000000000000000000000000000, mload(add(snum,32))))
-   }
+       assembly{
+        mstore(add(snum,32),add(0x0100000000000000000000000000000000000000000000000000000000000000, mload(add(snum,32))))
+      }
    }
   }
+  
+  
+  
 }

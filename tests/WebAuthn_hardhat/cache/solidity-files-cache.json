@@ -37,7 +37,7 @@
       ]
     },
     "/home/rdubois/Github/FreshCryptoLib/tests/WebAuthn_hardhat/contracts/Webauthn_prec.sol": {
-      "lastModificationDate": 1681473583577,
+      "lastModificationDate": 1682069621210,
       "contentHash": "edd07f5c79d6717ebde011b303cb0302",
       "sourceName": "contracts/Webauthn_prec.sol",
       "solcConfig": {
@@ -123,8 +123,8 @@
       ]
     },
     "/home/rdubois/Github/FreshCryptoLib/tests/WebAuthn_hardhat/contracts/FCL_elliptic.sol": {
-      "lastModificationDate": 1681918400735,
-      "contentHash": "81ee44801a5dd2ab7c826ec954e4d57d",
+      "lastModificationDate": 1683720443471,
+      "contentHash": "83b552f7224d648946dd8992c9413f14",
       "sourceName": "contracts/FCL_elliptic.sol",
       "solcConfig": {
         "version": "0.8.17",

@@ -7,8 +7,9 @@ A set of examples of integration of the FCL.
 test_ecrecover.sol: generate vectors to assess sage implementation of ecrecover
 
 ### WebAuthn_hardhat: 
+
 Implementation of the ECDSA P256 for WebAuthn using hardhat.
-Forked from https://github.com/btchip/Webauthn.sol
+WebAuthn part forked from https://github.com/btchip/Webauthn.sol
 
 Optimization of ecdsa verification using FCL_elliptic.sol library.
 
@@ -18,5 +19,14 @@ Final gas cost verification:
 
 -257K without precomputations, 
 
--137K with precomputations.
+-139K with precomputations.
 
+
+### WebAuthn_hardhat: 
+Implementation of the ECDSA P256 for WebAuthn using forge.
+WebAuthn part forked from https://github.com/btchip/Webauthn.sol
+
+requirements:
+- install forge
+execution:
+>forge test -vv --ffi

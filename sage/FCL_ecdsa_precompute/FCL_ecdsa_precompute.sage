@@ -70,8 +70,12 @@ def print_setlength(X,n):
     res=res+"0";
   res=res+l;  
   return res;  
- 
-def Print_Table( Q, Curve):
+
+#print for js file 
+def Print_Table_js( Q, Curve):
+ C_filepath='fcl_ecdsa_precbytecode.js';
+ filep = open(C_filepath,'a');
+
  Prec=Precompute_Pubkey(Q, Curve);
  chain="const precompute=\"0x";
  for i in [0..255]:
@@ -81,10 +85,32 @@ def Print_Table( Q, Curve):
    chain=chain+px+py;
    
  chain=chain+"\"\n exports.precompute=precompute;')";
- print(chain);
- return chain;
 
-Webauthn_Prec=Print_Table(Q, secp256r1);
+ filep.write(chain);
+ filep.close();
 
+ return 0;
+
+def Print_Table_raw( Q, Curve):
+ C_filepath='fcl_ecdsa_precbytecode.dat';
+ filep = open(C_filepath,'a');
+ 
+ Prec=Precompute_Pubkey(Q, Curve);
+ chain="0x";
+ for i in [0..255]:
+   px=print_setlength( Prec[i][0], 64);
+   py=print_setlength( Prec[i][1], 64);
+   #print("\n -- \n px=", px, "\n py=",py );
+   chain=chain+px+py;
+   
+ 
+ filep.write(chain);
+ filep.close();
+
+ return 0;
+
+
+Webauthn_Prec=Print_Table_js(Q, secp256r1);
+Print_Table_raw(Q,secp256r1);
 
      

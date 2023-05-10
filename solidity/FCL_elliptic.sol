@@ -264,7 +264,7 @@ library FCL_Elliptic_ZZ {
      * @dev Computation of uG+vQ using Strauss-Shamir's trick, G basepoint, Q public key
      */
      function ecZZ_mulmuladd_S_asm(
-        uint Q0, uint Q1,// Point G and Q stored in one memory for stack optimization
+        uint Q0, uint Q1,//affine rep for input point Q
         uint scalar_u,
         uint scalar_v
     ) internal returns (uint X) {
@@ -356,8 +356,15 @@ library FCL_Elliptic_ZZ {
       	 T1:=H0
       	 T2:= H1
       	 }
-      	 	 
-       // inlined EcZZ_AddN
+      if eq(zz,0) {
+       X:=T1
+       Y:=T2
+       zz:=1
+       zzz:=1
+       continue
+      }	 	 
+      // inlined EcZZ_AddN
+      
       //T3:=sub(p, Y)
       //T3:=Y
       let y2:=addmod(mulmod(T2, zzz,p),Y,p)  //R
@@ -366,29 +373,28 @@ library FCL_Elliptic_ZZ {
       //special extremely rare case accumulator where EcAdd is replaced by EcDbl, no need to optimize this
       //todo : construct edge vector case
       if eq(y2,0){
-       if eq(T2,0){
+             if eq(T2,0){
        
-       T1:=mulmod(2, Y, p) //U = 2*Y1, y free
+       T1:=mulmod(minus_2, Y, p) //U = 2*Y1, y free
        T2:=mulmod(T1,T1,p)  // V=U^2
        T3:=mulmod(X, T2,p)// S = X1*V
       
       let TT1:=mulmod(T1, T2,p) // W=UV
       y2:= addmod(X,zz,p)
       TT1:=addmod(X,sub(p,zz),p)
-      y2:=mulmod(y2,TT1,p)
-      T2:=addmod(X,zz,p)
-      T1:=addmod(X,sub(p,zz),p)
-      T2:=mulmod(T1,T2,p)
-      T4:=mulmod(3,T2,p)
-      zzz:=mulmod(T1,zzz,p)//zzz3=W*zzz1
+      y2:=mulmod(y2,TT1,p)//(X-ZZ)(X+ZZ)
+      T4:=mulmod(3,y2,p)//M
+      
+      
+      zzz:=mulmod(TT1,zzz,p)//zzz3=W*zzz1
        zz:=mulmod(T2, zz, p) //zz3=V*ZZ1, V free
      
       X:=addmod(mulmod(T4,T4,p), mulmod(minus_2, T3,p),p) //X3=M^2-2S
       T2:=mulmod(T4,addmod(T3, sub(p, X),p),p)//M(S-X3)
       
-      Y:= addmod(T2, sub(p, mulmod(T1, Y ,p)),p  )//Y3= M(S-X3)-W*Y1
+      Y:= addmod(T2, mulmod(T1, Y ,p) ,p  )//Y3= M(S-X3)-W*Y1
       
-      continue  
+      continue
        }
       }
       
@@ -510,7 +516,14 @@ library FCL_Elliptic_ZZ {
          /* Access to precomputed table using extcodecopy hack */
           
       // inlined EcZZ_AddN
-      
+      if iszero(zz){
+        X:=mload(T)
+        Y:=mload(add(T,32))
+        zz:=1
+        zzz:=1
+        
+        continue
+      }
       
       let y2:=addmod(mulmod(mload(add(T,32)), zzz,p),Y,p)  
       let T2:=addmod(mulmod(mload(T), zz,p),sub(p,X),p)  
@@ -518,26 +531,27 @@ library FCL_Elliptic_ZZ {
       //special case ecAdd(P,P)=EcDbl
       if eq(y2,0){
        if eq(T2,0){
-       let    T1:=mulmod(2, Y, p) //U = 2*Y1, y free
+       
+       let T1:=mulmod(minus_2, Y, p) //U = 2*Y1, y free
        T2:=mulmod(T1,T1,p)  // V=U^2
-       let T3:=mulmod(X, T2,p)// S = X1*V
+      let T3:=mulmod(X, T2,p)// S = X1*V
       
       let TT1:=mulmod(T1, T2,p) // W=UV
       y2:= addmod(X,zz,p)
       TT1:=addmod(X,sub(p,zz),p)
-      y2:=mulmod(y2,TT1,p)
-      T2:=addmod(X,zz,p)
-      T1:=addmod(X,sub(p,zz),p)
-      T2:=mulmod(T1,T2,p)
-      let T4:=mulmod(3,T2,p)
-      zzz:=mulmod(T1,zzz,p)//zzz3=W*zzz1
+      y2:=mulmod(y2,TT1,p)//(X-ZZ)(X+ZZ)
+      let T4:=mulmod(3,y2,p)//M
+      
+      
+      zzz:=mulmod(TT1,zzz,p)//zzz3=W*zzz1
        zz:=mulmod(T2, zz, p) //zz3=V*ZZ1, V free
      
       X:=addmod(mulmod(T4,T4,p), mulmod(minus_2, T3,p),p) //X3=M^2-2S
       T2:=mulmod(T4,addmod(T3, sub(p, X),p),p)//M(S-X3)
       
-      Y:= addmod(T2, sub(p, mulmod(T1, Y ,p)),p  )//Y3= M(S-X3)-W*Y1
-         continue
+      Y:= addmod(T2, mulmod(T1, Y ,p) ,p  )//Y3= M(S-X3)-W*Y1
+      
+      continue
        }
       }
       
@@ -704,7 +718,7 @@ library FCL_Elliptic_ZZ {
             return false;
         }
   	
-        uint sInv = FCL_nModInv(n-rs[1]);
+        uint sInv = FCL_nModInv(rs[1]);
         
         uint scalar_u=mulmod(uint(message), sInv, n);
         uint scalar_v= mulmod(rs[0], sInv, n);
