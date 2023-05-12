@@ -91,19 +91,37 @@ def Print_Table_js( Q, Curve):
 
  return 0;
 
-def Print_Table_raw( Q, Curve):
- C_filepath='fcl_ecdsa_precbytecode.dat';
+def Print_Table_json( Q, Curve):
+ C_filepath='fcl_ecdsa_precbytecode.json';
  filep = open(C_filepath,'a');
  
  Prec=Precompute_Pubkey(Q, Curve);
- chain="0x";
+ chain="{\n \"Bytecode\": \"0x";
  for i in [0..255]:
    px=print_setlength( Prec[i][0], 64);
    py=print_setlength( Prec[i][1], 64);
    #print("\n -- \n px=", px, "\n py=",py );
-   chain=chain+px+py;
+   chain=chain+px+py ;
    
+ chain=chain +"\"\n}\n";
+ filep.write(chain);
+ filep.close();
+
+ return 0;
+
+
+def Print_Table_raw( Q, Curve):
+ C_filepath='fcl_ecdsa_precbytecode.raw';
+ filep = open(C_filepath,'a');
  
+ Prec=Precompute_Pubkey(Q, Curve);
+ chain="";
+ for i in [0..255]:
+   px=print_setlength( Prec[i][0], 64);
+   py=print_setlength( Prec[i][1], 64);
+   #print("\n -- \n px=", px, "\n py=",py );
+   chain=chain+px+py ;
+   
  filep.write(chain);
  filep.close();
 
@@ -111,6 +129,6 @@ def Print_Table_raw( Q, Curve):
 
 
 Webauthn_Prec=Print_Table_js(Q, secp256r1);
-Print_Table_raw(Q,secp256r1);
+Print_Table_json(Q,secp256r1);
 
      

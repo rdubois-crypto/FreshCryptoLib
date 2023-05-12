@@ -19,18 +19,35 @@ function wrap_ecdsa_core( bytes32 message,
  
 }
 
-contract wrap_ecdsa_precal{
+contract Wrap_ecdsa_precal{
  address precomputations;
 
 function wrap_ecdsa_core( bytes32 message,
-        uint[2] calldata rs,
-        uint[2] calldata Q) public returns (bool)
+        uint[2] calldata rs
+       ) public returns (bool)
  {
   return FCL_Elliptic_ZZ.ecdsa_precomputed_verify(message,rs, precomputations);
  }
  
  constructor(address bytecode){
    precomputations=bytecode;
+    
+      uint[2] memory px;//pointer to an elliptic point
+   
+   /*
+     for(uint i=1;i<256;i++){  
+    uint offset=64*i;
+    assembly{
+       extcodecopy(bytecode, px, offset, 64)
+      }
+      
+      console.log("Test on curve of point ",i, px[0], px[1]);
+      console.log(FCL_Elliptic_ZZ.ecAff_isOnCurve(px[0], px[1]));
+    }    
+  
+  
+   console.log("bytecode @=",precomputations);
+   */
  }
 }
 
@@ -58,13 +75,17 @@ contract EcdsaTest is Test {
     uint constant minus_2modn = 0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC63254F; 
        
     uint constant minus_1=      0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+    
+    uint constant _prec_address = 0xcaca;
+     
+    
  function setUp() public {
     
     uint256 i_u256_a=0x703b99d600000000000000000000000000000000000000000000000000000000;
     
     uint256 res=FCL_Elliptic_ZZ.FCL_nModInv(i_u256_a);
   //  console.log("inv:",mulmod(i_u256_a, res,FCL_Elliptic_ZZ.n ));
-  
+  load_precalc();
  
 //     wx=vm.parseJsonUint(deployData, ".key[0]");
 //    console.log("Read:",wx);
@@ -108,26 +129,31 @@ contract EcdsaTest is Test {
  
  }
  //ecAff_isOnCurve
-  
-  function do_precalc() public returns (bool)
+ 
+ 
+    
+  function write_precalcsage(uint256 C0, uint256 C1) public returns (bool)
   {
     bytes memory bytecode ;
-    
-    string[] memory inputs = new string[](1);
-    inputs[0] = "echo toto  ";
-/*    inputs[1] = "114874632398302156264159990279427641021947882640101801130664833947273521181002";
-    inputs[2] = ";C1=";
-    inputs[3] = "32136952818958550240756825111900051564117520891182470183735244184006536587423'";
-    inputs[4] = ";load(\"test/FCL_ecdsa_precompute.sage\")'>>fcl_ecdsa_precbytecode.js" ;*/
 	
-    vm.ffi(inputs);    
+    string memory line="cd ../../sage/FCL_ecdsa_precompute;rm *json;sage -c 'C0=";
+    line=string.concat(line,vm.toString(C0));
+    line=string.concat(line,";C1=");
+    line=string.concat(line,vm.toString(C1));
+    line=string.concat(line,";load(\"FCL_ecdsa_precompute.sage\")' ;cp fcl_ecdsa_precbytecode.json ../../tests/WebAuthn_forge/test/vectors_sage/fcl_ecdsa_precbytecode.json;");
+  
+       
+    vm.writeLine("scriptz.sh", line) ;
+
+    string[] memory inputs = new string[](2);
+    
+    
+    inputs[0] = "bash";
+    inputs[1] = "scriptz.sh";
+    bytes memory output=vm.ffi(inputs);    
     console.log("precalc done");
   }
-  
-  function read_precalc() public returns (bool)
-  {
-   
-  }
+
   
   
   function test_Invariant_edge() public returns (bool)
@@ -153,12 +179,11 @@ contract EcdsaTest is Test {
    
   }
   
-  //testing Wychproof vectors
-  function test_Invariant_ecZZ_mulmuladd_S_asm(
-       
-    ) public returns (bool)
- {
-    string memory deployData = vm.readFile("test/vectors_wychproof/vec_sec256r1_valid.json");
+  function wychproof_keyload() public returns (
+     uint256[2] memory key, string memory deployData)
+   
+  {
+   string memory deployData = vm.readFile("test/vectors_wychproof/vec_sec256r1_valid.json");
     //string memory deployData = vm.readFile("test/vectors_sage/vec_sage_ecdsa_sec256r1.json");
    
    
@@ -171,35 +196,28 @@ contract EcdsaTest is Test {
     console.log("key_y:", key[1]);
     bool res=FCL_Elliptic_ZZ.ecAff_isOnCurve(key[0],key[1]);
     assertEq(res,true);
+    write_precalcsage(key[0], key[1]);
      
-     console.log("Is key on curve:",res);
-     
-     //ReadField_th(deployData,".sigx_",0x1);
-     
-     
-     
-    uint256[2] memory rs;
-    string memory snum="1";
-    for(uint256 i=1;i<10;i++)
-    {
+    console.log("Is key on curve:",res);
+    
+    return(key, deployData);
+  }
   
-   
-   //snum=string(abi.encodePacked(uintToBytes(i)));
-  
-  
-      string memory title=string(vm.parseJson(deployData, string.concat(".test_", snum)));
-      console.log("\n test:",snum, title);
+  //load a single test vector
+  function wychproof_vecload(string memory deployData, string memory snum) public returns (
+     uint256[2] memory rs, uint256 msg, string memory title)
+   {
+     string memory title=string(vm.parseJson(deployData, string.concat(".test_", snum)));
+     
+    console.log("\n test:",snum, title);
        console.log("\n ||");
     
   
       rs[0]=vm.parseJsonUint(deployData, string.concat(".sigx_", snum));
-      console.log("sigx:",rs[0]);
       rs[1]=vm.parseJsonUint(deployData, string.concat(".sigy_", snum));
-      console.log("sigy:",rs[1]);
-  
+   
     
        uint256 msg=vm.parseJsonUint(deployData, string.concat(".msg_", snum));
-       console.log("msg:",msg);
        
        
        vm.prank(vm.addr(5));
@@ -210,24 +228,79 @@ contract EcdsaTest is Test {
        uint scalar_u=mulmod(uint(msg), sInv, FCL_Elliptic_ZZ.n);
        uint scalar_v= mulmod(rs[0], sInv, FCL_Elliptic_ZZ.n);
     
-       console.log("u1:%x",scalar_u);
-       console.log("u2:%x",scalar_v);
     
-      
-       res=wrap.wrap_ecdsa_core(bytes32(msg), rs,key );
-       console.log("Sig verif:",res);
+     return (rs, msg, title);
+   }
+  
+  //testing Wychproof vectors
+  function test_Invariant_ecZZ_mulmuladd_S_asm(
+       
+    ) public returns (bool)
+ {
+    string memory deployData ;
+    uint256[2] memory key;
+    (key, deployData)= wychproof_keyload();
+   
+   
+    bool res=FCL_Elliptic_ZZ.ecAff_isOnCurve(key[0],key[1]);
+    bool res2;
+    assertEq(res,true);
      
-     /*
-     console.log("-u2:%x",FCL_Elliptic_ZZ.n-scalar_v); 
-     rs[1]=FCL_Elliptic_ZZ.n-rs[1];
-     res=ecdsa_verify(bytes32(msg), rs,key );
-     console.log("Sig verif:",res);*/
-       assembly{
+        
+     
+    uint256[2] memory rs;
+    string memory title;
+    string memory snum="1";
+    for(uint256 i=1;i<10;i++)
+    {
+  
+       uint256 msg;
+       (rs,msg, title)=wychproof_vecload(deployData, snum);
+       
+       vm.prank(vm.addr(5));
+       Wrap_ecdsa wrap=new Wrap_ecdsa();
+       Wrap_ecdsa_precal wrap2=new Wrap_ecdsa_precal(address(uint160(_prec_address)));
+       
+       console.log("msg:",msg);
+       console.log("sigx:",rs[0]);
+       console.log("sigy:",rs[1]);
+  
+       
+       res=wrap.wrap_ecdsa_core(bytes32(msg), rs,key );
+       res2=wrap2.wrap_ecdsa_core(bytes32(msg), rs);
+      console.log("Sig verif no prec:",res);
+       console.log("Sig verif with prec:",res2);
+       
+      assembly{
         mstore(add(snum,32),add(0x0100000000000000000000000000000000000000000000000000000000000000, mload(add(snum,32))))
       }
    }
   }
   
+  function load_precalc(       
+    ) public returns (bool)
+    {
+      string memory deployData = vm.readFile("test/vectors_sage/fcl_ecdsa_precbytecode.json");
+      bytes memory	prec=abi.decode(vm.parseJson(deployData, ".Bytecode"), (bytes));
+      address a_prec; //address of the precomputations bytecode contract
+      a_prec=address(uint160(_prec_address));
+      vm.etch(a_prec, prec);
+      
+      uint[2] memory px;//pointer to an elliptic point
+    
+    //check precomputations are correct, all point on curve P256  
+    for(uint i=1;i<256;i++){  
+    uint offset=64*i;
+    assembly{
+       extcodecopy(a_prec, px, offset, 64)
+      }
+      
+      //console.log("Test on curve of point ",i, px[0], px[1]);
+      //console.log(FCL_Elliptic_ZZ.ecAff_isOnCurve(px[0], px[1]));
+      assertEq(FCL_Elliptic_ZZ.ecAff_isOnCurve(px[0], px[1]), true);
+    }    
   
+     return true;
+    }
   
 }
