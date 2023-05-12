@@ -103,8 +103,8 @@ library FCL_Elliptic_ZZ {
     function ecZZ_SetAff(uint256 x, uint256 y, uint256 zz, uint256 zzz) internal returns (uint256 x1, uint256 y1) {
         uint256 zzzInv = FCL_pModInv(zzz); //1/zzz
         y1 = mulmod(y, zzzInv, p); //Y/zzz
-        uint256 b = mulmod(zz, zzzInv, p); //1/z
-        zzzInv = mulmod(b, b, p); //1/zz
+        uint256 _b = mulmod(zz, zzzInv, p); //1/z
+        zzzInv = mulmod(_b, _b, p); //1/zz
         x1 = mulmod(x, zzzInv, p); //X/zz
     }
 
@@ -516,7 +516,8 @@ library FCL_Elliptic_ZZ {
 
                         let T4 := mulmod(T2, T2, p)
                         let T1 := mulmod(T4, T2, p) //
-                        zz := mulmod(zz, T4, p) //zzz3=V*ZZ1
+                        zz := mulmod(zz, T4, p)
+                        //zzz3=V*ZZ1
                         zzz := mulmod(zzz, T1, p) // W=UV/
                         let zz1 := mulmod(X, T4, p)
                         X := addmod(addmod(mulmod(y2, y2, p), sub(p, T1), p), mulmod(minus_2, zz1, p), p)

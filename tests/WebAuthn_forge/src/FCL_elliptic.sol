@@ -19,7 +19,7 @@
 // Code is optimized for a=-3 only curves with prime order, constant like -1, -2 shall be replaced
 // if ever used for other curve than sec256R1
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.13;
 
 library FCL_Elliptic_ZZ {
     // Set parameters for curve sec256r1.
@@ -103,8 +103,8 @@ library FCL_Elliptic_ZZ {
     function ecZZ_SetAff(uint256 x, uint256 y, uint256 zz, uint256 zzz) internal returns (uint256 x1, uint256 y1) {
         uint256 zzzInv = FCL_pModInv(zzz); //1/zzz
         y1 = mulmod(y, zzzInv, p); //Y/zzz
-        uint256 b = mulmod(zz, zzzInv, p); //1/z
-        zzzInv = mulmod(b, b, p); //1/zz
+        uint256 _b = mulmod(zz, zzzInv, p); //1/z
+        zzzInv = mulmod(_b, _b, p); //1/zz
         x1 = mulmod(x, zzzInv, p); //X/zz
     }
 
@@ -178,11 +178,9 @@ library FCL_Elliptic_ZZ {
      * @dev Check if point is the neutral of the curve
      */
 
-    function ecZZ_IsZero(uint256 x0, uint256 y0, uint256 zz0, uint256 zzz0) internal pure returns (bool) {
-        if ((y0 == 0)) {
-            return true;
-        }
-        return false;
+    // uint256 x0, uint256 y0, uint256 zz0, uint256 zzz0
+    function ecZZ_IsZero(uint256, uint256 y0, uint256, uint256) internal pure returns (bool) {
+        return y0 == 0;
     }
     /**
      * @dev Return the zero curve in affine coordinates. Compatible with the double formulae (no special case)
@@ -195,7 +193,8 @@ library FCL_Elliptic_ZZ {
     /**
      * @dev Check if the curve is the zero curve in affine rep.
      */
-    function ecAff_IsZero(uint256 x, uint256 y) internal pure returns (bool flag) {
+    // uint256 x, uint256 y)
+    function ecAff_IsZero(uint256, uint256 y) internal pure returns (bool flag) {
         return (y == 0);
     }
 
@@ -253,12 +252,6 @@ library FCL_Elliptic_ZZ {
 
             (H0, H1) = ecAff_add(gx, gy, Q0, Q1); //will not work if Q=P, obvious forbidden private key
 
-            /*
-     while( ( ((scalar_u>>index)&1)+2*((scalar_v>>index)&1) ) ==0){
-      index=index-1;
-     }
-     */
-
             assembly {
                 for { let T4 := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1)) } eq(T4, 0) {
                     index := sub(index, 1)
@@ -294,10 +287,7 @@ library FCL_Elliptic_ZZ {
                     zz := mulmod(T2, zz, p) //zz3=V*ZZ1, V free
 
                     X := addmod(mulmod(T4, T4, p), mulmod(minus_2, T3, p), p) //X3=M^2-2S
-                    //T2:=mulmod(T4,addmod(T3, sub(p, X),p),p)//M(S-X3)
                     T2 := mulmod(T4, addmod(X, sub(p, T3), p), p) //-M(S-X3)=M(X3-S)
-
-                    //Y:= addmod(T2, sub(p, mulmod(T1, Y ,p)),p  )//Y3= M(S-X3)-W*Y1
                     Y := addmod(mulmod(T1, Y, p), T2, p) //-Y3= W*Y1-M(S-X3), we replace Y by -Y to avoid a sub in ecAdd
 
                     {
@@ -462,8 +452,6 @@ library FCL_Elliptic_ZZ {
                         let T1 :=
                             add(T2, add(shl(10, and(shr(index, scalar_v), 1)), shl(6, and(shr(index, scalar_u), 1))))
 
-                        //index:=add(index,192), restore index, interleaved with loop
-
                         //tbd: check validity of formulae with (0,1) to remove conditional jump
                         if iszero(T1) {
                             Y := sub(p, Y)
@@ -593,7 +581,6 @@ library FCL_Elliptic_ZZ {
                     Y := addmod(mulmod(T1, Y, p), T2, p) //-Y3= W*Y1-M(S-X3), we replace Y by -Y to avoid a sub in ecAdd
 
                     /* compute element to access in precomputed table */
-
                     T4 := add(shl(13, and(shr(index, scalar_v), 1)), shl(9, and(shr(index, scalar_u), 1)))
                     index := sub(index, 64)
                     T4 := add(T4, add(shl(12, and(shr(index, scalar_v), 1)), shl(8, and(shr(index, scalar_u), 1))))
@@ -696,7 +683,6 @@ library FCL_Elliptic_ZZ {
         }*/
 
         uint256 sInv = FCL_nModInv(rs[1]);
-        //uint sInv =2;
 
         uint256 X;
 
