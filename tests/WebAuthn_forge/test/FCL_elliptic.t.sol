@@ -88,8 +88,7 @@ contract EcdsaTest is Test {
     
     uint256 res=FCL_Elliptic_ZZ.FCL_nModInv(i_u256_a);
   //  console.log("inv:",mulmod(i_u256_a, res,FCL_Elliptic_ZZ.n ));
-  load_precalc();
- 
+  
 //     wx=vm.parseJsonUint(deployData, ".key[0]");
 //    console.log("Read:",wx);
 
@@ -201,7 +200,8 @@ contract EcdsaTest is Test {
     bool res=FCL_Elliptic_ZZ.ecAff_isOnCurve(key[0],key[1]);
     assertEq(res,true);
     write_precalcsage(key[0], key[1]);
-     
+    load_precalc();
+ 
     console.log("Is key on curve:",res);
     
     return(key, deployData, wx);
