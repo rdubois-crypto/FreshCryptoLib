@@ -3,7 +3,6 @@
 // | __| _ ___ __| |_    / __|_ _ _  _ _ __| |_ ___  | |  (_) |__
 // | _| '_/ -_|_-< ' \  | (__| '_| || | '_ \  _/ _ \ | |__| | '_ \
 // |_||_| \___/__/_||_|  \___|_|  \_, | .__/\__\___/ |____|_|_.__/
-//                                |__/|_|
 ///* Copyright (C) 2022 - Renaud Dubois - This file is part of FCL (Fresh CryptoLib) project
 ///* License: This software is licensed under MIT License
 ///* This Code may be reused including license and copyright notice.
@@ -21,7 +20,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {Base64URL} from "./Base64URL.sol";
+import {Base64} from "openzeppelin-contracts/contracts/utils/Base64.sol";
 import {FCL_Elliptic_ZZ} from "./FCL_elliptic.sol";
 
 library FCL_WebAuthn {
@@ -43,7 +42,7 @@ library FCL_WebAuthn {
                 revert InvalidAuthenticatorData();
             }
             // Verify that clientData commits to the expected client challenge
-            string memory challengeEncoded = Base64URL.encode32(abi.encodePacked(clientChallenge));
+            string memory challengeEncoded = Base64.encode(abi.encodePacked(clientChallenge));
             bytes memory challengeExtracted = new bytes(
             bytes(challengeEncoded).length
         );
