@@ -18,7 +18,7 @@
 // Code is optimized for a=-3 only curves with prime order, constant like -1, -2 shall be replaced
 // if ever used for other curve than sec256R1
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.13;
 
 import {Base64} from "openzeppelin-contracts/contracts/utils/Base64.sol";
 import {FCL_Elliptic_ZZ} from "./FCL_elliptic.sol";
@@ -34,8 +34,8 @@ library FCL_WebAuthn {
         bytes calldata clientData,
         bytes32 clientChallenge,
         uint256 clientChallengeDataOffset,
-        uint256[2] calldata rs
-    ) internal returns (bytes32 result) {
+        uint256[2] calldata // rs
+    ) internal pure returns (bytes32 result) {
         // Let the caller check if User Presence (0x01) or User Verification (0x04) are set
         {
             if ((authenticatorData[32] & authenticatorDataFlagMask) != authenticatorDataFlagMask) {
@@ -55,12 +55,12 @@ library FCL_WebAuthn {
                 )
             }
 
-            bytes32 more; //=keccak256(abi.encodePacked(challengeExtracted));
+            bytes32 moreData; //=keccak256(abi.encodePacked(challengeExtracted));
             assembly {
-                more := keccak256(add(challengeExtracted, 32), mload(challengeExtracted))
+                moreData := keccak256(add(challengeExtracted, 32), mload(challengeExtracted))
             }
 
-            if (keccak256(abi.encodePacked(bytes(challengeEncoded))) != more) {
+            if (keccak256(abi.encodePacked(bytes(challengeEncoded))) != moreData) {
                 revert InvalidClientData();
             }
         } //avoid stack full
