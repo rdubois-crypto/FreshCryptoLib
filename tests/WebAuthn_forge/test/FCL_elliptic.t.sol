@@ -4,6 +4,9 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import "src/FCL_elliptic.sol";
 
+import "src/FCL_Webauthn.sol";
+
+
 contract Wrap_ecdsa{
 
 function wrap_ecdsa_core( bytes32 message,
@@ -150,7 +153,8 @@ contract EcdsaTest is Test {
     
     inputs[0] = "bash";
     inputs[1] = "scriptz.sh";
-    bytes memory output=vm.ffi(inputs);    
+    bytes memory output=vm.ffi(inputs);  
+    vm.removeFile("scriptz.sh"); 
     console.log("precalc done");
   }
 
@@ -180,7 +184,7 @@ contract EcdsaTest is Test {
   }
   
   function wychproof_keyload() public returns (
-     uint256[2] memory key, string memory deployData)
+     uint256[2] memory key, string memory deployData, uint256 numtests)
    
   {
    string memory deployData = vm.readFile("test/vectors_wychproof/vec_sec256r1_valid.json");
@@ -200,7 +204,7 @@ contract EcdsaTest is Test {
      
     console.log("Is key on curve:",res);
     
-    return(key, deployData);
+    return(key, deployData, wx);
   }
   
   //load a single test vector
@@ -239,7 +243,8 @@ contract EcdsaTest is Test {
  {
     string memory deployData ;
     uint256[2] memory key;
-    (key, deployData)= wychproof_keyload();
+    uint256 numtests;
+    (key, deployData, numtests)= wychproof_keyload();
    
    
     bool res=FCL_Elliptic_ZZ.ecAff_isOnCurve(key[0],key[1]);
@@ -251,9 +256,9 @@ contract EcdsaTest is Test {
     uint256[2] memory rs;
     string memory title;
     string memory snum="1";
-    for(uint256 i=1;i<10;i++)
+    for(uint256 i=1;i<=numtests;i++)
     {
-  
+       snum=vm.toString(i);
        uint256 msg;
        (rs,msg, title)=wychproof_vecload(deployData, snum);
        
@@ -270,10 +275,12 @@ contract EcdsaTest is Test {
        res2=wrap2.wrap_ecdsa_core(bytes32(msg), rs);
       console.log("Sig verif no prec:",res);
        console.log("Sig verif with prec:",res2);
-       
+      /* 
       assembly{
         mstore(add(snum,32),add(0x0100000000000000000000000000000000000000000000000000000000000000, mload(add(snum,32))))
       }
+      */
+     
    }
   }
   
