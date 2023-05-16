@@ -135,7 +135,6 @@ contract EcdsaTest is Test {
     //ecAff_isOnCurve
 
     function test_Invariant_edge() public {
-        console.logString(vm.projectRoot());
         //choose Q=2P, then verify duplication is ok
         uint256[4] memory Q;
         (Q[0], Q[1], Q[2], Q[3]) = FCL_Elliptic_ZZ.ecZZ_Dbl(gx, gy, 1, 1);
@@ -170,6 +169,7 @@ contract EcdsaTest is Test {
         uint256[2] memory rs;
         string memory title;
         string memory snum = "1";
+
         for (uint256 i = 1; i <= numtests; i++) {
             snum = vm.toString(i);
             uint256 message;
@@ -216,18 +216,13 @@ contract EcdsaTest is Test {
         deployData = vm.readFile("test/vectors_wychproof/vec_sec256r1_valid.json");
 
         uint256 wx = vm.parseJsonUint(deployData, ".NumberOfTests");
-        console.log("NumberOfTests:", wx);
         key[0] = vm.parseJsonUint(deployData, ".keyx");
-        console.log("key_x:", key[0]);
         key[1] = vm.parseJsonUint(deployData, ".keyy");
-        console.log("key_y:", key[1]);
         bool res = FCL_Elliptic_ZZ.ecAff_isOnCurve(key[0], key[1]);
         assertEq(res, true);
 
         bytes memory precompute = precompute_shamir_table(key[0], key[1]);
         verify_precompute(precompute);
-
-        console.log("Is key on curve:", res);
 
         return (key, deployData, wx);
     }
@@ -238,10 +233,6 @@ contract EcdsaTest is Test {
         returns (uint256[2] memory rs, uint256 message, string memory title)
     {
         title = string(vm.parseJson(deployData, string.concat(".test_", snum)));
-
-        console.log("\n test:", snum, title);
-        console.log("\n ||");
-
         rs[0] = vm.parseJsonUint(deployData, string.concat(".sigx_", snum));
         rs[1] = vm.parseJsonUint(deployData, string.concat(".sigy_", snum));
         message = vm.parseJsonUint(deployData, string.concat(".msg_", snum));
