@@ -183,8 +183,8 @@ contract EcdsaTest is Test {
 
             res = wrap.wrap_ecdsa_core(bytes32(message), rs, key);
             res2 = wrap2.wrap_ecdsa_core(bytes32(message), rs);
-            console.log("Sig verif no prec:", res);
-            console.log("Sig verif with prec:", res2);
+            // ensure both implementations return the same result
+            assertEq(res, res2);
         }
     }
 
