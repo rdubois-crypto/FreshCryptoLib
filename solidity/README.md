@@ -4,8 +4,7 @@
 ## Content
 
 ### FCL_elliptic.sol: 
-Implementation of the ECDSA P256 using XYZZ coordinates.
-
+Optimized Implementation of the ECDSA P256 using XYZZ coordinates.
 
 Gas cost of ecdsa verification (with 100000 runs in configuration files):
 - 200K without precomputation table
