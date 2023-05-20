@@ -9,6 +9,8 @@ Optimized Implementation of the ECDSA P256 using XYZZ coordinates.
 Gas cost of ecdsa verification (with 100000 runs in configuration files):
 - 200K without precomputation table
 - 75K with precomputations table of 16kb
+
+Full test with WychProof vectors and comparizon to existing libraries (orbs-network, obvioustech) is available in tests/WebAuthn_forge.
 ### FCL_Webauthn:
 implementation of WebAuthn authentication mechanism on top of P256/sec256r1 ecdsa
 
