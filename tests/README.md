@@ -51,6 +51,12 @@ Final gas cost verification:
 
 Implementation of the ECDSA P256 for WebAuthn using [forge by foundry](https://book.getfoundry.sh/).
 WebAuthn part forked from https://github.com/btchip/Webauthn.sol
+The framework includes the following libraries to bench and compare execution time:
+- orbs-network
+- Numerology
+- obvioustech
+- 
+
 
 #### Specific requirements
 

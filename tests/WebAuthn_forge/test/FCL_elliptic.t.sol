@@ -8,7 +8,9 @@ import "../src/FCL_Webauthn.sol";
 //external implementation to bench
 import "../src/ECops.sol";
 import "../src/Secp256r1.sol";
+import "../src/Secp256r1_maxrobot.sol";
 
+// library elliptic solidity from orbs network
 contract wrap_ecdsa_orbs{
  uint256 constant gx = 0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296;
     uint256 constant gy = 0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5;
@@ -43,7 +45,7 @@ contract wrap_ecdsa_orbs{
     }
 }
 
-
+// library from obvioustech 
 contract wrap_ecdsa_obvious{
 
  function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) public returns (bool) {
@@ -54,6 +56,19 @@ contract wrap_ecdsa_obvious{
 
 }
 
+
+// library from maxrobot 
+contract wrap_ecdsa_maxrobot{
+
+ function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) public returns (bool) {
+ 
+  return Secp256r1_maxrobot.Verify(Q[0], Q[1], rs, uint256(message));
+}
+
+}
+
+
+// library FreshCryptoLib without precomputations
 contract Wrap_ecdsa_FCL {
     function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) public returns (bool) {
     
@@ -63,6 +78,8 @@ contract Wrap_ecdsa_FCL {
     constructor() {}
 }
 
+
+// library FreshCryptoLib with precomputations
 contract Wrap_ecdsa_precal {
     address precomputations;
 
@@ -232,9 +249,9 @@ contract EcdsaTest is Test {
             
             checkpointGasLeft=gasleft() ;
             //wrap_ecdsa_orbs wrap = new wrap_ecdsa_orbs();
-            wrap_ecdsa_obvious wrap = new wrap_ecdsa_obvious();
-            
-            //Wrap_ecdsa wrap = new Wrap_ecdsa();
+            //wrap_ecdsa_obvious wrap = new wrap_ecdsa_obvious();
+            wrap_ecdsa_maxrobot wrap = new wrap_ecdsa_maxrobot();
+            //Wrap_ecdsa_FCL wrap = new Wrap_ecdsa_FCL();
             checkpointGasLeft2=gasleft() ;
             console.log("deployment no prec:", checkpointGasLeft - checkpointGasLeft2 - 100);
             
