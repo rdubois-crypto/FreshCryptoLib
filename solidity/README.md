@@ -4,17 +4,18 @@
 ## Content
 
 ### FCL_elliptic.sol: 
-Implementation of the ECDSA P256 using XYZZ coordinates.
+Optimized Implementation of the ECDSA P256 using XYZZ coordinates.
 
+Gas cost of ecdsa verification (with 100000 runs in configuration files):
+- 200K without precomputation table
+- 75K with precomputations table of 16kb
 
-Gas cost of ecdsa verification:
-- 225K without precomputation table
-- 108K with precomputations table of 16kb
+Full test with WychProof vectors and comparizon to existing libraries (orbs-network, obvioustech) is available in tests/WebAuthn_forge.
 ### FCL_Webauthn:
 implementation of WebAuthn authentication mechanism on top of P256/sec256r1 ecdsa
 
  
-gas cost of WebAuthn verification:
+gas cost of WebAuthn verification (to be check again in forge):
 
 - 257K without precomputations,
 - 137K with precomputations (16kb, using FCL_ecdsa_precompute.sage).
