@@ -1,0 +1,106 @@
+name: webauthn-forge
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+    # This action will only run on pull requests that include changes to the following files
+    paths:
+      - "tests/WebAuthn_forge/**/*"
+      - "sage/FCL_ecdsa_precompute/FCL_ecdsa_precompute.sage"
+
+env:
+  FOUNDRY_PROFILE: ci
+  SAGEMATH_VERSION: 9.5-4
+
+jobs:
+  tests:
+    strategy:
+      fail-fast: true
+
+    name: WebAuthn Forge - Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Cache sagemath
+        uses: actions/cache@v2
+        id: cache-sagemath
+        with:
+          path: "~/sagemath"
+          key: "$SAGEMATH_VERSION"
+
+      - name: Install sagemath
+        # TODO: Sagemath is problematic as it does not support caching well. All my attempts to cache it have failed so far.
+        #       As a temporary solution, I have disabled the cache for now, which is why the cache key is commented out.
+        #       If you want to re-enable it, you will need to fix the cache issue first, or the CI will fail on the second run.
+        #       It may be worth taking the time to replace Sagemath with something else that does not have this issue
+        #      (two birds with one stone, sagemath sucks in a production environment anyway).
+
+        # env:
+        #   CACHE_HIT: ${{steps.cache-sagemath.outputs.cache-hit}}
+
+        # DEV: The `apt update/upgrade` is unfortunately required
+        run: |
+          if [[ "$CACHE_HIT" == 'true' ]]; then
+            sudo cp --verbose --force --recursive ~/sagemath/* /
+          else
+            sudo apt update && sudo apt upgrade
+            sudo apt install sagemath="$SAGEMATH_VERSION"
+            mkdir -p ~/sagemath
+            sudo dpkg -L sagemath | while IFS= read -r f; do if test -f $f; then echo $f; fi; done | xargs cp --parents --target-directory ~/sagemath/
+          fi
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Run Forge build
+        working-directory: tests/WebAuthn_forge
+        run: |
+          forge --version
+          forge build --sizes
+        id: build
+
+      - name: Run Forge tests
+        working-directory: tests/WebAuthn_forge
+        run: |
+          forge test -vvvv --ffi
+        id: test
+
+  lint:
+    strategy:
+      fail-fast: true
+
+    name: WebAuthn Forge - Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Run Forge build
+        working-directory: tests/WebAuthn_forge
+        run: |
+          forge --version
+          forge build --sizes
+        id: build
+
+      - name: Run Forge fmt
+        working-directory: tests/WebAuthn_forge
+        run: |
+          forge fmt --check
+        id: lint

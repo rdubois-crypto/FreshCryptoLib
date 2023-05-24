@@ -11,13 +11,13 @@ import "../src/Secp256r1.sol";
 import "../src/Secp256r1_maxrobot.sol";
 
 // library elliptic solidity from orbs network
-contract wrap_ecdsa_orbs{
- uint256 constant gx = 0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296;
+contract wrap_ecdsa_orbs {
+    uint256 constant gx = 0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296;
     uint256 constant gy = 0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5;
-     //curve order (number of points)
+    //curve order (number of points)
     uint256 constant n = 0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551;
-    
- function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) public returns (bool) {
+
+    function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) public returns (bool) {
         if (rs[0] == 0 || rs[0] >= n || rs[1] == 0 || rs[1] >= n) {
             return false;
         }
@@ -32,11 +32,11 @@ contract wrap_ecdsa_orbs{
         uint256 scalar_v = mulmod(rs[0], sInv, n);
         uint256[2] memory P1;
         uint256[2] memory P2;
-        (P1[0],P1[1])=ECops.multiplyScalar(gx,gy, scalar_u);
-        (P2[0],P2[1])= ECops.multiplyScalar(Q[0],Q[1], scalar_v);
+        (P1[0], P1[1]) = ECops.multiplyScalar(gx, gy, scalar_u);
+        (P2[0], P2[1]) = ECops.multiplyScalar(Q[0], Q[1], scalar_v);
 
-	uint256 x1;
-	(x1,)=ECops.add(P1[0],P1[1], P2[0],P2[1]);
+        uint256 x1;
+        (x1,) = ECops.add(P1[0], P1[1], P2[0], P2[1]);
         assembly {
             x1 := addmod(x1, sub(n, calldataload(rs)), n)
         }
@@ -45,39 +45,37 @@ contract wrap_ecdsa_orbs{
     }
 }
 
-// library from obvioustech 
-contract wrap_ecdsa_obvious{
-
- function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) public returns (bool) {
- 
-  PassKeyId memory pass=PassKeyId(Q[0], Q[1], "unused");
-  return Secp256r1.Verify(pass, rs[0], rs[1], uint256(message));
+// library from obvioustech
+contract wrap_ecdsa_obvious {
+    function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q)
+        public
+        view
+        returns (bool)
+    {
+        PassKeyId memory pass = PassKeyId(Q[0], Q[1], "unused");
+        return Secp256r1.Verify(pass, rs[0], rs[1], uint256(message));
+    }
 }
 
+// library from maxrobot
+contract wrap_ecdsa_maxrobot {
+    function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q)
+        public
+        pure
+        returns (bool)
+    {
+        return Secp256r1_maxrobot.Verify(Q[0], Q[1], rs, uint256(message));
+    }
 }
-
-
-// library from maxrobot 
-contract wrap_ecdsa_maxrobot{
-
- function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) public returns (bool) {
- 
-  return Secp256r1_maxrobot.Verify(Q[0], Q[1], rs, uint256(message));
-}
-
-}
-
 
 // library FreshCryptoLib without precomputations
 contract Wrap_ecdsa_FCL {
     function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) public returns (bool) {
-    
         return FCL_Elliptic_ZZ.ecdsa_verify(message, rs, Q);
     }
 
     constructor() {}
 }
-
 
 // library FreshCryptoLib with precomputations
 contract Wrap_ecdsa_precal {
@@ -113,18 +111,9 @@ contract EcdsaTest is Test {
 
     uint256 constant _prec_address = 0xcaca;
 
-    function uintToBytes(uint256 v) public pure returns (bytes32 ret) {
-        if (v == 0) {
-            ret = "0";
-        } else {
-            while (v > 0) {
-                ret = bytes32(uint256(ret) / (2 ** 8));
-                ret |= bytes32(((v % 10) + 48) * 2 ** (8 * 31));
-                v /= 10;
-            }
-        }
-        return ret;
-    }
+    /*//////////////////////////////////////////////////////////////
+                                 TESTS
+    //////////////////////////////////////////////////////////////*/
 
     function test_Fuzz_InVmodn(uint256 i_u256_a) public {
         vm.assume(i_u256_a < FCL_Elliptic_ZZ.n);
@@ -144,27 +133,6 @@ contract EcdsaTest is Test {
         assertEq(mulmod(res, i_u256_a, FCL_Elliptic_ZZ.p), 1);
     }
     //ecAff_isOnCurve
-
-    function write_precalcsage(uint256 C0, uint256 C1) public {
-        string memory line = "cd ../../sage/FCL_ecdsa_precompute;rm -f *json;sage -c 'C0=";
-        line = string.concat(line, vm.toString(C0));
-        line = string.concat(line, ";C1=");
-        line = string.concat(line, vm.toString(C1));
-        line = string.concat(
-            line,
-            ";load(\"FCL_ecdsa_precompute.sage\")' ;cp fcl_ecdsa_precbytecode.json ../../tests/WebAuthn_forge/test/vectors_sage/fcl_ecdsa_precbytecode.json;"
-        );
-
-        vm.writeLine("scriptz.sh", line);
-
-        string[] memory inputs = new string[](2);
-
-        inputs[0] = "bash";
-        inputs[1] = "scriptz.sh";
-        vm.ffi(inputs);
-        vm.removeFile("scriptz.sh");
-        console.log("precalc done");
-    }
 
     function test_Invariant_edge() public {
         //choose Q=2P, then verify duplication is ok
@@ -186,21 +154,75 @@ contract EcdsaTest is Test {
         assertEq(_4P_res1, _4P_res3);
     }
 
+    //testing Wychproof vectors
+    function test_Invariant_ecZZ_mulmuladd_S_asm() public {
+        string memory deployData;
+        uint256[2] memory key;
+        uint256 numtests;
+        (key, deployData, numtests) = wychproof_keyload();
+        uint256 checkpointGasLeft;
+        uint256 checkpointGasLeft2;
+
+        bool res = FCL_Elliptic_ZZ.ecAff_isOnCurve(key[0], key[1]);
+        assertEq(res, true);
+
+        uint256[2] memory rs;
+        string memory title;
+        string memory snum = "1";
+
+        for (uint256 i = 1; i <= numtests; i++) {
+            snum = vm.toString(i);
+            uint256 message;
+            (rs, message, title) = wychproof_vecload(deployData, snum);
+
+            vm.prank(vm.addr(5));
+
+            checkpointGasLeft = gasleft();
+            wrap_ecdsa_maxrobot wrap = new wrap_ecdsa_maxrobot();
+
+            checkpointGasLeft2 = gasleft();
+            console.log("deployment no prec:", checkpointGasLeft - checkpointGasLeft2 - 100);
+
+            checkpointGasLeft = gasleft();
+            Wrap_ecdsa_precal wrap2 = new Wrap_ecdsa_precal(address(uint160(_prec_address)));
+            checkpointGasLeft2 = gasleft();
+            console.log("deployment with prec, (no table cost):", checkpointGasLeft - checkpointGasLeft2 - 100);
+
+            console.log("message:", message);
+            console.log("sigx:", rs[0]);
+            console.log("sigy:", rs[1]);
+
+            checkpointGasLeft = gasleft();
+            res = wrap.wrap_ecdsa_core(bytes32(message), rs, key);
+            checkpointGasLeft2 = gasleft();
+            console.log("signature verif no prec:", checkpointGasLeft - checkpointGasLeft2 - 100);
+
+            assertEq(res, true);
+            checkpointGasLeft = gasleft();
+            res = wrap2.wrap_ecdsa_core(bytes32(message), rs);
+            checkpointGasLeft2 = gasleft();
+            console.log("signature verif with prec:", checkpointGasLeft - checkpointGasLeft2 - 100);
+
+            // ensure both implementations return the same result
+            assertEq(res, true);
+        }
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                           INTERNAL FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
     function wychproof_keyload() public returns (uint256[2] memory key, string memory deployData, uint256 numtests) {
         deployData = vm.readFile("test/vectors_wychproof/vec_sec256r1_valid.json");
 
         uint256 wx = vm.parseJsonUint(deployData, ".NumberOfTests");
-        console.log("NumberOfTests:", wx);
         key[0] = vm.parseJsonUint(deployData, ".keyx");
-        console.log("key_x:", key[0]);
         key[1] = vm.parseJsonUint(deployData, ".keyy");
-        console.log("key_y:", key[1]);
         bool res = FCL_Elliptic_ZZ.ecAff_isOnCurve(key[0], key[1]);
         assertEq(res, true);
-        write_precalcsage(key[0], key[1]);
-        load_precalc();
 
-        console.log("Is key on curve:", res);
+        bytes memory precompute = precompute_shamir_table(key[0], key[1]);
+        verify_precompute(precompute);
 
         return (key, deployData, wx);
     }
@@ -211,97 +233,36 @@ contract EcdsaTest is Test {
         returns (uint256[2] memory rs, uint256 message, string memory title)
     {
         title = string(vm.parseJson(deployData, string.concat(".test_", snum)));
-
-        console.log("\n test:", snum, title);
-        console.log("\n ||");
-
         rs[0] = vm.parseJsonUint(deployData, string.concat(".sigx_", snum));
         rs[1] = vm.parseJsonUint(deployData, string.concat(".sigy_", snum));
         message = vm.parseJsonUint(deployData, string.concat(".msg_", snum));
     }
 
+    function precompute_shamir_table(uint256 C0, uint256 C1) private returns (bytes memory precompute) {
+        vm.setEnv("C0", vm.toString(C0));
+        vm.setEnv("C1", vm.toString(C1));
 
-
-
-    //testing Wychproof vectors
-    function test_Invariant_ecZZ_mulmuladd_S_asm() public {
-        string memory deployData;
-        uint256[2] memory key;
-        uint256 numtests;
-        (key, deployData, numtests) = wychproof_keyload();
-	uint256  checkpointGasLeft ;
-	uint256  checkpointGasLeft2 ;
-	
-	
-        bool res = FCL_Elliptic_ZZ.ecAff_isOnCurve(key[0], key[1]);
-        
-        assertEq(res, true);
-
-        uint256[2] memory rs;
-        string memory title;
-        string memory snum = "1";
-        for (uint256 i = 1; i <= numtests; i++) {
-            snum = vm.toString(i);
-            uint256 message;
-            (rs, message, title) = wychproof_vecload(deployData, snum);
-
-            vm.prank(vm.addr(5));
-            
-            checkpointGasLeft=gasleft() ;
-            //wrap_ecdsa_orbs wrap = new wrap_ecdsa_orbs();
-            //wrap_ecdsa_obvious wrap = new wrap_ecdsa_obvious();
-            wrap_ecdsa_maxrobot wrap = new wrap_ecdsa_maxrobot();
-            //Wrap_ecdsa_FCL wrap = new Wrap_ecdsa_FCL();
-            checkpointGasLeft2=gasleft() ;
-            console.log("deployment no prec:", checkpointGasLeft - checkpointGasLeft2 - 100);
-            
-            checkpointGasLeft=gasleft() ;
-            Wrap_ecdsa_precal wrap2 = new Wrap_ecdsa_precal(address(uint160(_prec_address)));
-	    checkpointGasLeft2=gasleft() ;
-            console.log("deployment with prec, (no table cost):", checkpointGasLeft - checkpointGasLeft2 - 100);
-           
-            console.log("message:", message);
-            console.log("sigx:", rs[0]);
-            console.log("sigy:", rs[1]);
-
-	    checkpointGasLeft=gasleft() ;
-            res = wrap.wrap_ecdsa_core(bytes32(message), rs, key);
-            checkpointGasLeft2=gasleft() ;
-            console.log("signature verif no prec:", checkpointGasLeft - checkpointGasLeft2 - 100);
-
-            assertEq(res, true);
-            checkpointGasLeft=gasleft() ;         
-            res = wrap2.wrap_ecdsa_core(bytes32(message), rs);
-            checkpointGasLeft2=gasleft() ;
-            console.log("signature verif with prec:", checkpointGasLeft - checkpointGasLeft2 - 100);
-
-            // ensure both implementations return the same result
-            assertEq(res, true);
-            
-            
-           
-        }
+        // Precompute a 8 dimensional table for Shamir's trick from C0 and C1
+        // and return the table as a bytes
+        string[] memory inputs = new string[](2);
+        inputs[0] = "sage";
+        inputs[1] = "test/sage/shamir-precomputation.sage";
+        precompute = vm.ffi(inputs);
     }
 
-    function load_precalc() public returns (bool) {
-        string memory deployData = vm.readFile("test/vectors_sage/fcl_ecdsa_precbytecode.json");
-        bytes memory prec = abi.decode(vm.parseJson(deployData, ".Bytecode"), (bytes));
-        address a_prec; //address of the precomputations bytecode contract
-        a_prec = address(uint160(_prec_address));
-        uint256  checkpointGasLeft ;
-	uint256  checkpointGasLeft2 ;
-	
-        checkpointGasLeft=gasleft() ; 
+    function verify_precompute(bytes memory prec) private returns (bool) {
+        // address of the precomputations bytecode contract
+        address a_prec = address(uint160(_prec_address));
+        // set the precomputed points as the bytecode of the contract
         vm.etch(a_prec, prec);
-        checkpointGasLeft2=gasleft() ; 
-	console.log("deployment of precomputation cost:", checkpointGasLeft - checkpointGasLeft2 - 100);
-           
 
-        uint256[2] memory px; //pointer to an elliptic point
+        //pointer to an elliptic point
+        uint256[2] memory px;
 
-        //check precomputations are correct, all point on curve P256
+        // check the precomputations are correct, all point are on curve P256
         for (uint256 i = 1; i < 256; i++) {
             uint256 offset = 64 * i;
+
             assembly {
                 extcodecopy(a_prec, px, offset, 64)
             }
