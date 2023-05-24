@@ -2,11 +2,53 @@ pragma solidity ^0.8.13;
 
 
 import "forge-std/Test.sol";
-import "../src/FCL_elliptic.sol";
 import "../src/Numerology.sol";
 
 contract test_Numerology is Test {
 
+  /*
+  function test_wnaf() public returns (bool) {
+        uint256 k = 0xfe3d7F9A;
+        uint8[400] memory ptr; uint256 length;
+        uint8 ki=0;
+     
+	//compute 4-naf form
+        length = 0;
+        
+        assembly
+        {
+            for { } gt(k, 0) { } { // while k > 0
+                if and(k, 1) {  // if k is odd:
+                    ki := mod(k, 16)
+                    k := add(sub(k, ki), mul(gt(ki, 8), 16))
+                    // if sign = 1, store ki; if sign = -1, store 16 - ki
+                    mstore8(add(ptr, length), ki)
+                }
+                length := add(length, 1)
+                k := div(k, 2)
+            }
+            //log3(ptr, 1, 0xfabadaacabada, d, length)    
+        }
+        
+        while(k>0)
+        {
+          if(k%2==1){
+          ki=uint8(k%16);
+          k=(k-ki);
+          if(ki>8){k=k-16;}
+         
+          ptr[length]=uint8(ki);
+          }
+          k=k/2;
+          length=length+1;
+        }
+        
+        for(uint i=0;i<length;i++){
+         console.log(" %s %x",i,ptr[i]);
+         }
+	return true;
+    }
+    */
   function test_proof_verification() public view returns (bool) {
     // Verifier.deployed().then(function(inst) { return inst.test_proof_verification.estimateGas(); })
 
