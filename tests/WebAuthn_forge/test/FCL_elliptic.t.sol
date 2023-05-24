@@ -61,7 +61,7 @@ contract wrap_ecdsa_obvious {
 contract wrap_ecdsa_maxrobot {
     function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q)
         public
-        view
+        pure
         returns (bool)
     {
         return Secp256r1_maxrobot.Verify(Q[0], Q[1], rs, uint256(message));
