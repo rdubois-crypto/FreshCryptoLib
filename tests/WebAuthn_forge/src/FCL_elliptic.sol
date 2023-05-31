@@ -19,7 +19,7 @@
 // Code is optimized for a=-3 only curves with prime order, constant like -1, -2 shall be replaced
 // if ever used for other curve than sec256R1
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.20;
 
 library FCL_Elliptic_ZZ {
     // Set parameters for curve sec256r1.
@@ -140,7 +140,6 @@ library FCL_Elliptic_ZZ {
      * warning: assume that P1(x1,y1)!=P2(x2,y2), true in multiplication loop with prime order (cofactor 1)
      */
 
-    //tbd: return -x1 and -Y1 in double to avoid two substractions
     function ecZZ_AddN(uint256 x1, uint256 y1, uint256 zz1, uint256 zzz1, uint256 x2, uint256 y2)
         internal
         pure
@@ -256,6 +255,7 @@ library FCL_Elliptic_ZZ {
                 for { let T4 := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1)) } eq(T4, 0) {
                     index := sub(index, 1)
                     T4 := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1))
+                   
                 } {}
                 zz := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1))
 
@@ -414,14 +414,15 @@ library FCL_Elliptic_ZZ {
             }
             assembly {
                 extcodecopy(dataPointer, T, mload(T), 64)
-
+	        let index := sub(zz,1) 
                 X := mload(T)
                 let Y := mload(add(T, 32))
                 let zzz := 1
                 zz := 1
 
                 //loop over 1/4 of scalars thx to Shamir's trick over 8 points
-                for { let index := 254 } gt(index, 191) { index := add(index, 191) } {
+                for { } gt(index, 191) { index := add(index, 191) } {
+                	//inline Double
                     {
                         let TT1 := mulmod(2, Y, p) //U = 2*Y1, y free
                         let T2 := mulmod(TT1, TT1, p) // V=U^2
@@ -533,6 +534,191 @@ library FCL_Elliptic_ZZ {
             }
         } //end unchecked
     }
+
+    //compute the wnaf reprensentation of a positive scalar		
+    function ecZZ_wnaf(uint256 scalar) public returns (bytes memory wnaf, uint256 length) 
+    {
+      bytes memory temp=new bytes(300);
+      uint length=0;
+      uint8 ki=0;
+      
+      while(scalar>0){
+       if(scalar&1==1){
+         ki=uint8(scalar%256);
+         temp[length]=bytes1(ki);
+         if(ki>=128){
+          scalar+=256; 
+         }
+         scalar-=uint256(ki);
+         
+       }
+       scalar=scalar/2;
+       length=length+1;
+      }
+      
+    
+    
+      return (temp, length);
+    }
+	
+    	
+	
+      //Taking scalars directly interleaved to avoid to perform it in contract
+      function ecZZ_mulmuladd_interleaved(uint256 scalar_high, uint256 scalar_low, address dataPointer)
+        internal
+        returns (uint256 X /*, uint Y*/ )
+    {
+        
+        unchecked {
+            uint256 zz; // third and  coordinates of the point
+	    if((scalar_high &scalar_low)==0)
+	    {
+	     return 0;
+	    }
+            uint256[6] memory T;
+            zz = 248; //start index
+
+            while ( ((scalar_high >>zz)&0xff)==0) {
+            	zz-=8;
+                if(zz==0) {
+                 scalar_high=scalar_low;//first test prevent infinite loop on (0,0) input
+                 zz=248;
+                }
+            }
+            T[0]= scalar_high>>zz;
+            zz-=8;
+                if(zz==0) {
+                 scalar_high=scalar_low;//first test prevent infinite loop on (0,0) input
+                 zz=248;
+                }
+            
+            
+            assembly {
+                extcodecopy(dataPointer, T, mload(T), 64)
+	        let index := zz
+                X := mload(T)
+                let Y := mload(add(T, 32))
+                let zzz := 1
+                zz := 1
+		let highdone:=0
+		
+                //loop over 1/4 of scalars thx to Shamir's trick over 8 points
+                for { } gt(index, 0) { index := sub(index, 8) } {
+                	//inline Double
+                    {
+                        let TT1 := mulmod(2, Y, p) //U = 2*Y1, y free
+                        let T2 := mulmod(TT1, TT1, p) // V=U^2
+                        let T3 := mulmod(X, T2, p) // S = X1*V
+                        let T1 := mulmod(TT1, T2, p) // W=UV
+                        let T4 := mulmod(3, mulmod(addmod(X, sub(p, zz), p), addmod(X, zz, p), p), p) //M=3*(X1-ZZ1)*(X1+ZZ1)
+                        zzz := mulmod(T1, zzz, p) //zzz3=W*zzz1
+                        zz := mulmod(T2, zz, p) //zz3=V*ZZ1, V free
+
+                        X := addmod(mulmod(T4, T4, p), mulmod(minus_2, T3, p), p) //X3=M^2-2S
+                        //T2:=mulmod(T4,addmod(T3, sub(p, X),p),p)//M(S-X3)
+                        let T5 := mulmod(T4, addmod(X, sub(p, T3), p), p) //-M(S-X3)=M(X3-S)
+
+                        //Y:= addmod(T2, sub(p, mulmod(T1, Y ,p)),p  )//Y3= M(S-X3)-W*Y1
+                        Y := addmod(mulmod(T1, Y, p), T5, p) //-Y3= W*Y1-M(S-X3), we replace Y by -Y to avoid a sub in ecAdd
+
+                        /* compute element to access in precomputed table */
+                    }
+                    {
+                       
+                        let T1 := and(shr(index, scalar_high), 0xff)
+                        //tbd: check validity of formulae with (0,1) to remove conditional jump
+                        if iszero(T1) {
+                            Y := sub(p, Y)
+
+                            continue
+                        }
+                        extcodecopy(dataPointer, T, T1, 64)
+                        if eq(8, index)
+                        {
+                          if iszero(highdone){
+                            highdone:=1
+                            scalar_high:=scalar_low
+                            index:=248
+                          }
+                        }
+                         
+                    }
+
+                    {
+                        /* Access to precomputed table using extcodecopy hack */
+
+                        // inlined EcZZ_AddN
+                        if iszero(zz) {
+                            X := mload(T)
+                            Y := mload(add(T, 32))
+                            zz := 1
+                            zzz := 1
+
+                            continue
+                        }
+
+                        let y2 := addmod(mulmod(mload(add(T, 32)), zzz, p), Y, p)
+                        let T2 := addmod(mulmod(mload(T), zz, p), sub(p, X), p)
+
+                        //special case ecAdd(P,P)=EcDbl
+                        if eq(y2, 0) {
+                            if eq(T2, 0) {
+                                let T1 := mulmod(minus_2, Y, p) //U = 2*Y1, y free
+                                T2 := mulmod(T1, T1, p) // V=U^2
+                                let T3 := mulmod(X, T2, p) // S = X1*V
+
+                                let TT1 := mulmod(T1, T2, p) // W=UV
+                                y2 := addmod(X, zz, p)
+                                TT1 := addmod(X, sub(p, zz), p)
+                                y2 := mulmod(y2, TT1, p) //(X-ZZ)(X+ZZ)
+                                let T4 := mulmod(3, y2, p) //M
+
+                                zzz := mulmod(TT1, zzz, p) //zzz3=W*zzz1
+                                zz := mulmod(T2, zz, p) //zz3=V*ZZ1, V free
+
+                                X := addmod(mulmod(T4, T4, p), mulmod(minus_2, T3, p), p) //X3=M^2-2S
+                                T2 := mulmod(T4, addmod(T3, sub(p, X), p), p) //M(S-X3)
+
+                                Y := addmod(T2, mulmod(T1, Y, p), p) //Y3= M(S-X3)-W*Y1
+
+                                continue
+                            }
+                        }
+
+                        let T4 := mulmod(T2, T2, p)
+                        let T1 := mulmod(T4, T2, p) //
+                        zz := mulmod(zz, T4, p)
+                        //zzz3=V*ZZ1
+                        zzz := mulmod(zzz, T1, p) // W=UV/
+                        let zz1 := mulmod(X, T4, p)
+                        X := addmod(addmod(mulmod(y2, y2, p), sub(p, T1), p), mulmod(minus_2, zz1, p), p)
+                        Y := addmod(mulmod(addmod(zz1, sub(p, X), p), y2, p), mulmod(Y, T1, p), p)
+                    }
+                    
+                } //end loop
+                mstore(add(T, 0x60), zz)
+
+                //(X,Y)=ecZZ_SetAff(X,Y,zz, zzz);
+                //T[0] = inverseModp_Hard(T[0], p); //1/zzz, inline modular inversion using precompile:
+                // Define length of base, exponent and modulus. 0x20 == 32 bytes
+                mstore(T, 0x20)
+                mstore(add(T, 0x20), 0x20)
+                mstore(add(T, 0x40), 0x20)
+                // Define variables base, exponent and modulus
+                //mstore(add(pointer, 0x60), u)
+                mstore(add(T, 0x80), minus_2)
+                mstore(add(T, 0xa0), p)
+
+                // Call the precompiled contract 0x05 = ModExp
+                if iszero(call(not(0), 0x05, 0, T, 0xc0, T, 0x20)) { revert(0, 0) }
+
+                zz := mload(T)
+                X := mulmod(X, zz, p) //X/zz
+            }
+        } //end unchecked
+    }	
+
+
 
     // improving the extcodecopy trick : append array at end of contract
     function ecZZ_mulmuladd_S8_hackmem(uint256 scalar_u, uint256 scalar_v, uint256 dataPointer)
@@ -674,7 +860,7 @@ library FCL_Elliptic_ZZ {
         internal
         returns (bool)
     {
-        if (rs[0] == 0 || rs[0] >= n || rs[1] == 0) {
+        if (rs[0] == 0 || rs[0] >= n || rs[1] == 0|| rs[1] >= n) {
             return false;
         }
         /* Q is pushed via bytecode assumed to be correct
@@ -696,6 +882,25 @@ library FCL_Elliptic_ZZ {
         return X == 0;
     } //end  ecdsa_precomputed_verify()
 
+
+    function ecdsa_interleaved_verify(uint256 scalar_u, uint256 scalar_v, uint256 scalar_r, address Shamir8)
+        internal
+        returns (bool)
+    {
+        
+
+         uint256 X;
+
+        //Shamir 8 dimensions
+        X = ecZZ_mulmuladd_interleaved(scalar_u, scalar_v, Shamir8);
+
+        assembly {
+            X := addmod(X, sub(n, scalar_r), n)
+        }
+
+        return X == 0;
+    } //end  ecdsa_precomputed_verify()
+    
     /**
      * @dev ECDSA verification using a precomputed table of multiples of P and Q appended at end of contract at address endcontract
      *     generation of contract bytecode for precomputations is done using sagemath code

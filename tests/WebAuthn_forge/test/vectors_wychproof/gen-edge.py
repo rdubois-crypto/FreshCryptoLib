@@ -45,7 +45,6 @@ class DERSig(Sequence):
 
 
 input = open('ecdsa_secp256r1_sha256_test.json')
-#input = open('vectors_valid.json')
 f = open("ecdsa_secp256r1_sha256_test.cairo", "w")
 
 data = json.load(input)
@@ -79,11 +78,9 @@ for tg in data['testGroups']:
             #    raise Exception('Bad encoding')
 
             expect_revert = ""
-            if tc["result"] == "valid":
+            if tc["result"] == "invalid":
                 numvec=numvec+1;
                 charvec=str(numvec);
-                print("\n \"keyx_"+charvec+"\":",int(tg['key']['wx'], 16), ",\"keyy_"+charvec+ "\":", int(tg['key']['wy'], 16), ",")
-
                 print(" \"test_"+charvec+"\":\"", title, "\", \"msg_"+charvec+"\": \"0x"+msg+"\"",", \"sigx_"+charvec+"\":", int(sig['r']), ", \"sigy_"+charvec+"\":", int(sig['s']),",");
                 
         except Exception as err:
