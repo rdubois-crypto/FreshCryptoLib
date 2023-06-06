@@ -20,7 +20,6 @@ import "forge-std/Test.sol";
 import "../src/FCL_elliptic.sol";
 import "../src/FCL_Webauthn.sol";
 
-
 //external implementation to bench
 import "../src/ECops.sol";
 import "../src/Secp256r1.sol";
@@ -46,9 +45,9 @@ contract ArithmeticTest is Test {
     uint256 constant minus_1 = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
 
     uint256 constant _prec_address = 0xcaca;
-    uint256 constant _NUM_TEST_ECMULMULADD=100;
-    uint256 constant _NUM_TEST_DBL=100;
- 
+    uint256 constant _NUM_TEST_ECMULMULADD = 1000;
+    uint256 constant _NUM_TEST_DBL = 100;
+
     function test_Fuzz_InVmodn(uint256 i_u256_a) public {
         vm.assume(i_u256_a < FCL_Elliptic_ZZ.n);
         vm.assume(i_u256_a != 0);
@@ -67,52 +66,54 @@ contract ArithmeticTest is Test {
         assertEq(mulmod(res, i_u256_a, FCL_Elliptic_ZZ.p), 1);
     }
     //ecAff_isOnCurve
-   
-   
+
     //check consistency of ecmulmuladd and Add
     function test_invariant_FCL_Ecmulmuladd() public {
-        uint256 ecpoint_Rx=0;
-        uint256 ecpoint_Ry=0;
-         uint256 ecpoint_Rzz=1;
-        uint256 ecpoint_Rzzz=1;
-       uint256  checkpointGasLeft ;
-	uint256  checkpointGasLeft2 ;
-	
-        //Uncomment the library to test/bench here
+        uint256 ecpoint_Rx = 0;
+        uint256 ecpoint_Ry = 0;
+        uint256 ecpoint_Rzz = 1;
+        uint256 ecpoint_Rzzz = 1;
+        uint256 checkpointGasLeft;
+        uint256 checkpointGasLeft2;
+
+        //Uncomment the library to test/bench here, todo: replace with switch case
         //(ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz, ecpoint_Rzzz )= FCL_Elliptic_ZZ.ecZZ_Dbl(gx, gy,1,1);
-        (ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz )= ECops.twiceProj(gx, gy,1);
-        
-        
-        checkpointGasLeft=gasleft() ;
-   
-        for(uint256 i=3;i<=_NUM_TEST_ECMULMULADD;i++){
-          // (ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz, ecpoint_Rzzz )= FCL_Elliptic_ZZ.ecZZ_AddN(ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz, ecpoint_Rzzz , gx, gy);
+        //(ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz )= ECops.twiceProj(gx, gy,1);
+        // (ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz )=Secp256r1._modifiedJacobianDouble(gx, gy,1);
+        (ecpoint_Rx, ecpoint_Ry, ecpoint_Rzz) = Secp256r1_maxrobot._jDouble(gx, gy, 1);
 
-             (ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz)= ECops.addProj(ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz,gx,gy,1);
+        checkpointGasLeft = gasleft();
+
+        for (uint256 i = 3; i <= _NUM_TEST_ECMULMULADD; i++) {
+            // (ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz, ecpoint_Rzzz )= FCL_Elliptic_ZZ.ecZZ_AddN(ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz, ecpoint_Rzzz , gx, gy);
+
+            //(ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz)= ECops.addProj(ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz,gx,gy,1);
+            // (ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz )=Secp256r1._jAdd(ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz,gx,gy,1);
+            (ecpoint_Rx, ecpoint_Ry, ecpoint_Rzz) =
+                Secp256r1_maxrobot._jAdd(ecpoint_Rx, ecpoint_Ry, ecpoint_Rzz, gx, gy, 1);
         }
-        checkpointGasLeft2=gasleft() ;
-        console.log("Add number test and gas cost :", _NUM_TEST_ECMULMULADD, checkpointGasLeft - checkpointGasLeft2 - 100);
+        checkpointGasLeft2 = gasleft();
+        console.log(
+            "Add number test and gas cost :", _NUM_TEST_ECMULMULADD, checkpointGasLeft - checkpointGasLeft2 - 100
+        );
 
-//        (ecpoint_Rx, ecpoint_Ry)=FCL_Elliptic_ZZ.ecZZ_SetAff(ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz, ecpoint_Rzzz);
-        (ecpoint_Rx, ecpoint_Ry)=ECops.toAffinePoint(ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz);
-        
+        //(ecpoint_Rx, ecpoint_Ry)=FCL_Elliptic_ZZ.ecZZ_SetAff(ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz, ecpoint_Rzzz);
+        // (ecpoint_Rx, ecpoint_Ry)=ECops.toAffinePoint(ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz);
+        (ecpoint_Rx, ecpoint_Ry) = Secp256r1._affineFromJacobian(ecpoint_Rx, ecpoint_Ry, ecpoint_Rzz);
+
         //generate a small multiple of G using scalar
-        assertEq(ecpoint_Rx, FCL_Elliptic_ZZ.ecZZ_mulmuladd_S_asm(0,0, _NUM_TEST_ECMULMULADD, 0));
-        
-          checkpointGasLeft=gasleft() ;
-        for(uint256 i=3;i<=_NUM_TEST_DBL;i++){
-           //(ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz, ecpoint_Rzzz )=FCL_Elliptic_ZZ.ecZZ_Dbl(ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz, ecpoint_Rzzz );
-           
-              (ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz )= ECops.twiceProj(ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz);
-     
+        assertEq(ecpoint_Rx, FCL_Elliptic_ZZ.ecZZ_mulmuladd_S_asm(0, 0, _NUM_TEST_ECMULMULADD, 0));
+
+        checkpointGasLeft = gasleft();
+        for (uint256 i = 3; i <= _NUM_TEST_DBL; i++) {
+            //(ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz, ecpoint_Rzzz )=FCL_Elliptic_ZZ.ecZZ_Dbl(ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz, ecpoint_Rzzz );
+
+            //   (ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz )= Secp256r1._modifiedJacobianDouble(ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz);
+            (ecpoint_Rx, ecpoint_Ry, ecpoint_Rzz) = Secp256r1_maxrobot._jDouble(ecpoint_Rx, ecpoint_Ry, ecpoint_Rzz);
         }
-          checkpointGasLeft2=gasleft() ;
-        console.log("Dbl number test and gas cost :", _NUM_TEST_ECMULMULADD, checkpointGasLeft - checkpointGasLeft2 - 100);
-
-
+        checkpointGasLeft2 = gasleft();
+        console.log(
+            "Dbl number test and gas cost :", _NUM_TEST_ECMULMULADD, checkpointGasLeft - checkpointGasLeft2 - 100
+        );
     }
-    
-    
-    
-}    
-    
+}
