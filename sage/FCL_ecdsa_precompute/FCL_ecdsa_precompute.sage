@@ -17,6 +17,8 @@
 
 load('../FCL_common/FCL_elliptic.sage');
 
+#//echo "itsakindofmagic" | sha256sum, used as a label 
+_MAGIC_ENCODING=0x9a8295d6f225e4f07313e2e1440ab76e26d4c6ed2d1eb4cbaa84827c8b7caa8d;
 	
 #//Curve secp256r1, aka p256	
 #//curve prime field modulus
@@ -78,6 +80,8 @@ def Print_Table_js( Q, Curve):
 
  Prec=Precompute_Pubkey(Q, Curve);
  chain="const precompute=\"0x";
+ 
+  
  for i in [0..255]:
    px=print_setlength( Prec[i][0], 64);
    py=print_setlength( Prec[i][1], 64);
@@ -93,11 +97,18 @@ def Print_Table_js( Q, Curve):
 
 def Print_Table_json( Q, Curve):
  C_filepath='fcl_ecdsa_precbytecode.json';
- filep = open(C_filepath,'a');
+ filep = open(C_filepath,'w');
  
  Prec=Precompute_Pubkey(Q, Curve);
+ print("// Public key:",Q);
  chain="{\n \"Bytecode\": \"0x";
- for i in [0..255]:
+ 
+ px=print_setlength( 0,64);   
+ py=print_setlength( _MAGIC_ENCODING,64);
+ chain=chain+px+py ;
+      
+ for i in [1..255]:
+   
    px=print_setlength( Prec[i][0], 64);
    py=print_setlength( Prec[i][1], 64);
    #print("\n -- \n px=", px, "\n py=",py );
@@ -110,8 +121,38 @@ def Print_Table_json( Q, Curve):
  return 0;
 
 
-def Print_Table_raw( Q, Curve):
- C_filepath='fcl_ecdsa_precbytecode.raw';
+def Print_Table_sol( Q, Curve):
+ C_filepath='fcl_ecdsa_precbytecode.sol';
+ filep = open(C_filepath,'w');
+ 
+ Prec=Precompute_Pubkey(Q, Curve);
+ 
+ chain="// Public key\n//x:"+print_setlength(Q[0],64)+ " y:"+print_setlength(Q[1],64);
+ 
+ filep.write(chain);
+ chain="\n bytes constant x=hex\"";
+ 
+ px=print_setlength( 0,64);   
+ py=print_setlength( _MAGIC_ENCODING,64);
+ chain=chain+px+py ;
+      
+ for i in [1..255]:
+   
+   px=print_setlength( Prec[i][0], 64);
+   py=print_setlength( Prec[i][1], 64);
+   #print("\n -- \n px=", px, "\n py=",py );
+   chain=chain+px+py ;
+   
+ chain=chain +"\"\n";
+ filep.write(chain);
+ filep.close();
+
+ return 0;
+ 
+# bytes constant x=hex"
+
+def Print_Table_raw( Q, Curve, filename):
+ C_filepath=filename;
  filep = open(C_filepath,'a');
  
  Prec=Precompute_Pubkey(Q, Curve);
@@ -130,5 +171,5 @@ def Print_Table_raw( Q, Curve):
 
 Webauthn_Prec=Print_Table_js(Q, secp256r1);
 Print_Table_json(Q,secp256r1);
-
+Print_Table_sol(Q,secp256r1)
      

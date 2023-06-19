@@ -45,8 +45,8 @@ class DERSig(Sequence):
 
 
 input = open('ecdsa_secp256r1_sha256_test.json')
-#input = open('vectors_valid.json')
-f = open("ecdsa_secp256r1_sha256_test.cairo", "w")
+input = open('vectors_valid.json')
+#f = open("ecdsa_secp256r1_sha256_test.cairo", "w")
 
 data = json.load(input)
 
