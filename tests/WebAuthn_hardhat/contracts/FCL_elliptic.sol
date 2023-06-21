@@ -253,7 +253,7 @@ library FCL_Elliptic_ZZ {
         uint zzz0;
         
 	if(ecAff_IsZero(x0,y0)) return (x1,y1);
-	if(ecAff_IsZero(x1,y1)) return (x1,y1);
+	if(ecAff_IsZero(x1,y1)) return (x0,y0);
 	
         (x0, y0, zz0, zzz0) = ecZZ_AddN(x0, y0, 1,1, x1, y1);
 
