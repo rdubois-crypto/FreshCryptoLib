@@ -59,11 +59,11 @@ forge-coverage:
 
 .PHONY: forge-lint-check
 forge-lint-check:
-	@runcmd forge fmt --check
+	@runcmd forge fmt test ../../solidity --check
 
 .PHONY: forge-lint
 forge-lint:
-	@runcmd forge fmt
+	@runcmd forge fmt test ../../solidity
 
 .PHONY: forge-clean
 forge-clean:

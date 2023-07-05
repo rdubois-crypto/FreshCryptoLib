@@ -1,7 +1,7 @@
 pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
-import "../src/Secp256k1.sol";
+import "@solidity/Secp256k1.sol";
 
 contract test_Androlo is Test {
     // Field size

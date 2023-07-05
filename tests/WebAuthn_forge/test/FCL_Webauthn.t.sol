@@ -3,11 +3,11 @@ pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
 //FreshCryptoLib implementation
-import "src/FCL_elliptic.sol";
-import "src/FCL_Webauthn.sol";
+import "@solidity/FCL_elliptic.sol";
+import "@solidity/FCL_Webauthn.sol";
 
 //orbs_network implementation
-import "src/ECops.sol";
+import "@solidity/ECops.sol";
 
 contract WebAuthn_bench {
     uint256 constant _FCL_ID = 0;

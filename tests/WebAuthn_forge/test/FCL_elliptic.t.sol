@@ -17,13 +17,13 @@
 pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
-import "../src/FCL_elliptic.sol";
-import "../src/FCL_Webauthn.sol";
+import "@solidity/FCL_elliptic.sol";
+import "@solidity/FCL_Webauthn.sol";
 
 //external implementation to bench
-import "../src/ECops.sol";
-import "../src/Secp256r1.sol";
-import "../src/Secp256r1_maxrobot.sol";
+import "@solidity/ECops.sol";
+import "@solidity/Secp256r1.sol";
+import "@solidity/Secp256r1_maxrobot.sol";
 
 contract ArithmeticTest is Test {
     //curve prime field modulus

@@ -19,7 +19,7 @@
 // Code is optimized for a=-3 only curves with prime order, constant like -1, -2 shall be replaced
 // if ever used for other curve than sec256R1
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
 library FCL_Elliptic_ZZ {
     // Set parameters for curve sec256r1.
@@ -140,7 +140,6 @@ library FCL_Elliptic_ZZ {
      * warning: assume that P1(x1,y1)!=P2(x2,y2), true in multiplication loop with prime order (cofactor 1)
      */
 
-    //tbd: return -x1 and -Y1 in double to avoid two substractions
     function ecZZ_AddN(uint256 x1, uint256 y1, uint256 zz1, uint256 zzz1, uint256 x2, uint256 y2)
         internal
         pure
@@ -178,11 +177,9 @@ library FCL_Elliptic_ZZ {
      * @dev Check if point is the neutral of the curve
      */
 
-    function ecZZ_IsZero(uint256 x0, uint256 y0, uint256 zz0, uint256 zzz0) internal pure returns (bool) {
-        if ((y0 == 0)) {
-            return true;
-        }
-        return false;
+    // uint256 x0, uint256 y0, uint256 zz0, uint256 zzz0
+    function ecZZ_IsZero(uint256, uint256 y0, uint256, uint256) internal pure returns (bool) {
+        return y0 == 0;
     }
     /**
      * @dev Return the zero curve in affine coordinates. Compatible with the double formulae (no special case)
@@ -195,7 +192,8 @@ library FCL_Elliptic_ZZ {
     /**
      * @dev Check if the curve is the zero curve in affine rep.
      */
-    function ecAff_IsZero(uint256 x, uint256 y) internal pure returns (bool flag) {
+    // uint256 x, uint256 y)
+    function ecAff_IsZero(uint256, uint256 y) internal pure returns (bool flag) {
         return (y == 0);
     }
 
@@ -224,7 +222,7 @@ library FCL_Elliptic_ZZ {
         uint256 zzz0;
 
         if (ecAff_IsZero(x0, y0)) return (x1, y1);
-        if (ecAff_IsZero(x1, y1)) return (x0, y0);
+        if (ecAff_IsZero(x1, y1)) return (x1, y1);
 
         (x0, y0, zz0, zzz0) = ecZZ_AddN(x0, y0, 1, 1, x1, y1);
 
@@ -252,12 +250,6 @@ library FCL_Elliptic_ZZ {
             if (scalar_u == 0 && scalar_v == 0) return 0;
 
             (H0, H1) = ecAff_add(gx, gy, Q0, Q1); //will not work if Q=P, obvious forbidden private key
-
-            /*
-     while( ( ((scalar_u>>index)&1)+2*((scalar_v>>index)&1) ) ==0){
-      index=index-1;
-     }
-     */
 
             assembly {
                 for { let T4 := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1)) } eq(T4, 0) {
@@ -294,10 +286,7 @@ library FCL_Elliptic_ZZ {
                     zz := mulmod(T2, zz, p) //zz3=V*ZZ1, V free
 
                     X := addmod(mulmod(T4, T4, p), mulmod(minus_2, T3, p), p) //X3=M^2-2S
-                    //T2:=mulmod(T4,addmod(T3, sub(p, X),p),p)//M(S-X3)
                     T2 := mulmod(T4, addmod(X, sub(p, T3), p), p) //-M(S-X3)=M(X3-S)
-
-                    //Y:= addmod(T2, sub(p, mulmod(T1, Y ,p)),p  )//Y3= M(S-X3)-W*Y1
                     Y := addmod(mulmod(T1, Y, p), T2, p) //-Y3= W*Y1-M(S-X3), we replace Y by -Y to avoid a sub in ecAdd
 
                     {
@@ -424,14 +413,15 @@ library FCL_Elliptic_ZZ {
             }
             assembly {
                 extcodecopy(dataPointer, T, mload(T), 64)
-
+                let index := sub(zz, 1)
                 X := mload(T)
                 let Y := mload(add(T, 32))
                 let zzz := 1
                 zz := 1
 
                 //loop over 1/4 of scalars thx to Shamir's trick over 8 points
-                for { let index := 254 } gt(index, 191) { index := add(index, 191) } {
+                for {} gt(index, 191) { index := add(index, 191) } {
+                    //inline Double
                     {
                         let TT1 := mulmod(2, Y, p) //U = 2*Y1, y free
                         let T2 := mulmod(TT1, TT1, p) // V=U^2
@@ -461,8 +451,6 @@ library FCL_Elliptic_ZZ {
                         index := sub(index3, 64)
                         let T1 :=
                             add(T2, add(shl(10, and(shr(index, scalar_v), 1)), shl(6, and(shr(index, scalar_u), 1))))
-
-                        //index:=add(index,192), restore index, interleaved with loop
 
                         //tbd: check validity of formulae with (0,1) to remove conditional jump
                         if iszero(T1) {
@@ -546,43 +534,67 @@ library FCL_Elliptic_ZZ {
         } //end unchecked
     }
 
+    //compute the wnaf reprensentation of a positive scalar
+    function ecZZ_wnaf(uint256 scalar) public returns (bytes memory wnaf, uint256 length) {
+        bytes memory temp = new bytes(300);
+        uint256 length = 0;
+        uint8 ki = 0;
 
+        while (scalar > 0) {
+            if (scalar & 1 == 1) {
+                ki = uint8(scalar % 256);
+                temp[length] = bytes1(ki);
+                if (ki >= 128) {
+                    scalar += 256;
+                }
+                scalar -= uint256(ki);
+            }
+            scalar = scalar / 2;
+            length = length + 1;
+        }
 
-    //8 dimensions Shamir's trick, using precomputations stored in Shamir8,  stored as Bytecode of an external
-    //contract at given address dataPointer
-    //(thx to Lakhdar https://github.com/Kelvyne for EVM storage explanations and tricks)
-    // the external tool to generate tables from public key is in the /sage directory
-    function ecZZ_mulmuladd_S8_hackmem(uint256 scalar_u, uint256 scalar_v, uint256 dataPointer)
+        return (temp, length);
+    }
+
+    //Taking scalars directly interleaved to avoid to perform it in contract
+    function ecZZ_mulmuladd_interleaved(uint256 scalar_high, uint256 scalar_low, address dataPointer)
         internal
         returns (uint256 X /*, uint Y*/ )
     {
         unchecked {
             uint256 zz; // third and  coordinates of the point
-
-            uint256[6] memory T;
-            zz = 256; //start index
-
-            while (T[0] == 0) {
-                zz = zz - 1;
-                //tbd case of msb octobit is null
-                T[0] = 64
-                    * (
-                        128 * ((scalar_v >> zz) & 1) + 64 * ((scalar_v >> (zz - 64)) & 1)
-                            + 32 * ((scalar_v >> (zz - 128)) & 1) + 16 * ((scalar_v >> (zz - 192)) & 1)
-                            + 8 * ((scalar_u >> zz) & 1) + 4 * ((scalar_u >> (zz - 64)) & 1)
-                            + 2 * ((scalar_u >> (zz - 128)) & 1) + ((scalar_u >> (zz - 192)) & 1)
-                    );
+            if ((scalar_high & scalar_low) == 0) {
+                return 0;
             }
+            uint256[6] memory T;
+            zz = 248; //start index
+
+            while (((scalar_high >> zz) & 0xff) == 0) {
+                zz -= 8;
+                if (zz == 0) {
+                    scalar_high = scalar_low; //first test prevent infinite loop on (0,0) input
+                    zz = 248;
+                }
+            }
+            T[0] = scalar_high >> zz;
+            zz -= 8;
+            if (zz == 0) {
+                scalar_high = scalar_low; //first test prevent infinite loop on (0,0) input
+                zz = 248;
+            }
+
             assembly {
                 extcodecopy(dataPointer, T, mload(T), 64)
-
+                let index := zz
                 X := mload(T)
                 let Y := mload(add(T, 32))
                 let zzz := 1
                 zz := 1
+                let highdone := 0
 
                 //loop over 1/4 of scalars thx to Shamir's trick over 8 points
-                for { let index := 254 } gt(index, 191) { index := add(index, 191) } {
+                for {} gt(index, 0) { index := sub(index, 8) } {
+                    //inline Double
                     {
                         let TT1 := mulmod(2, Y, p) //U = 2*Y1, y free
                         let T2 := mulmod(TT1, TT1, p) // V=U^2
@@ -602,26 +614,21 @@ library FCL_Elliptic_ZZ {
                         /* compute element to access in precomputed table */
                     }
                     {
-                        let T4 := add(shl(13, and(shr(index, scalar_v), 1)), shl(9, and(shr(index, scalar_u), 1)))
-                        let index2 := sub(index, 64)
-                        let T3 :=
-                            add(T4, add(shl(12, and(shr(index2, scalar_v), 1)), shl(8, and(shr(index2, scalar_u), 1))))
-                        let index3 := sub(index2, 64)
-                        let T2 :=
-                            add(T3, add(shl(11, and(shr(index3, scalar_v), 1)), shl(7, and(shr(index3, scalar_u), 1))))
-                        index := sub(index3, 64)
-                        let T1 :=
-                            add(T2, add(shl(10, and(shr(index, scalar_v), 1)), shl(6, and(shr(index, scalar_u), 1))))
-
-                        //index:=add(index,192), restore index, interleaved with loop
-
+                        let T1 := and(shr(index, scalar_high), 0xff)
                         //tbd: check validity of formulae with (0,1) to remove conditional jump
                         if iszero(T1) {
                             Y := sub(p, Y)
 
                             continue
                         }
-                        codecopy( T, add(dataPointer,T1), 64)
+                        extcodecopy(dataPointer, T, T1, 64)
+                        if eq(8, index) {
+                            if iszero(highdone) {
+                                highdone := 1
+                                scalar_high := scalar_low
+                                index := 248
+                            }
+                        }
                     }
 
                     {
@@ -697,9 +704,8 @@ library FCL_Elliptic_ZZ {
         } //end unchecked
     }
 
-
     // improving the extcodecopy trick : append array at end of contract
-    function ecZZ_mulmuladd_S8_hackmem_back(uint256 scalar_u, uint256 scalar_v, uint256 dataPointer)
+    function ecZZ_mulmuladd_S8_hackmem(uint256 scalar_u, uint256 scalar_v, uint256 dataPointer)
         internal
         returns (uint256 X /*, uint Y*/ )
     {
@@ -745,7 +751,6 @@ library FCL_Elliptic_ZZ {
                     Y := addmod(mulmod(T1, Y, p), T2, p) //-Y3= W*Y1-M(S-X3), we replace Y by -Y to avoid a sub in ecAdd
 
                     /* compute element to access in precomputed table */
-
                     T4 := add(shl(13, and(shr(index, scalar_v), 1)), shl(9, and(shr(index, scalar_u), 1)))
                     index := sub(index, 64)
                     T4 := add(T4, add(shl(12, and(shr(index, scalar_v), 1)), shl(8, and(shr(index, scalar_u), 1))))
@@ -762,7 +767,7 @@ library FCL_Elliptic_ZZ {
                         continue
                     }
                     {
-                        /* Access to precomputed table using codecopy hack */
+                        /* Access to precomputed table using extcodecopy hack */
                         codecopy(T, add(T4, dataPointer), 64)
 
                         // inlined EcZZ_AddN
@@ -839,7 +844,7 @@ library FCL_Elliptic_ZZ {
         internal
         returns (bool)
     {
-        if (rs[0] == 0 || rs[0] >= n || rs[1] == 0) {
+        if (rs[0] == 0 || rs[0] >= n || rs[1] == 0 || rs[1] >= n) {
             return false;
         }
         /* Q is pushed via bytecode assumed to be correct
@@ -848,7 +853,6 @@ library FCL_Elliptic_ZZ {
         }*/
 
         uint256 sInv = FCL_nModInv(rs[1]);
-        //uint sInv =2;
 
         uint256 X;
 
@@ -857,6 +861,22 @@ library FCL_Elliptic_ZZ {
 
         assembly {
             X := addmod(X, sub(n, calldataload(rs)), n)
+        }
+
+        return X == 0;
+    } //end  ecdsa_precomputed_verify()
+
+    function ecdsa_interleaved_verify(uint256 scalar_u, uint256 scalar_v, uint256 scalar_r, address Shamir8)
+        internal
+        returns (bool)
+    {
+        uint256 X;
+
+        //Shamir 8 dimensions
+        X = ecZZ_mulmuladd_interleaved(scalar_u, scalar_v, Shamir8);
+
+        assembly {
+            X := addmod(X, sub(n, scalar_r), n)
         }
 
         return X == 0;
@@ -872,7 +892,7 @@ library FCL_Elliptic_ZZ {
         internal
         returns (bool)
     {
-        if (rs[0] == 0 || rs[0] >= n || rs[1] == 0) {
+        if (rs[0] == 0 || rs[0] >= n || rs[1] == 0 || rs[1] >= n) {
             return false;
         }
         /* Q is pushed via bytecode assumed to be correct
