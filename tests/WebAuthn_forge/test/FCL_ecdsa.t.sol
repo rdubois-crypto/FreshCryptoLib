@@ -12,10 +12,10 @@
 ///*
 ///*
 ///* DESCRIPTION: test file for ecdsa signature protocol
-///* 
+///*
 //**************************************************************************************/
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.20;
+pragma solidity >=0.8.19 <0.9.0;
 
 import "forge-std/Test.sol";
 import "../src/FCL_elliptic.sol";
@@ -32,7 +32,7 @@ contract wrap_ecdsa_orbs{
     uint256 constant gy = 0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5;
      //curve order (number of points)
     uint256 constant n = 0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551;
-    
+
  function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) public returns (bool) {
         if (rs[0] == 0 || rs[0] >= n || rs[1] == 0 || rs[1] >= n) {
             return false;
@@ -61,11 +61,11 @@ contract wrap_ecdsa_orbs{
     }
 }
 
-// library from obvioustech 
+// library from obvioustech
 contract wrap_ecdsa_obvious{
 
  function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) public returns (bool) {
- 
+
   PassKeyId memory pass=PassKeyId(Q[0], Q[1], "unused");
   return Secp256r1.Verify(pass, rs[0], rs[1], uint256(message));
 }
@@ -73,11 +73,11 @@ contract wrap_ecdsa_obvious{
 }
 
 
-// library from maxrobot 
+// library from maxrobot
 contract wrap_ecdsa_maxrobot{
 
  function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) public returns (bool) {
- 
+
   return Secp256r1_maxrobot.Verify(Q[0], Q[1], rs, uint256(message));
 }
 
@@ -87,7 +87,7 @@ contract wrap_ecdsa_maxrobot{
 // library FreshCryptoLib without precomputations
 contract Wrap_ecdsa_FCL {
     function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) public returns (bool) {
-    
+
         return FCL_Elliptic_ZZ.ecdsa_verify(message, rs, Q);
     }
 
@@ -100,14 +100,14 @@ contract Wrap_ecdsa_precal {
     address precomputations;
 
 
-    //compute the coefficients for multibase exponentiation, then their wnaf representation 
+    //compute the coefficients for multibase exponentiation, then their wnaf representation
     //note that this function can be implemented in the front to reduce tx cost
-   
-    
+
+
     function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs) public returns (bool) {
-        
-      
-    
+
+
+
         return FCL_Elliptic_ZZ.ecdsa_precomputed_verify(message, rs, precomputations);
     }
 
@@ -120,23 +120,23 @@ contract Wrap_ecdsa_precal {
 contract Wrap_ecdsa_interleaved  {
     address precomputations;
   uint256 constant n = 0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551;
-  
+
      function  interleave_shamir(uint256 scalar_u, uint256 scalar_v) internal returns (uint256 high, uint256 low)
     {
       uint256 temp=0;
       uint256  checkpointGasLeft ;
       uint256  checkpointGasLeft2 ;
-	
-	
+
+
       assembly{
-        let i:=0x0 
+        let i:=0x0
         //loop over 1/4 of scalars thx to Shamir's trick over 8 points
         for { let index := 255 } gt(index, 191) { index := add(index, 191) } {
               if eq(index, 223){
          high:=temp
          temp:=0
          i:=0
-        } 
+        }
         let T4 := add(shl(13, and(shr(index, scalar_v), 1)), shl(9, and(shr(index, scalar_u), 1)))
                         let index2 := sub(index, 64)
                         let T3 :=
@@ -149,27 +149,27 @@ contract Wrap_ecdsa_interleaved  {
                             add(T2, add(shl(10, and(shr(index, scalar_v), 1)), shl(6, and(shr(index, scalar_u), 1))))
         temp:=add(temp, shl(sub(258, i),shr(6,T1)))
         i:=add(i,8)
-        
-       
+
+
       }
-      
+
       low:=temp
       }
-      
+
       return (high, low);
     }
-    
+
     function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs) public returns (bool) {
-    
+
      uint256 scalar_high;
      uint256 scalar_low;
       uint256 sInv = FCL_Elliptic_ZZ.FCL_nModInv(rs[1]);
-   
+
      uint256 scalar_u = mulmod(uint256(message), sInv, n);
      uint256 scalar_v = mulmod(rs[0], sInv, n);
      (scalar_u, scalar_v)= interleave_shamir(scalar_u, scalar_v);
      //console.log("interleaved:", scalar_u, scalar_v);
-     
+
         return FCL_Elliptic_ZZ.ecdsa_interleaved_verify( scalar_u, scalar_v, rs[0], precomputations);
     }
 
@@ -263,7 +263,7 @@ contract EcdsaTest is Test {
 	else
 	{
 	deployData = vm.readFile("test/vectors_wychproof/vec_sec256r1_invalid.json");
-	
+
 	}
         uint256 wx = vm.parseJsonUint(deployData, ".NumberOfTests");
         console.log("NumberOfTests:", wx);
@@ -307,10 +307,10 @@ contract EcdsaTest is Test {
         (key, deployData, numtests) = wychproof_keyload(valid_flag);
 	uint256  checkpointGasLeft ;
 	uint256  checkpointGasLeft2 ;
-	
-	
+
+
         bool res = FCL_Elliptic_ZZ.ecAff_isOnCurve(key[0], key[1]);
-        
+
         assertEq(res, true);
 
         uint256[2] memory rs;
@@ -322,7 +322,7 @@ contract EcdsaTest is Test {
             (rs, message, title) = wychproof_vecload(deployData, snum);
 
             vm.prank(vm.addr(5));
-            
+
             checkpointGasLeft=gasleft() ;
             //wrap_ecdsa_orbs wrap = new wrap_ecdsa_orbs();
             //wrap_ecdsa_obvious wrap = new wrap_ecdsa_obvious();
@@ -330,14 +330,14 @@ contract EcdsaTest is Test {
             Wrap_ecdsa_FCL wrap = new Wrap_ecdsa_FCL();
             checkpointGasLeft2=gasleft() ;
             console.log("deployment no prec:", checkpointGasLeft - checkpointGasLeft2 - 100);
-            
+
             checkpointGasLeft=gasleft() ;
           //  Wrap_ecdsa_interleaved wrap2=new Wrap_ecdsa_interleaved(address(uint160(_prec_address)));
-            
+
             Wrap_ecdsa_precal wrap2 = new Wrap_ecdsa_precal(address(uint160(_prec_address)));
 	    checkpointGasLeft2=gasleft() ;
             console.log("deployment with prec, (no table cost):", checkpointGasLeft - checkpointGasLeft2 - 100);
-           
+
             console.log("message:", message);
             console.log("sigx:", rs[0]);
             console.log("sigy:", rs[1]);
@@ -348,44 +348,44 @@ contract EcdsaTest is Test {
             console.log("signature verif no prec:", checkpointGasLeft - checkpointGasLeft2 - 100);
 
             assertEq(res, valid_flag);
-            checkpointGasLeft=gasleft() ;         
+            checkpointGasLeft=gasleft() ;
             res = wrap2.wrap_ecdsa_core(bytes32(message), rs);
-            
+
             checkpointGasLeft2=gasleft() ;
             console.log("signature verif with prec:", checkpointGasLeft - checkpointGasLeft2 - 100);
 
             // ensure both implementations return the same result
             assertEq(res, valid_flag);
-         
+
         }
     }
-    
-    
+
+
     //testing Wychproof vectors: valid edge vectors, all tests are expected to be false
     function test_batch_ecmulmuladd() public {
         Validation_Invariant_ecmulmuladd(true); //test valid vectors, all assert shall be true
         Validation_Invariant_ecmulmuladd(false);//test valid vectors, all assert shall be true
-        
+
     }
-    
-    //compute the coefficients for multibase exponentiation, then their wnaf representation 
+
+    //compute the coefficients for multibase exponentiation, then their wnaf representation
     //note that this function can be implemented in the front to reduce tx cost
     function  interleave_shamir(uint256 scalar_u, uint256 scalar_v) internal returns (uint256 high, uint256 low)
     {
       uint256 temp=0;
       uint256  checkpointGasLeft ;
       uint256  checkpointGasLeft2 ;
-	
-	
+
+
       assembly{
-        let i:=0x0 
+        let i:=0x0
         //loop over 1/4 of scalars thx to Shamir's trick over 8 points
         for { let index := 255 } gt(index, 191) { index := add(index, 191) } {
               if eq(index, 223){
          high:=temp
          temp:=0
          i:=0
-        } 
+        }
         let T4 := add(shl(13, and(shr(index, scalar_v), 1)), shl(9, and(shr(index, scalar_u), 1)))
                         let index2 := sub(index, 64)
                         let T3 :=
@@ -398,54 +398,54 @@ contract EcdsaTest is Test {
                             add(T2, add(shl(10, and(shr(index, scalar_v), 1)), shl(6, and(shr(index, scalar_u), 1))))
         temp:=add(temp, shl(i,shr(6,T1)))
         i:=add(i,8)
-        
-       
+
+
       }
-      
+
       low:=temp
       }
-      
+
       return (high, low);
     }
-    
+
     function test_Invariant_wnaf() public {
-  
+
        uint256 inpute= 0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC63255F;
        uint256 inpute2=0xF0FFFFFFFAAAAAAAFFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC63255F;
-       
+
        bytes memory wnaf=new bytes(300);
        uint256 length;
-       
+
        (wnaf,length)=FCL_Elliptic_ZZ.ecZZ_wnaf(inpute);
        /*console.log("length=",length);
        for(uint i=0;i<length;i++)
        {
         console.log(" ",i, uint8(wnaf[i]));
-       }	
+       }
        */
        uint256 high;
        uint256 low;
        uint[2] memory uv=[inpute, inpute2];
        uint256  checkpointGasLeft ;
 	uint256  checkpointGasLeft2 ;
-	
-       Wrap_ecdsa_interleaved wrap2 = new Wrap_ecdsa_interleaved(address(uint160(_prec_address)));
-       
 
-        checkpointGasLeft=gasleft() ; 
-       
+       Wrap_ecdsa_interleaved wrap2 = new Wrap_ecdsa_interleaved(address(uint160(_prec_address)));
+
+
+        checkpointGasLeft=gasleft() ;
+
         wrap2.wrap_ecdsa_core(0,uv);
-       
-         
-       checkpointGasLeft2=gasleft() ; 
-       
+
+
+       checkpointGasLeft2=gasleft() ;
+
        console.log("interleaved: %x %x",	high, low);
 	console.log("ecmulmul interleaved cost:", checkpointGasLeft - checkpointGasLeft2 - 100);
-           
-       
-       
+
+
+
     }
-    
+
     function load_precalc() public returns (bool) {
         string memory deployData = vm.readFile("test/vectors_sage/fcl_ecdsa_precbytecode.json");
         bytes memory prec = abi.decode(vm.parseJson(deployData, ".Bytecode"), (bytes));
@@ -453,12 +453,12 @@ contract EcdsaTest is Test {
         a_prec = address(uint160(_prec_address));
         uint256  checkpointGasLeft ;
 	uint256  checkpointGasLeft2 ;
-	
-        checkpointGasLeft=gasleft() ; 
+
+        checkpointGasLeft=gasleft() ;
         vm.etch(a_prec, prec);
-        checkpointGasLeft2=gasleft() ; 
+        checkpointGasLeft2=gasleft() ;
 	console.log("deployment of precomputation cost:", checkpointGasLeft - checkpointGasLeft2 - 100);
-           
+
 
         uint256[2] memory px; //pointer to an elliptic point
 

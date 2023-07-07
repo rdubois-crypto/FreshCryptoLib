@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.20;
-// 
-// Heavily inspired from 
+pragma solidity >=0.8.19 <0.9.0;
+//
+// Heavily inspired from
 // https://github.com/maxrobot/elliptic-solidity/blob/master/contracts/Secp256r1.sol
 // https://github.com/tdrerup/elliptic-curve-solidity/blob/master/contracts/curves/EllipticCurve.sol
 // modified to use precompile 0x05 modexp
 // and modified jacobian double
 // optimisations to avoid to an from from affine and jacobian coordinates
-// 
+//
 struct PassKeyId {
     uint256 pubKeyX;
     uint256 pubKeyY;
@@ -25,7 +25,7 @@ library Secp256r1 {
     uint256 constant gx = 0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296;
     uint256 constant gy = 0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5;
     uint256 public constant pp = 0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF;
-                          
+
     uint256 public constant nn = 0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551;
     uint256 constant a = 0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFC;
     uint256 constant b = 0x5AC635D8AA3A93E7B3EBBD55769886BC651D06B0CC53B0F63BCE3C3E27D2604B;
@@ -147,9 +147,9 @@ library Secp256r1 {
         (x, y, z) = _modifiedJacobianDouble(p.x, p.y, p.z);
         return JPoint(x, y, z);
     }
- 
+
     /* _affineFromJacobian
-    * @desription returns affine coordinates from a jacobian input follows 
+    * @desription returns affine coordinates from a jacobian input follows
     * golang elliptic/crypto library
     */
     function _affineFromJacobian(uint x, uint y, uint z)
@@ -172,7 +172,7 @@ library Secp256r1 {
     * https://hyperelliptic.org/EFD/g1p/auto-code/shortw/jacobian-3/doubling/mdbl-2007-bl.op3
     */
     function _jAdd(uint p1, uint p2, uint p3, uint q1, uint q2, uint q3)
-        internal pure returns(uint r1, uint r2, uint r3)    
+        internal pure returns(uint r1, uint r2, uint r3)
     {
         if (p3 == 0) {
             r1 = q1;
@@ -250,7 +250,7 @@ library Secp256r1 {
 
     // Point doubling on the modified jacobian coordinates
     // http://point-at-infinity.org/ecc/Prime_Curve_Modified_Jacobian_Coordinates.html
-    function _modifiedJacobianDouble(uint x, uint y, uint z) 
+    function _modifiedJacobianDouble(uint x, uint y, uint z)
         internal pure returns (uint x3, uint y3, uint z3)
     {
         assembly {
@@ -299,7 +299,7 @@ library Secp256r1 {
             }
             // Free memory pointer is always stored at 0x40
             let freemem := mload(0x40)
-            
+
             mstore(freemem, 0x20)
             mstore(add(freemem, 0x20), 0x20)
             mstore(add(freemem, 0x40), 0x20)
@@ -313,9 +313,9 @@ library Secp256r1 {
             case 0 {
                 revert(0x0, 0x0)
             } default {
-                ret := mload(freemem) 
+                ret := mload(freemem)
             }
-        }        
+        }
     }
 
 }

@@ -19,7 +19,7 @@
 // Code is optimized for a=-3 only curves with prime order, constant like -1, -2 shall be replaced
 // if ever used for other curve than sec256R1
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity >=0.8.19 <0.9.0;
 
 library FCL_Elliptic_ZZ {
     // Set parameters for curve sec256r1.
@@ -255,7 +255,7 @@ library FCL_Elliptic_ZZ {
                 for { let T4 := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1)) } eq(T4, 0) {
                     index := sub(index, 1)
                     T4 := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1))
-                   
+
                 } {}
                 zz := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1))
 
@@ -414,7 +414,7 @@ library FCL_Elliptic_ZZ {
             }
             assembly {
                 extcodecopy(dataPointer, T, mload(T), 64)
-	        let index := sub(zz,1) 
+	        let index := sub(zz,1)
                 X := mload(T)
                 let Y := mload(add(T, 32))
                 let zzz := 1
@@ -535,40 +535,40 @@ library FCL_Elliptic_ZZ {
         } //end unchecked
     }
 
-    //compute the wnaf reprensentation of a positive scalar		
-    function ecZZ_wnaf(uint256 scalar) public returns (bytes memory wnaf, uint256 length) 
+    //compute the wnaf reprensentation of a positive scalar
+    function ecZZ_wnaf(uint256 scalar) public returns (bytes memory wnaf, uint256 length)
     {
       bytes memory temp=new bytes(300);
       uint length=0;
       uint8 ki=0;
-      
+
       while(scalar>0){
        if(scalar&1==1){
          ki=uint8(scalar%256);
          temp[length]=bytes1(ki);
          if(ki>=128){
-          scalar+=256; 
+          scalar+=256;
          }
          scalar-=uint256(ki);
-         
+
        }
        scalar=scalar/2;
        length=length+1;
       }
-      
-    
-    
+
+
+
       return (temp, length);
     }
-	
-    	
-	
+
+
+
       //Taking scalars directly interleaved to avoid to perform it in contract
       function ecZZ_mulmuladd_interleaved(uint256 scalar_high, uint256 scalar_low, address dataPointer)
         internal
         returns (uint256 X /*, uint Y*/ )
     {
-        
+
         unchecked {
             uint256 zz; // third and  coordinates of the point
 	    if((scalar_high &scalar_low)==0)
@@ -591,8 +591,8 @@ library FCL_Elliptic_ZZ {
                  scalar_high=scalar_low;//first test prevent infinite loop on (0,0) input
                  zz=248;
                 }
-            
-            
+
+
             assembly {
                 extcodecopy(dataPointer, T, mload(T), 64)
 	        let index := zz
@@ -601,7 +601,7 @@ library FCL_Elliptic_ZZ {
                 let zzz := 1
                 zz := 1
 		let highdone:=0
-		
+
                 //loop over 1/4 of scalars thx to Shamir's trick over 8 points
                 for { } gt(index, 0) { index := sub(index, 8) } {
                 	//inline Double
@@ -624,7 +624,7 @@ library FCL_Elliptic_ZZ {
                         /* compute element to access in precomputed table */
                     }
                     {
-                       
+
                         let T1 := and(shr(index, scalar_high), 0xff)
                         //tbd: check validity of formulae with (0,1) to remove conditional jump
                         if iszero(T1) {
@@ -641,7 +641,7 @@ library FCL_Elliptic_ZZ {
                             index:=248
                           }
                         }
-                         
+
                     }
 
                     {
@@ -694,7 +694,7 @@ library FCL_Elliptic_ZZ {
                         X := addmod(addmod(mulmod(y2, y2, p), sub(p, T1), p), mulmod(minus_2, zz1, p), p)
                         Y := addmod(mulmod(addmod(zz1, sub(p, X), p), y2, p), mulmod(Y, T1, p), p)
                     }
-                    
+
                 } //end loop
                 mstore(add(T, 0x60), zz)
 
@@ -716,7 +716,7 @@ library FCL_Elliptic_ZZ {
                 X := mulmod(X, zz, p) //X/zz
             }
         } //end unchecked
-    }	
+    }
 
 
 
@@ -887,7 +887,7 @@ library FCL_Elliptic_ZZ {
         internal
         returns (bool)
     {
-        
+
 
          uint256 X;
 
@@ -900,7 +900,7 @@ library FCL_Elliptic_ZZ {
 
         return X == 0;
     } //end  ecdsa_precomputed_verify()
-    
+
     /**
      * @dev ECDSA verification using a precomputed table of multiples of P and Q appended at end of contract at address endcontract
      *     generation of contract bytecode for precomputations is done using sagemath code

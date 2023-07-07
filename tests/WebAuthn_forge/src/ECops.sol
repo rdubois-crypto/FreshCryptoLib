@@ -1,24 +1,24 @@
-pragma solidity ^0.8.20;
+pragma solidity >=0.8.19 <0.9.0;
 
 // Orbs implementation
 library ECops {
-    
+
     uint256 constant n = 0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF;
     //short weierstrass first coefficient
     uint256 constant a = 0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFC;
     //short weierstrass second coefficient
     uint256 constant b = 0x5AC635D8AA3A93E7B3EBBD55769886BC651D06B0CC53B0F63BCE3C3E27D2604B;
-    
-    
- //   uint256 constant n = 0x30644E72E131A029B85045B68181585D97816A916871CA8D3C208C16D87CFD47;   
+
+
+ //   uint256 constant n = 0x30644E72E131A029B85045B68181585D97816A916871CA8D3C208C16D87CFD47;
    // uint256 constant a = 0;
   //  uint256 constant b = 3;
-    
 
-    
 
-    
-    // Returns the inverse in the field of modulo n 
+
+
+
+    // Returns the inverse in the field of modulo n
     function inverse(uint256 num) public pure
         returns(uint256 invNum)
     {
@@ -36,8 +36,8 @@ library ECops {
 
         invNum = t;
     }
-    
-    
+
+
     // Transform from affine to projective coordinates
     function toProjectivePoint(uint256 x0, uint256 y0) public pure
         returns(uint256 x1, uint256 y1, uint256 z1)
@@ -46,8 +46,8 @@ library ECops {
         x1 = mulmod(x0, z1, n);
         y1 = mulmod(y0, z1, n);
     }
-    
-    
+
+
     // Transform from projective to affine coordinates
     function toAffinePoint(uint256 x0, uint256 y0, uint256 z0) public pure
         returns(uint256 x1, uint256 y1)
@@ -60,7 +60,7 @@ library ECops {
 
 
     // Returns the zero curve in proj coordinates
-    function zeroProj() public pure 
+    function zeroProj() public pure
         returns(uint256 x, uint256 y, uint256 z)
     {
         return (0,0,1);
@@ -68,7 +68,7 @@ library ECops {
 
 
     // Returns the zero curve in affine coordinates
-    function zeroAffine() public pure 
+    function zeroAffine() public pure
         returns(uint256 x, uint256 y)
     {
         return (0,0);
@@ -84,7 +84,7 @@ library ECops {
         }
         return false;
     }
-    
+
 
     // Double an elliptic curve point
     // https://www.nayuki.io/page/elliptic-curve-point-addition-in-projective-coordinates
@@ -145,17 +145,17 @@ library ECops {
 
         if (isZeroCurve(x0, y0)) {
             return (x1, y1, z1);
-        } 
+        }
         else if (isZeroCurve(x1, y1)) {
             return (x0, y0, z0);
         }
-        
+
         t0 = mulmod(y0, z1, n);
         t1 = mulmod(y1, z0, n);
-        
+
         u0 = mulmod(x0, z1, n);
         u1 = mulmod(x1, z0, n);
-        
+
         if (u0 == u1) {
             if (t0 == t1) {
                 return twiceProj(x0, y0, z0);
@@ -164,13 +164,13 @@ library ECops {
                 return zeroProj();
             }
         }
-        
+
         (x2, y2, z2) = addProj2(mulmod(z0, z1, n), u0, u1, t1, t0);
     }
-    
-    
+
+
     // An help function to split addProj so it won't have too many local variables
-    function addProj2(uint256 v, uint256 u0, uint256 u1, 
+    function addProj2(uint256 v, uint256 u0, uint256 u1,
                       uint256 t1, uint256 t0) private pure
         returns(uint256 x2, uint256 y2, uint256 z2)
     {
@@ -189,7 +189,7 @@ library ECops {
         u1 = addmod(u1, u0, n);
         u1 = mulmod(u1, u2, n);
         w = addmod(w, n-u1, n);
-        
+
         x2 = mulmod(u, w, n);
 
         u3 = mulmod(u2, u, n);
@@ -202,7 +202,7 @@ library ECops {
 
         z2 = mulmod(u3, v, n);
     }
-    
+
 
     // Add two elliptic curve points (affine coordinates)
     function add(uint256 x0, uint256 y0,
@@ -228,7 +228,7 @@ library ECops {
 
 
     // Multiple an elliptic curve point in a 2 power base (i.e., (2^exp)*P))
-    function multiplyPowerBase2(uint256 x0, uint256 y0, 
+    function multiplyPowerBase2(uint256 x0, uint256 y0,
                                 uint exp) public pure
         returns(uint256 x1, uint256 y1)
     {
@@ -248,7 +248,7 @@ library ECops {
                             uint scalar) public pure
         returns(uint256 x1, uint256 y1)
     {
-        
+
 
         if(scalar == 0) {
             return zeroAffine();
@@ -285,5 +285,5 @@ library ECops {
 
         return toAffinePoint(x1, y1, z1);
     }
-    
+
 }

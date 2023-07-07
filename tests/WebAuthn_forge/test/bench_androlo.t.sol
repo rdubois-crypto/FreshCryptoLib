@@ -1,4 +1,4 @@
-pragma solidity ^0.8.20;
+pragma solidity >=0.8.19 <0.9.0;
 
 
 import "forge-std/Test.sol";
@@ -28,12 +28,12 @@ contract test_Androlo is Test {
         if (!Secp256k1.isPubKey(Q))
             return false;
 
-     
+
         uint sInv = ECCMath.invmod(rs[1], n);
 
         uint[3] memory u1G = Secp256k1._mul(mulmod(e, sInv, n), [Gx, Gy]);
-        
-     
+
+
         uint[3] memory u2Q = Secp256k1._mul(mulmod(rs[0], sInv, n), Q);
         uint[3] memory P = Secp256k1._add(u1G, u2Q);
 
@@ -62,6 +62,6 @@ contract test_Androlo is Test {
 
     return res;
    }
-   
-   
+
+
 }

@@ -1,4 +1,4 @@
-pragma solidity ^0.8.20;
+pragma solidity >=0.8.19 <0.9.0;
 
 /**
  * @title ECCMath
@@ -51,17 +51,17 @@ library ECCMath {
         r = 1;
         uint bit = 2 ** 255;
         assembly {
-            for{} gt(bit,0) {}{ 
+            for{} gt(bit,0) {}{
                 r := mulmod(mulmod(r, r, m), exp(b, iszero(iszero(and(e, bit)))), m)
                 r := mulmod(mulmod(r, r, m), exp(b, iszero(iszero(and(e, div(bit, 2))))), m)
                 r := mulmod(mulmod(r, r, m), exp(b, iszero(iszero(and(e, div(bit, 4))))), m)
                 r := mulmod(mulmod(r, r, m), exp(b, iszero(iszero(and(e, div(bit, 8))))), m)
                 bit := div(bit, 16)
-               
+
         }
         }
     }
-  
+
     ///  @dev Converts a point (Px, Py, Pz) expressed in Jacobian coordinates to affine coordinates
     /// Mutates P.
     /// @param P The point.

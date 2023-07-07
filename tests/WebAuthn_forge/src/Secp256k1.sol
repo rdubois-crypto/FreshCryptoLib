@@ -1,4 +1,4 @@
-pragma solidity ^0.8.20;
+pragma solidity >=0.8.19 <0.9.0;
 
 import "src/ECCMath.sol";
 
@@ -271,11 +271,11 @@ library Secp256k1 {
                 i := add(i, 1)
                 continue
 		}
-            
+
 	         dm := mod(d, 32)
                 mstore8(add(dwPtr, i), dm) // Don't store as signed - convert when reading.
                 d := add(sub(d, dm), mul(gt(dm, 16), 32))
-            
+
         }
         }
 

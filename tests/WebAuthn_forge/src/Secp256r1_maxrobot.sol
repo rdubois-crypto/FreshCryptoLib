@@ -1,11 +1,11 @@
-pragma solidity ^0.8.20;
+pragma solidity >=0.8.19 <0.9.0;
 
 library Secp256r1_maxrobot {
 
     uint256 constant gx = 0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296;
     uint256 constant gy = 0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5;
     uint256 constant pp = 0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF;
-                          
+
     uint256 constant nn = 0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551;
     uint256 constant a = 0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFC;
     uint256 constant b = 0x5AC635D8AA3A93E7B3EBBD55769886BC651D06B0CC53B0F63BCE3C3E27D2604B;
@@ -46,7 +46,7 @@ library Secp256r1_maxrobot {
     * scalarMultiplications
     * @description - performs a number of EC operations required in te pk signature verification
     */
-    function scalarMultiplications(uint X, uint Y, uint u1, uint u2) 
+    function scalarMultiplications(uint X, uint Y, uint u1, uint u2)
         public pure returns(uint, uint)
     {
         uint x1;
@@ -60,7 +60,7 @@ library Secp256r1_maxrobot {
         return Add(x1, y1, x2, y2);
     }
 
-    function Add(uint p1, uint p2, uint q1, uint q2) 
+    function Add(uint p1, uint p2, uint q1, uint q2)
         public pure returns(uint, uint)
     {
         uint p3;
@@ -69,7 +69,7 @@ library Secp256r1_maxrobot {
         return _affineFromJacobian(p1, p2, p3);
     }
 
-    function Double(uint p1, uint p2) 
+    function Double(uint p1, uint p2)
         public pure returns(uint, uint)
     {
         uint p3;
@@ -77,7 +77,7 @@ library Secp256r1_maxrobot {
 
         return _affineFromJacobian(p1, p2, p3);
     }
- 
+
     /*
     * ScalarMult
     * @description performs scalar multiplication of two elliptic curve points, based on golang
@@ -101,7 +101,7 @@ library Secp256r1_maxrobot {
                 k[i] = k[i] << 1;
             }
         }
-        
+
         return _affineFromJacobian(x, y, z);
         }
     }
@@ -119,7 +119,7 @@ library Secp256r1_maxrobot {
 
 
     /* _affineFromJacobian
-    * @desription returns affine coordinates from a jacobian input follows 
+    * @desription returns affine coordinates from a jacobian input follows
     * golang elliptic/crypto library
     */
     function _affineFromJacobian(uint x, uint y, uint z)
@@ -142,7 +142,7 @@ library Secp256r1_maxrobot {
     * https://hyperelliptic.org/EFD/g1p/auto-code/shortw/jacobian-3/doubling/mdbl-2007-bl.op3
     */
     function _jAdd(uint p1, uint p2, uint p3, uint q1, uint q2, uint q3)
-        public pure returns(uint r1, uint r2, uint r3)    
+        public pure returns(uint r1, uint r2, uint r3)
     {
         if (p3 == 0) {
             r1 = q1;
@@ -228,14 +228,14 @@ library Secp256r1_maxrobot {
     * https://hyperelliptic.org/EFD/g1p/auto-code/shortw/jacobian-3/doubling/dbl-2001-b.op3
     */
     function _jDouble(uint p1, uint p2, uint p3)
-        public pure returns(uint q1, uint q2, uint q3)    
+        public pure returns(uint q1, uint q2, uint q3)
     {
         assembly {
             let pd := 0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF
             let delta := mulmod(p3, p3, pd) // delta = Z1^2
             let gamma := mulmod(p2, p2, pd) // gamma = Y1^2
             let beta := mulmod(p1, gamma, pd) // beta = X1*gamma
-            
+
             let alpha := p1
             if lt(alpha, delta) {
                 alpha := add(pd, alpha)
@@ -247,10 +247,10 @@ library Secp256r1_maxrobot {
                 q1 := add(pd, q1)
             }
             q1 := sub(q1, mulmod(0x08, beta, pd)) // X3 = (alpha^2)-(8*beta)
-            
+
             q3  := addmod(p2, p3, pd)
             q3 := mulmod(q3, q3, pd)
-            
+
             delta := addmod(delta, gamma, pd)
             if lt(q3, delta) {
                 q3 := add(pd, q3)
@@ -270,7 +270,7 @@ library Secp256r1_maxrobot {
         }
     }
 
-    function _hashToUint(bytes memory input) 
+    function _hashToUint(bytes memory input)
         public pure returns (uint)
     {
         require(input.length >= 32, "slicing out of range");
@@ -292,7 +292,7 @@ library Secp256r1_maxrobot {
 
     /*
     * invmod
-    * @description returns the inverse of an integer 
+    * @description returns the inverse of an integer
     */
     function _invmod(uint value, uint p)
         public pure returns (uint)
@@ -303,13 +303,13 @@ library Secp256r1_maxrobot {
         if (value > p) {
             value = value % p;
         }
-        
+
         int t1;
         int t2 = 1;
         uint r1 = p;
         uint r2 = value;
         uint q;
-        
+
         while (r2 != 0) {
             q = r1 / r2;
             (t1, t2, r1, r2) = (t2, t1 - int(q) * t2, r2, r1 - q * r2);
@@ -318,7 +318,7 @@ library Secp256r1_maxrobot {
         if (t1 < 0) {
             return (p - uint(-t1));
         }
-        
+
         return uint(t1);
       }
     }
