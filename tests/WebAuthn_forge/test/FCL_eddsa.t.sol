@@ -21,13 +21,6 @@ import "forge-std/Test.sol";
 
 import "@solidity/FCL_eddsa.sol";
 
-
 contract EddsaTest is Test {
-  function test_add() public
-  {
-
-    
-  }
-
-
+    function test_add() public {}
 }

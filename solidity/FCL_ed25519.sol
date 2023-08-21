@@ -19,7 +19,7 @@
 pragma solidity >=0.8.19 <0.9.0;
 
 // prime field modulus of the ed25519 curve
-uint256 constant p =0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffed;
+uint256 constant p = 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffed;
 // -2 mod(p), used to accelerate inversion and doubling operations by avoiding negation
 // the representation of -1 in this field
 uint256 constant MINUS_1 = 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffec;
@@ -35,7 +35,7 @@ address constant MODEXP_PRECOMPILE = 0x0000000000000000000000000000000000000005;
 // address of the ModExp precompiled contract (Arbitrary-precision exponentiation under modulo)
 uint256 constant d = 37095705934669439343138083508754565189542113879843219016388785533085940283555;
 //2*d mod p
-uint256 constant deux_d =16295367250680780974490674513165176452449235426866156013048779062215315747161;
+uint256 constant deux_d = 16295367250680780974490674513165176452449235426866156013048779062215315747161;
 
 /// @notice Calculate the modular inverse of a given integer, which is the inverse of this integer modulo n.
 /// @dev Uses the ModExp precompiled contract at address 0x05 for fast computation using little Fermat theorem

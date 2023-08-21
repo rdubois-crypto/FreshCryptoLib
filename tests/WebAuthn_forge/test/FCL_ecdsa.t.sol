@@ -368,7 +368,7 @@ contract EcdsaTest is Test {
             Wrap_ecdsa_FCL wrap = new Wrap_ecdsa_FCL();
             checkpointGasLeft[1] = gasleft();
             console.log("deployment no prec:", checkpointGasLeft[0] - checkpointGasLeft[1] - 100);
- 	  
+
             checkpointGasLeft[0] = gasleft();
             //  Wrap_ecdsa_interleaved wrap2=new Wrap_ecdsa_interleaved(address(uint160(_prec_address)));
 
@@ -530,7 +530,7 @@ contract EcdsaTest is Test {
         estimated_size = bytecode.length;
 
         //bytecode = abi.encodePacked(vm.getCode("FCL_ecdsa.t.sol:Wrap_ecdsa_precal_hackmem"), estimated_size);
-       // console.logBytes(bytecode);
+        // console.logBytes(bytecode);
         console.log("Found offset =", find_offset(bytecode, _MAGIC_ENCODING));
         bytecode = bytes.concat(bytecode, prec);
         console.log("size contract hackmem=", estimated_size);
