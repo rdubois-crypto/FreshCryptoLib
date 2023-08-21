@@ -1,7 +1,7 @@
 pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
-import "@solidity/Numerology.sol";
+import "@external/Numerology.sol";
 
 contract test_Numerology is Test {
     uint256 constant _NUM_TEST_ECMULMULADD = 1000;

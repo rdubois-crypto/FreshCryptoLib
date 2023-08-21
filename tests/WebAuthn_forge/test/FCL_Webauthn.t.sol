@@ -7,7 +7,7 @@ import "@solidity/FCL_elliptic.sol";
 import "@solidity/FCL_Webauthn.sol";
 
 //orbs_network implementation
-import "@solidity/ECops.sol";
+import "@external/ECops.sol";
 
 contract WebAuthn_bench {
     uint256 constant _FCL_ID = 0;

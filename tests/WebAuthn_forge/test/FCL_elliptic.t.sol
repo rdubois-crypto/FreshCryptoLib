@@ -21,9 +21,9 @@ import "@solidity/FCL_elliptic.sol";
 import "@solidity/FCL_Webauthn.sol";
 
 //external implementation to bench
-import "@solidity/ECops.sol";
-import "@solidity/Secp256r1.sol";
-import "@solidity/Secp256r1_maxrobot.sol";
+import "@external/ECops.sol";
+import "@external/Secp256r1.sol";
+import "@external/Secp256r1_maxrobot.sol";
 
 contract ArithmeticTest is Test {
     //curve prime field modulus
