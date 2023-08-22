@@ -42,6 +42,21 @@ library EDDSA {
         x1 = mulmod(x, zInv, p);
     }
 
+    function ed_isOnCurve(uint256 x, uint256 y, uint256 z, uint256 t) internal  returns(bool b){
+        (x,y)=ed_z2Aff(x,y,z);
+
+       
+        uint256 x2=mulmod(x,x,p);
+        uint256 y2=mulmod(y,y,p);
+        uint256 dy2=mulmod(d,y2,p);//dy2
+        uint256 dy2x2=mulmod(x2,dy2,p);//dx2y2
+
+        dy2x2=addmod(x2,addmod(1,dy2x2,p),p);//x2+dx2y2+1 == y2 ?
+
+        return(addmod(p-y2,dy2x2,p)==0);
+
+    }
+
     function ed_Add(uint256 x1, uint256 y1, uint256 z1, uint256 t1, uint256 x2, uint256 y2, uint256 z2, uint256 t2)
         internal
         pure

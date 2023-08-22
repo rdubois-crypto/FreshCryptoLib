@@ -33,11 +33,11 @@ uint256 constant MINUS_2MODN = 0x1000000000000000000000000000000014def9dea2f79cd
 // address of the ModExp precompiled contract (Arbitrary-precision exponentiation under modulo)
 address constant MODEXP_PRECOMPILE = 0x0000000000000000000000000000000000000005;
 // address of the ModExp precompiled contract (Arbitrary-precision exponentiation under modulo)
-uint256 constant d = 37095705934669439343138083508754565189542113879843219016388785533085940283555;
+uint256 constant d = 0x52036cee2b6ffe738cc740797779e89800700a4d4141d8ab75eb4dca135978a3;
 //2*d mod p
 uint256 constant deux_d = 16295367250680780974490674513165176452449235426866156013048779062215315747161;
-uint256 constant gx = 15112221349535400772501151409588531511454012693041857206046113283949847762202;
-uint256 constant gy = 46316835694926478169428394003475163141307993866256225615783033603165251855960;
+uint256 constant gx = 0x216936D3CD6E53FEC0A4E231FDD6DC5C692CC7609525A7B2C9562D608F25D51A;
+uint256 constant gy = 0x6666666666666666666666666666666666666666666666666666666666666658;
 /// @notice Calculate the modular inverse of a given integer, which is the inverse of this integer modulo n.
 /// @dev Uses the ModExp precompiled contract at address 0x05 for fast computation using little Fermat theorem
 /// @param self The integer of which to find the modular inverse
