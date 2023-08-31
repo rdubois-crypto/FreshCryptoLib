@@ -153,60 +153,6 @@ contract Wrap_ecdsa_precal_hackmem {
     }
 }
 
-// library FreshCryptoLib with precomputations and interleaving
-contract Wrap_ecdsa_interleaved {
-    address precomputations;
-    uint256 constant n = 0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551;
-
-    function interleave_shamir(uint256 scalar_u, uint256 scalar_v) internal returns (uint256 high, uint256 low) {
-        uint256 temp = 0;
-        uint256 checkpointGasLeft;
-        uint256 checkpointGasLeft2;
-
-        assembly {
-            let i := 0x0
-            //loop over 1/4 of scalars thx to Shamir's trick over 8 points
-            for { let index := 255 } gt(index, 191) { index := add(index, 191) } {
-                if eq(index, 223) {
-                    high := temp
-                    temp := 0
-                    i := 0
-                }
-                let T4 := add(shl(13, and(shr(index, scalar_v), 1)), shl(9, and(shr(index, scalar_u), 1)))
-                let index2 := sub(index, 64)
-                let T3 := add(T4, add(shl(12, and(shr(index2, scalar_v), 1)), shl(8, and(shr(index2, scalar_u), 1))))
-                let index3 := sub(index2, 64)
-                let T2 := add(T3, add(shl(11, and(shr(index3, scalar_v), 1)), shl(7, and(shr(index3, scalar_u), 1))))
-                index := sub(index3, 64)
-                let T1 := add(T2, add(shl(10, and(shr(index, scalar_v), 1)), shl(6, and(shr(index, scalar_u), 1))))
-                temp := add(temp, shl(sub(258, i), shr(6, T1)))
-                i := add(i, 8)
-            }
-
-            low := temp
-        }
-
-        return (high, low);
-    }
-
-    function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs) public returns (bool) {
-        uint256 scalar_high;
-        uint256 scalar_low;
-        uint256 sInv = FCL_Elliptic_ZZ.FCL_nModInv(rs[1]);
-
-        uint256 scalar_u = mulmod(uint256(message), sInv, n);
-        uint256 scalar_v = mulmod(rs[0], sInv, n);
-        (scalar_u, scalar_v) = interleave_shamir(scalar_u, scalar_v);
-        //console.log("interleaved:", scalar_u, scalar_v);
-
-        return FCL_Elliptic_ZZ.ecdsa_interleaved_verify(scalar_u, scalar_v, rs[0], precomputations);
-    }
-
-    constructor(address bytecode) {
-        precomputations = bytecode;
-    }
-}
-
 contract EcdsaTest is Test {
     //curve prime field modulus
     uint256 constant p = 0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF;
@@ -415,71 +361,6 @@ contract EcdsaTest is Test {
         Validation_Invariant_ecmulmuladd(filename_valid, true); //test valid vectors, all assert shall be true
     }
 
-    //compute the coefficients for multibase exponentiation, then their wnaf representation
-    //note that this function can be implemented in the front to reduce tx cost
-    function interleave_shamir(uint256 scalar_u, uint256 scalar_v) internal returns (uint256 high, uint256 low) {
-        uint256 temp = 0;
-        uint256 checkpointGasLeft;
-        uint256 checkpointGasLeft2;
-
-        assembly {
-            let i := 0x0
-            //loop over 1/4 of scalars thx to Shamir's trick over 8 points
-            for { let index := 255 } gt(index, 191) { index := add(index, 191) } {
-                if eq(index, 223) {
-                    high := temp
-                    temp := 0
-                    i := 0
-                }
-                let T4 := add(shl(13, and(shr(index, scalar_v), 1)), shl(9, and(shr(index, scalar_u), 1)))
-                let index2 := sub(index, 64)
-                let T3 := add(T4, add(shl(12, and(shr(index2, scalar_v), 1)), shl(8, and(shr(index2, scalar_u), 1))))
-                let index3 := sub(index2, 64)
-                let T2 := add(T3, add(shl(11, and(shr(index3, scalar_v), 1)), shl(7, and(shr(index3, scalar_u), 1))))
-                index := sub(index3, 64)
-                let T1 := add(T2, add(shl(10, and(shr(index, scalar_v), 1)), shl(6, and(shr(index, scalar_u), 1))))
-                temp := add(temp, shl(i, shr(6, T1)))
-                i := add(i, 8)
-            }
-
-            low := temp
-        }
-
-        return (high, low);
-    }
-
-    function test_Invariant_wnaf() public {
-        uint256 inpute = 0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC63255F;
-        uint256 inpute2 = 0xF0FFFFFFFAAAAAAAFFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC63255F;
-
-        bytes memory wnaf = new bytes(300);
-        uint256 length;
-
-        (wnaf, length) = FCL_Elliptic_ZZ.ecZZ_wnaf(inpute);
-        /*console.log("length=",length);
-       for(uint i=0;i<length;i++)
-       {
-        console.log(" ",i, uint8(wnaf[i]));
-       }
-       */
-        uint256 high;
-        uint256 low;
-        uint256[2] memory uv = [inpute, inpute2];
-        uint256 checkpointGasLeft;
-        uint256 checkpointGasLeft2;
-
-        Wrap_ecdsa_interleaved wrap2 = new Wrap_ecdsa_interleaved(address(uint160(_prec_address)));
-
-        checkpointGasLeft = gasleft();
-
-        wrap2.wrap_ecdsa_core(0, uv);
-
-        checkpointGasLeft2 = gasleft();
-
-        console.log("interleaved: %x %x", high, low);
-        console.log("ecmulmul interleaved cost:", checkpointGasLeft - checkpointGasLeft2 - 100);
-    }
-
     //find the offset of precomputation table in the bytecode of the contract
     function find_offset(bytes memory bytecode, uint256 magic_value) public returns (uint256 offset) {
         uint256 read_value;
@@ -598,5 +479,162 @@ contract EcdsaTest is Test {
         }
 
         return true;
+    }
+
+    /**
+     * @dev Computation of uG+vQ using Strauss-Shamir's trick, G basepoint, Q public key
+     */
+    function ecZZ_mulmuladd_S4(
+        uint256 Q0,
+        uint256 Q1, //affine rep for input point Q
+        uint256 scalar_u,
+        uint256 scalar_v
+    ) internal returns (uint256 X) {
+        uint256 zz;
+        uint256 zzz;
+        uint256 Y;
+        uint256 index = 255;
+        uint256[6] memory T;
+        uint256 H0;
+        uint256 H1;
+
+        unchecked {
+            if (scalar_u == 0 && scalar_v == 0) return 0;
+
+            (H0, H1) = ecAff_add(gx, gy, Q0, Q1); //will not work if Q=P, obvious forbidden private key
+
+            assembly {
+                for { let T4 := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1)) } eq(T4, 0) {
+                    index := sub(index, 1)
+                    T4 := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1))
+                } {}
+                zz := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1))
+
+                if eq(zz, 1) {
+                    X := gx
+                    Y := gy
+                }
+                if eq(zz, 2) {
+                    X := Q0
+                    Y := Q1
+                }
+                if eq(zz, 3) {
+                    X := H0
+                    Y := H1
+                }
+
+                index := sub(index, 1)
+                zz := 1
+                zzz := 1
+
+                for {} gt(minus_1, index) { index := sub(index, 1) } {
+                    // inlined EcZZ_Dbl
+                    let T1 := mulmod(2, Y, p) //U = 2*Y1, y free
+                    let T2 := mulmod(T1, T1, p) // V=U^2
+                    let T3 := mulmod(X, T2, p) // S = X1*V
+                    T1 := mulmod(T1, T2, p) // W=UV
+                    let T4 := mulmod(3, mulmod(addmod(X, sub(p, zz), p), addmod(X, zz, p), p), p) //M=3*(X1-ZZ1)*(X1+ZZ1)
+                    zzz := mulmod(T1, zzz, p) //zzz3=W*zzz1
+                    zz := mulmod(T2, zz, p) //zz3=V*ZZ1, V free
+
+                    X := addmod(mulmod(T4, T4, p), mulmod(minus_2, T3, p), p) //X3=M^2-2S
+                    T2 := mulmod(T4, addmod(X, sub(p, T3), p), p) //-M(S-X3)=M(X3-S)
+                    Y := addmod(mulmod(T1, Y, p), T2, p) //-Y3= W*Y1-M(S-X3), we replace Y by -Y to avoid a sub in ecAdd
+
+                    {
+                        //value of dibit
+                        T4 := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1))
+
+                        if iszero(T4) {
+                            Y := sub(p, Y) //restore the -Y inversion
+                            continue
+                        } // if T4!=0
+
+                        if eq(T4, 1) {
+                            T1 := gx
+                            T2 := gy
+                        }
+                        if eq(T4, 2) {
+                            T1 := Q0
+                            T2 := Q1
+                        }
+                        if eq(T4, 3) {
+                            T1 := H0
+                            T2 := H1
+                        }
+                        if eq(zz, 0) {
+                            X := T1
+                            Y := T2
+                            zz := 1
+                            zzz := 1
+                            continue
+                        }
+                        // inlined EcZZ_AddN
+
+                        //T3:=sub(p, Y)
+                        //T3:=Y
+                        let y2 := addmod(mulmod(T2, zzz, p), Y, p) //R
+                        T2 := addmod(mulmod(T1, zz, p), sub(p, X), p) //P
+
+                        //special extremely rare case accumulator where EcAdd is replaced by EcDbl, no need to optimize this
+                        //todo : construct edge vector case
+                        if eq(y2, 0) {
+                            if eq(T2, 0) {
+                                T1 := mulmod(minus_2, Y, p) //U = 2*Y1, y free
+                                T2 := mulmod(T1, T1, p) // V=U^2
+                                T3 := mulmod(X, T2, p) // S = X1*V
+
+                                let TT1 := mulmod(T1, T2, p) // W=UV
+                                y2 := addmod(X, zz, p)
+                                TT1 := addmod(X, sub(p, zz), p)
+                                y2 := mulmod(y2, TT1, p) //(X-ZZ)(X+ZZ)
+                                T4 := mulmod(3, y2, p) //M
+
+                                zzz := mulmod(TT1, zzz, p) //zzz3=W*zzz1
+                                zz := mulmod(T2, zz, p) //zz3=V*ZZ1, V free
+
+                                X := addmod(mulmod(T4, T4, p), mulmod(minus_2, T3, p), p) //X3=M^2-2S
+                                T2 := mulmod(T4, addmod(T3, sub(p, X), p), p) //M(S-X3)
+
+                                Y := addmod(T2, mulmod(T1, Y, p), p) //Y3= M(S-X3)-W*Y1
+
+                                continue
+                            }
+                        }
+
+                        T4 := mulmod(T2, T2, p) //PP
+                        let TT1 := mulmod(T4, T2, p) //PPP, this one could be spared, but adding this register spare gas
+                        zz := mulmod(zz, T4, p)
+                        zzz := mulmod(zzz, TT1, p) //zz3=V*ZZ1
+                        let TT2 := mulmod(X, T4, p)
+                        T4 := addmod(addmod(mulmod(y2, y2, p), sub(p, TT1), p), mulmod(minus_2, TT2, p), p)
+                        Y := addmod(mulmod(addmod(TT2, sub(p, T4), p), y2, p), mulmod(Y, TT1, p), p)
+
+                        X := T4
+                    }
+                } //end loop
+                mstore(add(T, 0x60), zz)
+                //(X,Y)=ecZZ_SetAff(X,Y,zz, zzz);
+                //T[0] = inverseModp_Hard(T[0], p); //1/zzz, inline modular inversion using precompile:
+                // Define length of base, exponent and modulus. 0x20 == 32 bytes
+                mstore(T, 0x20)
+                mstore(add(T, 0x20), 0x20)
+                mstore(add(T, 0x40), 0x20)
+                // Define variables base, exponent and modulus
+                //mstore(add(pointer, 0x60), u)
+                mstore(add(T, 0x80), minus_2)
+                mstore(add(T, 0xa0), p)
+
+                // Call the precompiled contract 0x05 = ModExp
+                if iszero(call(not(0), 0x05, 0, T, 0xc0, T, 0x20)) { revert(0, 0) }
+
+                //Y:=mulmod(Y,zzz,p)//Y/zzz
+                //zz :=mulmod(zz, mload(T),p) //1/z
+                //zz:= mulmod(zz,zz,p) //1/zz
+                X := mulmod(X, mload(T), p) //X/zz
+            } //end assembly
+        } //end unchecked
+
+        return X;
     }
 }
