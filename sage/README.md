@@ -1,4 +1,4 @@
-# Fresh Crypto Lib (FCL): sage
+	# Fresh Crypto Lib (FCL): sage
 
 Some sagemath utilities for the FCL. You will need to have sagemath installed.
 
@@ -33,4 +33,6 @@ A x-only version of the schnorr algorithm, compatible with BIP340 and BIP Musig2
 ## License 
 License: This software is licensed under MIT License (see LICENSE FILE at root directory of project).
 
+## external ressources:
 
+* Pairing implementation used in protocols (ecdaa, ethereum pairing precompiles) comes from the impressive work of Aurore Guillevic's Gitlab at INRIA: https://gitlab.inria.fr/tnfs-alpha/alpha/-/tree/190b87732901750ed1438a8cf340571531d32230/sage/tnfs

@@ -534,27 +534,7 @@ library FCL_Elliptic_ZZ {
         } //end unchecked
     }
 
-    //compute the wnaf reprensentation of a positive scalar
-    function ecZZ_wnaf(uint256 scalar) public returns (bytes memory wnaf, uint256 length) {
-        bytes memory temp = new bytes(300);
-        uint256 length = 0;
-        uint8 ki = 0;
-
-        while (scalar > 0) {
-            if (scalar & 1 == 1) {
-                ki = uint8(scalar % 256);
-                temp[length] = bytes1(ki);
-                if (ki >= 128) {
-                    scalar += 256;
-                }
-                scalar -= uint256(ki);
-            }
-            scalar = scalar / 2;
-            length = length + 1;
-        }
-
-        return (temp, length);
-    }
+   
 
     // improving the extcodecopy trick : append array at end of contract
     function ecZZ_mulmuladd_S8_hackmem(uint256 scalar_u, uint256 scalar_v, uint256 dataPointer)

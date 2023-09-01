@@ -501,7 +501,7 @@ contract EcdsaTest is Test {
         unchecked {
             if (scalar_u == 0 && scalar_v == 0) return 0;
 
-            (H0, H1) = ecAff_add(gx, gy, Q0, Q1); //will not work if Q=P, obvious forbidden private key
+            (H0, H1) = FCL_Elliptic_ZZ.ecAff_add(gx, gy, Q0, Q1); //will not work if Q=P, obvious forbidden private key
 
             assembly {
                 for { let T4 := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1)) } eq(T4, 0) {
