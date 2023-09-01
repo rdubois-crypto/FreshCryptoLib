@@ -13,8 +13,8 @@ test_altbn128:
 	sage FCL_pairings/arithmetic/curves/atlbn128.py
 
 test_ecdaa:
-	sage FCL_ECDAA/tests/test_ECDAA.py
+	sage FCL_ecdaa/tests/test_ECDAA.py
 
 rfc_ecdaa:
-	sage FCL_ECDAA/rfc/gen_rfc_ECDAA.py 
+	sage FCL_ecdaa/rfc/gen_rfc_ECDAA.py 
 

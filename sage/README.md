@@ -2,12 +2,25 @@
 
 Some sagemath utilities for the FCL. You will need to have sagemath installed.
 
+
+## Requirements
+
+* solidity sha3 compatibility : Some functions require the old keccak_256 as implemented in Ethereum to function. You might need to install pysha3 manually from this repo 
+https://github.com/tiran/pysha3/tree/coverity_scan. (git clone, then make install).
+* add sage directory to python path: type >export PYTHONPATH=$PYTHONPATH:$(pwd) in sage directory
+
+
 ## Content
 
 
 
 ### Directory FCL_common:
 Little routines common to all projects.
+
+
+### Directory FCL_ecdaa:
+Implementation of ecdaa over BN254 and BLS12 for blockchain implementation reference
+
 
 ### Directory FCL_ecdsa:
 Signing, Verifying with key recovery ECDSA (canonical and non canonical versions).

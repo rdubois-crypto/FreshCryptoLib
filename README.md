@@ -1,9 +1,10 @@
 # Fresh Crypto Lib (FCL)
 
-The Fresh Crypto Lib is a set of functions for blockchain systems such as Wallet, SmarContract.
+The Fresh Crypto Lib is a set of functions for blockchain systems such as Wallet, SmartContracts.
 
 
 ## Content
+
 The implemented content is:
 - sec256r1 optimizations for EVM chains and Starknet
 - an ecdaa implementation using blockchain primitives
@@ -54,9 +55,15 @@ The following repos have been used in benchmarks:
 
 
 
-### FCL in the wild:
+### FCL in the wild
+
+* Academic paper: https://eprint.iacr.org/2023/939 for EthCC2023
 * Braavos https://github.com/myBraavos/efficient-secp256r1/blob/develop/src/secp256r1/ec_mulmuladd.cairo
 * Cartridge https://github.com/cartridge-gg/cairo-secp256r1/pull/3
+* EIP665 PR#7515 :https://github.com/ethereum/EIPs/pull/7515
+* Presentation made at EthCC 2023 in Paris: https://www.youtube.com/live/Rlq21oA_FA8
+
+
 
 ## License 
 License: This software is licensed under MIT License (see LICENSE FILE at root directory of project).
