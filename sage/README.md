@@ -38,6 +38,13 @@ Contains the precomputation of contract bytecode to be used by FCL_elliptic.sol.
 Type make gentab to generate precompiled bytecode contract for the public key of coordinates (C0,C1).
 Public key  may be changed by modifying the makefile constants C0 and C1.
 
+
+### Directory FCL_starknet:
+
+A Starknet implementation of Pedersen Hash, compatible with its cairo counterpart, but faster. This implementation was used by our team to win the DNA challenge of starknet Lisbon:
+https://blog.ledger.com/starknet-ctf/
+
+
 ### Directory FCL_schnorr:
 A x-only version of the schnorr algorithm, compatible with BIP340 and BIP Musig2.
 

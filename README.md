@@ -33,6 +33,7 @@ Namely arbitrary domain separator, choice of hash, byte ordering and annoying li
 ### Directory sage:
 
 * FCL_ecdsa_precompute.sage : precompute bytecode contract to speed up ecdsa verification for a given key.
+* FCL_ecdaa : sage reference for a blockchain implementation of ECDAA
 * FCL_pairings : sage implementation of curve and pairing computation over BN254 (aka altbn128) and BLS12381 using INRIA sources.
 
 
@@ -43,7 +44,7 @@ Namely arbitrary domain separator, choice of hash, byte ordering and annoying li
 
 The following repos are used as building blocks in the FCL:
 * Aurore Guillevic's Gitlab at INRIA: https://gitlab.inria.fr/tnfs-alpha/alpha/-/tree/190b87732901750ed1438a8cf340571531d32230/sage/tnfs for its generic sagemath BN and BLS curves and pairing implementation.
-* Paul Miller ** Noble ** javascript library for its G1 implementation of BN254 and BLS12, and keccak256.
+* Paul Miller **Noble** javascript library for its G1 implementation of BN254 and BLS12, and keccak256. https://paulmillr.com/noble/
 
 #### Benchmark
 
