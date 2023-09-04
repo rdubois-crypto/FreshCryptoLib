@@ -36,8 +36,8 @@ from sha3 import keccak_256
 #from common.arithmetic.curves.bls12_381 import *
 
 #ALTBN128 aka BN254 : current Ethereum precompiled contracts
-from common.arithmetic.curves.atlbn128 import long_pairing as _e
-from common.arithmetic.curves.atlbn128 import *
+from FCL_pairings.arithmetic.curves.atlbn128 import long_pairing as _e
+from FCL_pairings.arithmetic.curves.atlbn128 import *
 
 
 

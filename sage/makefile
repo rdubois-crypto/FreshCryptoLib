@@ -1,15 +1,14 @@
-# if your imports fail, try this:
-export:
-	export PYTHONPATH=$$PYTHONPATH:$$(pwd)
-#export PYTHONPATH=$PYTHONPATH:$(pwd)
 
-## This is a simple makefile to fasten Musig2 compilation and testing
+# if your imports fail, try this:
+
+#export PYTHONPATH=$PYTHONPATH:$(pwd)
 
 
 #compile Cairo and Sage and Compare Results
 test_bls12_381:
 	sage FCL_pairings/arithmetic/curves/bls12_381.sage
 test_altbn128:
+#	export PYTHONPATH=$$PYTHONPATH:$$(pwd)
 	sage FCL_pairings/arithmetic/curves/atlbn128.py
 
 test_ecdaa:
@@ -17,4 +16,12 @@ test_ecdaa:
 
 rfc_ecdaa:
 	sage FCL_ecdaa/rfc/gen_rfc_ECDAA.py 
+	
+test_starknet:
+	sage FCL_starknet/tests/FCL_starknet_test.py
+
+test_musig2:
+	sage FCL_musig2/tests/FCL_musig2_test.py
+all:
+	make test_starknet;make test_altbn128;make test_ecdaa;
 

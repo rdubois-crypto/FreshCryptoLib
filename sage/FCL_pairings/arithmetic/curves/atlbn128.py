@@ -139,18 +139,21 @@ def Precompile8(listG1, listG2):
  Gt=_e(Gen1, Gen2);
  l=len(listG1)
  for i in range(l):
-   print("i=",i, "produit=",produit);
+   #print("i=",i, "produit=",produit);
    produit=produit*_e(listG1[i],listG2[i]);
 
    
  bool= (produit==1);
- print("bool=", bool);
- 
+ #print("bool=", bool);
+ if bool:
+   print("   OK");
+ else:
+   print("   KO");
  return bool
 
 def precompute_gtm1():
  gtm1=  (_e(Gen1, Gen2))**(-1);
- print("gtm1=", gtm1);
+ #print("gtm1=", gtm1);
  return gtm1;
  
  
@@ -164,7 +167,7 @@ def local2_test_ate_pairing_bn254_aklgl():
         Q = c2 * E2.random_element()
     f = _e(P,Q);
     
-    print("P, Q, f",P, Q, f);
+    #print("P, Q, f",P, Q, f);
     
     ok = True
     bb = 1
@@ -178,20 +181,29 @@ def local2_test_ate_pairing_bn254_aklgl():
             ok = fab == fab_expected
             aa += 1
         bb += 1
-    print("test_ate_pairing_bn_aklgl (bilinear): {} ({} tests)".format(ok, (aa-1)*(bb-1)))
+    print("   test_ate_pairing_bn_aklgl (bilinear) ({} tests)".format( (aa-1)*(bb-1)) )
+    if(ok==true):
+     print("   OK");
+    else:
+     print("   KO"); 
+    
     return ok
 
 if __name__ == "__main__":
     arithmetic(False)
+    print("\n *********************************** ");
+    print("   Test FCL sage altbn128 module: ");   
+    print(" *********************************** ");
     
-    print("test Precompiled contract 8 (ecPairing)");
-    print("len",len(list_G1));
+    
+    print("   test Precompiled contract 8 (ecPairing):");
+    #print("len",len(list_G1));
     
     Precompile8(list_G1, list_G2); 
     precompute_gtm1();
     
     
-    print("\ntest pairing")
+    print("\n   test pairing :")
 #    print(" E, E2, Fq6D, xiD, r, c, c2, t-1",E1, E2, Fq6D, xiD, r, c, c2, t-1);
    
 #    test_miller_function_ate_aklgl(E1,E2,Fq6D,xiD,r,c,c2,t-1,D_twist=True)

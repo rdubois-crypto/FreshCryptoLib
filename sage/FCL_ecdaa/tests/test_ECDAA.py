@@ -1,7 +1,12 @@
-##*************************************************************************************/
-##/* Copyright (C) 2022 - Renaud Dubois - This file is part of cairo_musig2 project	 */
-##/* License: This software is licensed under a dual BSD and GPL v2 license. 	 */
-##/* See LICENSE file at the root folder of the project.				 */
+#//********************************************************************************************/
+#//  ___           _       ___               _         _    _ _    
+#// | __| _ ___ __| |_    / __|_ _ _  _ _ __| |_ ___  | |  (_) |__ 
+#// | _| '_/ -_|_-< ' \  | (__| '_| || | '_ \  _/ _ \ | |__| | '_ \
+#// |_||_| \___/__/_||_|  \___|_|  \_, | .__/\__\___/ |____|_|_.__/
+#//                                |__/|_|                        
+#///* Copyright (C) 2022 - Renaud Dubois - This file is part of FCL (Fresh CryptoLib) project 
+#///* License: This software is licensed under MIT License 	 
+#///* See LICENSE file at the root folder of the project.
 ##/* FILE: test_ecdaa.py							             	  */
 ##/* 											  */
 ##/* 											  */
@@ -26,7 +31,7 @@ from hashlib import *
 
 #this is the ethereum version of pre-sha3 standard:
 from sha3 import keccak_256    
-from ECDAA.ecdaa import *
+from FCL_ecdaa.ecdaa import *
 
 
 
@@ -34,18 +39,18 @@ def test_ethereum_hash():
  
  #first attempt: use ascci encoding
  res=keccak_256('Hello world!'.encode()).hexdigest()
- print("1. keccak('Hello world!)'",  hex(int('0x'+res,16)));
+# print("1. keccak('Hello world!)'",  hex(int('0x'+res,16)));
  #second attempt, convert to numbers, lsb:
  h_in=8031924123371070792+2^64*560229490;
  ctx= keccak_256(); 
  ctx=H_Zp_update(ctx, h_in, 12);	
- print("2. keccak('Hello world!)", ctx.hexdigest());
+# print("2. keccak('Hello world!)", ctx.hexdigest());
  
  #third attempt, convert to numbers, msb:
  h_in=8031924123371070792*2^64+560229490;
  ctx= keccak_256(); 
  ctx=H_Zp_update(ctx, h_in, 12);	
- print("3. keccak('Hello world!)", ctx.hexdigest());
+# print("3. keccak('Hello world!)", ctx.hexdigest());
  
  
  digeste=keccak_256('testing'.encode()).hexdigest()
@@ -143,17 +148,17 @@ def test_SigVerif():
 def RFC_SigVerif():
   set_random_seed(0)
 
-  print("*********************** Golden Sequence for ECDAA over EVM:");
-  print("CurveID:",curve_name);
-  print("r=",r);
+ # print("*********************** Golden Sequence for ECDAA over EVM:");
+  #print("CurveID:",curve_name);
+ # print("r=",r);
   isk_x,isk_y, r_x, r_y=SetUp_Priv();
-  print("Issuer secret parameters:", "\n isk_x=",isk_x,"\n isk_y=",isk_y, "\n r_x=",r_x, "\n r_y",r_y);
+  #print("Issuer secret parameters:", "\n isk_x=",isk_x,"\n isk_y=",isk_y, "\n r_x=",r_x, "\n r_y",r_y);
   
   
   
   X,Y,i_c,s_x, s_y = SetUp_DerivPub(isk_x,isk_y, r_x, r_y);
   
-  print("Issuer Public parameters:", "\n X=",X,"\n Y=",Y, "\n c=",i_c);
+  #print("Issuer Public parameters:", "\n X=",X,"\n Y=",Y, "\n c=",i_c);
   
   
   sc, yc=Issuer_Join_Generate_B();
@@ -161,18 +166,18 @@ def RFC_SigVerif():
   B=Deriv_B(sc,yc);
   sk,Q, i_c1, s1, n= Authenticator_Join_GenPriv(sc,yc);
   A,B,C,D = Issuer_Gen_Credentials(isk_x, isk_y, m, B, Q, i_c1, s1, n)
-  print("User Credentials:", "\n A=",A,"\n B=",B, "\n C=",C, "\n D=",D);
+  #print("User Credentials:", "\n A=",A,"\n B=",B, "\n C=",C, "\n D=",D);
   
-  print("r=",r);
+  #print("r=",r);
   
   Data=get_ZPnonce()%(2**256);
   
   h_KRD=get_ZPnonce()%(2**256);
-  print("Tag:", Data);
-  print("Msg:", h_KRD);
+  #print("Tag:", Data);
+ # print("Msg:", h_KRD);
   
   i_c,s,R,S,T,W,n=ECDAA_Sign(sk, A, B, C, D, Data, 32, h_KRD, 32);
-  print("Signature:", "\n c=", i_c,"\n s=",s,"\n R=",R,"\n S=",S,"\n T=",T,"\n W=",W,"\n n=",n);
+  #print("Signature:", "\n c=", i_c,"\n s=",s,"\n R=",R,"\n S=",S,"\n T=",T,"\n W=",W,"\n n=",n);
   
   
   res=true;
