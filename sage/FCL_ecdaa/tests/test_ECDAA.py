@@ -185,24 +185,38 @@ def RFC_SigVerif():
 
   return res;
 
+_VERBOSE=false;
+
+def print_verbose(comment, x):
+ if _VERBOSE:
+    print(comment, x)
+
 if __name__ == "__main__":
     arithmetic(False)
+    print(" ***********************************");
+    print("test FCL sage ECDAA Module");
+    print(" ***********************************");
    
-    print("\n\n######## Test ECDAA with curve:", curve_name);
+    print_verbose("---- Test Encodings:","");
    
-    print("---- Test Encodings:");
-   
-    print("test_ethereum_hash:",test_ethereum_hash());
-    print("test_sha256:",test_sha512());
-    print("test_sha512:",test_sha512());
+    print_verbose("test_ethereum_hash:",test_ethereum_hash());
+    print_verbose("test_sha256:",test_sha512());
+    print_verbose("test_sha512:",test_sha512());
     
-    print("---- Test SetUp:");        
-    print("test_CheckSetUp:",test_CheckSetup());
-    print("---- Test Join:");        
-    print("test_Proof_of_possesion:",test_Proof_of_possesion());
-    print("test_CheckCredentials:",test_CheckCredentials());
-    print("test_SigVerif:",test_SigVerif());
+    print_verbose("---- Test SetUp:","");        
+    print_verbose("test_CheckSetUp:",test_CheckSetup());
+    print_verbose("---- Test Join:","");        
+    print_verbose("test_Proof_of_possesion:",test_Proof_of_possesion());
+    print_verbose("test_CheckCredentials:",test_CheckCredentials());
+    print_verbose("test_SigVerif:",test_SigVerif());
 
-    print("RFC:",RFC_SigVerif());
+    print_verbose("RFC:",RFC_SigVerif());
+    if(	RFC_SigVerif()==true):
+      print("   OK");
+    else:
+      print("   KO");
+
+
+
 
 
