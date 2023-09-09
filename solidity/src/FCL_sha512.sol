@@ -12,20 +12,20 @@
 ///*
 ///*
 ///* DESCRIPTION: dummy SHA512 translation from https://opensource.apple.com/source/network_cmds/network_cmds-511/unbound/compat/sha512.c.auto.html
-///* This work is still WIP, not working yet
+///* This work is still WIP, not working yet, for gas efficiency the function only process messages of size multiple of 64
 //**************************************************************************************/
 //Initialize hash values:
 //(first 32 bits of the fractional parts of the square roots of the first 8 primes 2..19):
 contract sha512 {
-    int256 constant SHA512_BLOCK_LENGTH8 = 128;
-    int256 constant SHA512_BLOCK_LENGTH64 = SHA512_BLOCK_LENGTH8 >> 3;
+    uint256 constant SHA512_BLOCK_LENGTH8 = 128;
+    uint256 constant SHA512_BLOCK_LENGTH64 = SHA512_BLOCK_LENGTH8 >> 3;
 
     uint256 constant SHA512_DIGEST_LENGTH = 64;
 
     struct SHA512_CTX {
         uint64[8] state;
-        uint256[2] bitcount;
-        bytes buffer;
+        uint256 usedspace64;
+        uint64[SHA512_BLOCK_LENGTH64] buffer;
     }
 
     function Sha_Init(SHA512_CTX memory context) public {
@@ -157,21 +157,21 @@ contract sha512 {
 
         do {
             /* Part of the message block expansion: */
-            s0 = W512[(j + 1) & 0x0f];
+            uint64 s0 = context.buffer[(j + 1) & 0x0f];
             //s0 = sigma0_512(s0);
             s0 = (((s0) >> (14)) | ((s0) << (64 - (1)))) ^ (((s0) >> (18)) | ((s0) << (64 - (8)))) ^ ((s0) >> (7));
-            s1 = W512[(j + 14) & 0x0f];
+            uint64 s1 = context.buffer[(j + 14) & 0x0f];
             s1 = (((s1) >> (14)) | ((s1) << (64 - (14)))) ^ (((s1) >> (18)) | ((s1) << (64 - (18))))
                 ^ (((s1) >> (41)) | ((s1) << (64 - (41)))); //s1 =  sigma1_512(s1);
 
             /* Apply the SHA-512 compression function to update a..h */
             //T1 = h + Sigma1_512(e) + Ch(e, f, g) + K512[j] +		     (W512[j&0x0f] += s1 + W512[(j+9)&0x0f] + s0);
-            T1 = h + (((e) >> (14)) | ((e) << (64 - (14)))) ^ (((e) >> (18)) | ((e) << (64 - (18))))
+            uint64 T1 = h + (((e) >> (14)) | ((e) << (64 - (14)))) ^ (((e) >> (18)) | ((e) << (64 - (18))))
                 ^ (((e) >> (41)) | ((e) << (64 - (41))));
             context.buffer[j & 0x0f] += s1 + context.buffer[(j + 9) & 0x0f] + s0;
             T1 += (((e) & (f)) ^ ((~(e)) & (g))) + K512[j] + context.buffer[j & 0x0f];
             //T2 = Sigma0_512(a) + Maj(a, b, c);
-            T2 = T2 = (((a) >> (14)) | ((a) << (64 - (1)))) ^ (((a) >> (18)) | ((a) << (64 - (8))))
+            uint64 T2 = (((a) >> (14)) | ((a) << (64 - (1)))) ^ (((a) >> (18)) | ((a) << (64 - (8))))
                 ^ ((a) >> (7)) + (((a) & (b)) ^ ((a) & (c)) ^ ((b) & (c)));
             h = g;
             g = f;
@@ -196,34 +196,38 @@ contract sha512 {
         context.state[7] += h;
     }
 
-    //update hash with a 64 bit block multiple
-    function Sha_Update64(SHA512_CTX memory context, uint64[SHA512_BLOCK_LENGTH64] calldata datain, uint256 len)
+    //update hash with a 64-multiple bit block 
+
+    function Sha_Update64(SHA512_CTX memory context, uint64[SHA512_BLOCK_LENGTH64] calldata datain, uint256 len64)
         public
     {
-        uint256 usedspace64;
         uint256 freespace64;
 
-        if (len == 0) {
+        if (len64 == 0) {
             return;
         }
-        usedspace64 = (context.bitcount[0] >> 6) % SHA512_BLOCK_LENGTH;
-        if (usedspace > 0) {
-            /* Calculate how much free space is available in the buffer */
-            freespace = SHA512_BLOCK_LENGTH - usedspace;
 
-            if (len >= freespace) {
+        if (context.usedspace64 > 0) {
+            /* Calculate how much free space is available in the buffer */
+            freespace64 = SHA512_BLOCK_LENGTH64 - context.usedspace64;
+
+            if (len64 >= freespace64) {
                 /* Fill the buffer completely and process it */
-                MEMCPY_BCOPY(context.buffer[usedspace], data, freespace);
-                ADDINC128(context.bitcount, freespace << 3);
-                len -= freespace;
-                data += freespace;
-                //SHA512_Transform(context, (sha2_word64*)context->buffer);
+            for(uint i=0; i<freespace64;i++)
+             //   ADDINC128(context.bitcount, freespace << 3);
+                len64 -= freespace64;
+                context.buffer[context.usedspace64]=datain[i];
+                SHA512_Transform(context, context.buffer);
             } else {
                 /* The buffer is not yet full */
-                //MEMCPY_BCOPY(&context->buffer[usedspace], data, len);
+                for(uint i=0; i<len64;i++){
+                    context.buffer[context.usedspace64]=datain[i];
+                    
+
+                }
                 //ADDINC128(context->bitcount, len << 3);
                 /* Clean up: */
-                usedspace = freespace = 0;
+           //     usedspace = freespace = 0;
                 return;
             }
         }
