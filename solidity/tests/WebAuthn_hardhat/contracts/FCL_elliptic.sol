@@ -51,6 +51,10 @@ library FCL_Elliptic_ZZ {
     uint constant minus_2modn = 0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC63254F; 
        
     uint constant minus_1=      0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+    /* p - gy */
+    uint constant minus_3= 0xB01CBD1C01E58065711814B583F061E9D431CCA994CEA1313449BF97C840AE0A;
+    /* p - gx */
+    uint constant minus_4= 0x94E82E0C1ED3BDB90743191A9C5BBF0D88FC827FD214CC5F0B5EC6BA27673D69;
     
     /**
     /* inversion mod n via a^(n-2), use of precompiled using little Fermat theorem*/
@@ -260,6 +264,53 @@ library FCL_Elliptic_ZZ {
         return ecZZ_SetAff(x0, y0, zz0, zzz0);
     }
 
+    function ecAff_add2(
+        uint x1,
+        uint y1
+    ) internal view returns (uint _x1, uint _y1) {
+       assembly{
+          let _x, _y, _zz, _zzz
+          {
+            let _y2:=addmod(mulmod(y1, 1,p),minus_3,p)  
+            let _x2:=addmod(mulmod(x1, 1,p),minus_4,p)  
+            _x:=mulmod(_x2, _x2, p)//PP = P^2
+            _y:=mulmod(_x,_x2,p)//PPP = P*PP
+            _zz:=mulmod(1,_x,p) ////ZZ3 = ZZ1*PP
+            _zzz:= mulmod(1,_y,p) ////ZZZ3 = ZZZ1*PPP
+            let _zz1:=mulmod(gx, _x, p)//Q = X1*PP
+            _x:=addmod(addmod(mulmod(_y2,_y2, p), sub(p,_y),p ), mulmod(minus_2, _zz1,p) ,p )//R^2-PPP-2*Q
+            _y:=addmod(mulmod(addmod(_zz1, sub(p,_x),p), _y2, p), mulmod(minus_3, _y,p),p)//R*(Q-X3)
+          }
+          let zzzInv
+          {
+            let T := mload(0x40)
+            // store data
+            // Bsize: [0; 31]
+            mstore(T, 0x20)
+            // Esize: [32; 63]
+            mstore(add(T, 0x20), 0x20)
+            // Msize: [64; 95]
+            mstore(add(T, 0x40), 0x20)
+            // B: [96; 127]
+            mstore(add(T, 0x60), _zzz)
+            // E: [128; 159]
+            mstore(add(T, 0x80), minus_2)
+            // M: [160; 191]
+            mstore(add(T, 0xa0), p)
+                    
+            // Call the precompiled contract 0x05 = ModExp
+            if iszero(staticcall(not(0), 0x05, T, 0xc0, T, 0x20)) {
+                  revert(0, 0)
+            }
+            zzzInv:=mload(T)
+          }
+          _y1 := mulmod(_y,zzzInv,p)//Y/zzz
+          zzzInv :=mulmod(_zz, zzzInv,p) //1/z
+          zzzInv := mulmod(zzzInv,zzzInv,p) //1/zz
+          _x1:=mulmod(_x,zzzInv,p)//X/zz
+       }
+    }
+
      /**
      * @dev Computation of uG+vQ using Strauss-Shamir's trick, G basepoint, Q public key
      */
@@ -267,37 +318,32 @@ library FCL_Elliptic_ZZ {
         uint Q0, uint Q1,//affine rep for input point Q
         uint scalar_u,
         uint scalar_v
-    ) internal returns (uint X) {
+    ) internal view returns (uint X) {
      uint zz;
      uint zzz;
      uint Y;
      uint index=255;
-     uint[6] memory T;
      uint H0;
-     uint H1;   
-     
-     unchecked {
-     
-     if(scalar_u==0 && scalar_v==0) return 0;
-     
-     (H0,H1 )=ecAff_add(gx,gy,Q0, Q1);//will not work if Q=P, obvious forbidden private key
-   
-   /*
-     while( ( ((scalar_u>>index)&1)+2*((scalar_v>>index)&1) ) ==0){
-      index=index-1; 
-     }
-     */
-         
-      assembly{
-      
-     
-      for{  let T4:=add( shl(1, and(shr(index, scalar_v),1)), and(shr(index, scalar_u),1) )
-      } eq(T4,0) {
+     uint H1;
+     //(H0,H1 )=ecAff_add(gx,gy,Q0, Q1);//will not work if Q=P, obvious forbidden private key
+    (H0,H1 )=ecAff_add2(Q0, Q1);
+     assembly {
+
+      // if(scalar_u==0 && scalar_v==0) return 0;
+      if and(eq(scalar_u,0),eq(scalar_v,0)) {
+        return(X, 0x20)
+      }
+      /*
+        while( ( ((scalar_u>>index)&1)+2*((scalar_v>>index)&1) ) ==0){
+          index=index-1; 
+        }
+      */
+      for{ zz:=add( shl(1, and(shr(index, scalar_v),1)), and(shr(index, scalar_u),1) )
+      } eq(zz,0) {
         index := sub(index, 1)
-        T4:=add( shl(1, and(shr(index, scalar_v),1)), and(shr(index, scalar_u),1) )
+        zz:=add( shl(1, and(shr(index, scalar_v),1)), and(shr(index, scalar_u),1) )
       }
       {}
-       zz:=add( shl(1, and(shr(index, scalar_v),1)), and(shr(index, scalar_u),1) )
            
       if eq(zz,1) {
       	X:=gx
@@ -410,20 +456,31 @@ library FCL_Elliptic_ZZ {
        }
           
            }//end loop
-        mstore(add(T, 0x60),zz)
-      //(X,Y)=ecZZ_SetAff(X,Y,zz, zzz);
-      //T[0] = inverseModp_Hard(T[0], p); //1/zzz, inline modular inversion using precompile:
-     // Define length of base, exponent and modulus. 0x20 == 32 bytes
+      
+      
+      /* 
+         get free memory pointer, but no need update free memory pointer(saving 15 gas)): 
+          'mstore(0x40, add(T, 0xc0))'
+         because we will return X, and T is a local variable.
+       */
+      let T := mload(0x40)
+
+      // store data
+      // Bsize: [0; 31]
       mstore(T, 0x20)
+      // Esize: [32; 63]
       mstore(add(T, 0x20), 0x20)
+      // Msize: [64; 95]
       mstore(add(T, 0x40), 0x20)
-      // Define variables base, exponent and modulus
-      //mstore(add(pointer, 0x60), u)
+      // B: [96; 127]
+      mstore(add(T, 0x60), zz)
+      // E: [128; 159]
       mstore(add(T, 0x80), minus_2)
+      // M: [160; 191]
       mstore(add(T, 0xa0), p)
                
       // Call the precompiled contract 0x05 = ModExp
-      if iszero(call(not(0), 0x05, 0, T, 0xc0, T, 0x20)) {
+      if iszero(staticcall(not(0), 0x05, T, 0xc0, T, 0x20)) {
             revert(0, 0)
       }
        
@@ -432,7 +489,6 @@ library FCL_Elliptic_ZZ {
       //zz:= mulmod(zz,zz,p) //1/zz
       X:=mulmod(X,mload(T),p)//X/zz
       } //end assembly
-     }//end unchecked
      
       return X;
     }
