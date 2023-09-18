@@ -30,6 +30,8 @@ This directory contain the logic to generate the precompiles.
 
 ### WebAuthn_hardhat:
 
+**!beware that hardhat is not maintained, forge is now the preferred environment.**
+
 Implementation of the ECDSA P256 for WebAuthn using [hardhat](https://hardhat.org/).
 WebAuthn part forked from https://github.com/btchip/Webauthn.sol
 
