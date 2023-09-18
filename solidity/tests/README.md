@@ -41,7 +41,7 @@ Initial gas cost per verification: 1.15M
 
 Final gas cost verification:
 
--257K without precomputations,
+-208K without precomputations,
 
 -139K with precomputations.
 
@@ -57,7 +57,11 @@ The framework includes the following libraries to bench and compare execution ti
 - orbs-network
 - Numerology
 - obvioustech
-- 
+
+Final gas cost verification:
+
+-202K without precomputations,
+-69K with precomputations.
 
 
 #### Specific requirements
