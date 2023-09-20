@@ -20,7 +20,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {Base64} from "openzeppelin-contracts/contracts/utils/Base64.sol";
+import {Base64Url} from "./utils/Base64Url.sol";
 import {FCL_Elliptic_ZZ} from "./FCL_elliptic.sol";
 
 library FCL_WebAuthn {
@@ -42,7 +42,8 @@ library FCL_WebAuthn {
                 revert InvalidAuthenticatorData();
             }
             // Verify that clientData commits to the expected client challenge
-            string memory challengeEncoded = Base64.encode(abi.encodePacked(clientChallenge));
+            // Use the Base64Url encoding which omits padding characters to match WebAuthn Specification
+            string memory challengeEncoded = Base64Url.encode(abi.encodePacked(clientChallenge));
             bytes memory challengeExtracted = new bytes(
             bytes(challengeEncoded).length
         );
