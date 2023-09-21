@@ -14,12 +14,12 @@ import {Base64Url} from "@solidity/utils/Base64Url.sol";
  * @notice Mock data is used in these tests. Here I will explain how this mock data was derived to ensure its accuracy.
  * This is the response object from the WebAuthn Authentication API call:
  * {
-     response: 
-        authenticatorData: "SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MFAAAAAA"
-        clientDataJSON: "eyJ0eXBlIjoid2ViYXV0aG4uZ2V0IiwiY2hhbGxlbmdlIjoibkNMX1h5SHd1QnNSUG1QMzIyMnBULTN2RWJJUm0wQ0l1SlprLTVvOHRsZyIsIm9yaWdpbiI6Imh0dHA6Ly9sb2NhbGhvc3Q6MzAwMCIsImNyb3NzT3JpZ2luIjpmYWxzZX0"
-        signature: "MEUCIECRE8S97mXV1Dwqqp3uF_CW3c6XvQMQrkrgjnx1lVnLAiEA00ucboY5T_qXn5MJdpYyzvid-8MROOS9-Q3QRPvqsl4"
-        userHandle:"cUtqZTRBNGk0TTdDTFBGTVE4UFVOam5PU3RsRUlMdDRyOWpMdG00amtDRT0"
-    }
+ *      response: 
+ *         authenticatorData: "SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MFAAAAAA"
+ *         clientDataJSON: "eyJ0eXBlIjoid2ViYXV0aG4uZ2V0IiwiY2hhbGxlbmdlIjoibkNMX1h5SHd1QnNSUG1QMzIyMnBULTN2RWJJUm0wQ0l1SlprLTVvOHRsZyIsIm9yaWdpbiI6Imh0dHA6Ly9sb2NhbGhvc3Q6MzAwMCIsImNyb3NzT3JpZ2luIjpmYWxzZX0"
+ *         signature: "MEUCIECRE8S97mXV1Dwqqp3uF_CW3c6XvQMQrkrgjnx1lVnLAiEA00ucboY5T_qXn5MJdpYyzvid-8MROOS9-Q3QRPvqsl4"
+ *         userHandle:"cUtqZTRBNGk0TTdDTFBGTVE4UFVOam5PU3RsRUlMdDRyOWpMdG00amtDRT0"
+ *     }
  *  The authenticatorDataMock is the hex representation of the bytes retrieved by Base64URL decoding the authenticatorData from the response object above.
  *  The clientDataMock provided below is retrieved by Base64URL decoding the clientDataJSON from the response object above, and then converting it to the hex representation of those bytes.
  *  The challengeMock is the hex representation of the bytes retrieved by Base64URL decoding the clientDataJSON from the response object above.
@@ -37,19 +37,27 @@ contract FCL_Webauthn_Base64Url is Test {
     }
 
     function test_base64URL_format() external {
-        // mock data, see notice above for details on how this was derived 
-        bytes memory authenticatorDataMock = hex"49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000";
+        // mock data, see notice above for details on how this was derived
+        bytes memory authenticatorDataMock =
+            hex"49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000";
         bytes1 authenticatorDataFlagMaskMock = hex"01";
-        bytes memory clientDataMock = hex"7b2274797065223a22776562617574686e2e676574222c226368616c6c656e6765223a226e434c5f5879487775427352506d503332323270542d3376456249526d304349754a5a6b2d356f38746c67222c226f726967696e223a22687474703a2f2f6c6f63616c686f73743a33303030222c2263726f73734f726967696e223a66616c73657d";
+        bytes memory clientDataMock =
+            hex"7b2274797065223a22776562617574686e2e676574222c226368616c6c656e6765223a226e434c5f5879487775427352506d503332323270542d3376456249526d304349754a5a6b2d356f38746c67222c226f726967696e223a22687474703a2f2f6c6f63616c686f73743a33303030222c2263726f73734f726967696e223a66616c73657d";
         bytes32 clientChallengeMock = hex"9c22ff5f21f0b81b113e63f7db6da94fedef11b2119b4088b89664fb9a3cb658";
         uint256 clientChallengeDataOffsetMock = 36;
-        uint256[2] memory rsMock = [29204351571054144655406732941989447033933540609767730374087271035220690033099 , 95571604233087243530638576272724546495790691135210520108106485630494705365598];
-        uint256[2] memory QMock = [81682839938742543555082486110423905347664508641828409199518693630277409128887 , 17376078742205537968081477783760696603470208142043731074843150602836373389861];
-        
+        uint256[2] memory rsMock = [
+            29204351571054144655406732941989447033933540609767730374087271035220690033099,
+            95571604233087243530638576272724546495790691135210520108106485630494705365598
+        ];
+        uint256[2] memory QMock = [
+            81682839938742543555082486110423905347664508641828409199518693630277409128887,
+            17376078742205537968081477783760696603470208142043731074843150602836373389861
+        ];
+
         // if this function call doesn't revert with an error, we believe it to have passed
-        // the next test ensures that data is properly formated and successfully verified 
+        // the next test ensures that data is properly formated and successfully verified
         bytes32 message = webauthn.format(
-            authenticatorDataMock, 
+            authenticatorDataMock,
             authenticatorDataFlagMaskMock,
             clientDataMock,
             clientChallengeMock,
@@ -62,16 +70,24 @@ contract FCL_Webauthn_Base64Url is Test {
 
     function test_webauthn_Base64URL_checkSignature() external {
         // mock data, see notice above for details on how this was derived
-        bytes memory authenticatorDataMock = hex"49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000";
+        bytes memory authenticatorDataMock =
+            hex"49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000";
         bytes1 authenticatorDataFlagMaskMock = hex"01";
-        bytes memory clientDataMock = hex"7b2274797065223a22776562617574686e2e676574222c226368616c6c656e6765223a226e434c5f5879487775427352506d503332323270542d3376456249526d304349754a5a6b2d356f38746c67222c226f726967696e223a22687474703a2f2f6c6f63616c686f73743a33303030222c2263726f73734f726967696e223a66616c73657d";
+        bytes memory clientDataMock =
+            hex"7b2274797065223a22776562617574686e2e676574222c226368616c6c656e6765223a226e434c5f5879487775427352506d503332323270542d3376456249526d304349754a5a6b2d356f38746c67222c226f726967696e223a22687474703a2f2f6c6f63616c686f73743a33303030222c2263726f73734f726967696e223a66616c73657d";
         bytes32 clientChallengeMock = hex"9c22ff5f21f0b81b113e63f7db6da94fedef11b2119b4088b89664fb9a3cb658";
         uint256 clientChallengeDataOffsetMock = 36;
-        uint256[2] memory rsMock = [29204351571054144655406732941989447033933540609767730374087271035220690033099 , 95571604233087243530638576272724546495790691135210520108106485630494705365598];
-        uint256[2] memory QMock = [81682839938742543555082486110423905347664508641828409199518693630277409128887 , 17376078742205537968081477783760696603470208142043731074843150602836373389861];
-        
+        uint256[2] memory rsMock = [
+            29204351571054144655406732941989447033933540609767730374087271035220690033099,
+            95571604233087243530638576272724546495790691135210520108106485630494705365598
+        ];
+        uint256[2] memory QMock = [
+            81682839938742543555082486110423905347664508641828409199518693630277409128887,
+            17376078742205537968081477783760696603470208142043731074843150602836373389861
+        ];
+
         bool result = webauthn.verify(
-            authenticatorDataMock, 
+            authenticatorDataMock,
             authenticatorDataFlagMaskMock,
             clientDataMock,
             clientChallengeMock,
@@ -85,14 +101,22 @@ contract FCL_Webauthn_Base64Url is Test {
 
     function test_webauthn_format_details() public {
         // mock data, see notice above for details on how this was derived
-        bytes memory authenticatorDataMock = hex"49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000";
+        bytes memory authenticatorDataMock =
+            hex"49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000";
         bytes1 authenticatorDataFlagMaskMock = hex"01";
-        bytes memory clientDataMock = hex"7b2274797065223a22776562617574686e2e676574222c226368616c6c656e6765223a226e434c5f5879487775427352506d503332323270542d3376456249526d304349754a5a6b2d356f38746c67222c226f726967696e223a22687474703a2f2f6c6f63616c686f73743a33303030222c2263726f73734f726967696e223a66616c73657d";
+        bytes memory clientDataMock =
+            hex"7b2274797065223a22776562617574686e2e676574222c226368616c6c656e6765223a226e434c5f5879487775427352506d503332323270542d3376456249526d304349754a5a6b2d356f38746c67222c226f726967696e223a22687474703a2f2f6c6f63616c686f73743a33303030222c2263726f73734f726967696e223a66616c73657d";
         bytes32 clientChallengeMock = hex"9c22ff5f21f0b81b113e63f7db6da94fedef11b2119b4088b89664fb9a3cb658";
         uint256 clientChallengeDataOffsetMock = 36;
-        uint256[2] memory rsMock = [29204351571054144655406732941989447033933540609767730374087271035220690033099 , 95571604233087243530638576272724546495790691135210520108106485630494705365598];
-        uint256[2] memory QMock = [81682839938742543555082486110423905347664508641828409199518693630277409128887 , 17376078742205537968081477783760696603470208142043731074843150602836373389861];
-        
+        uint256[2] memory rsMock = [
+            29204351571054144655406732941989447033933540609767730374087271035220690033099,
+            95571604233087243530638576272724546495790691135210520108106485630494705365598
+        ];
+        uint256[2] memory QMock = [
+            81682839938742543555082486110423905347664508641828409199518693630277409128887,
+            17376078742205537968081477783760696603470208142043731074843150602836373389861
+        ];
+
         // call helper function for logs of the new encoding process
         bytes32 message = helper.WebAuthn_format(
             authenticatorDataMock, // authenticator data
@@ -101,14 +125,12 @@ contract FCL_Webauthn_Base64Url is Test {
             clientChallengeMock, // client challenge
             clientChallengeDataOffsetMock, // client challenge data offset
             rsMock // signature r and s
-        );     
-
+        );
     }
 }
 
 // Contract implementing the FCL_Webauthn library functions to test
-contract WebAuthn_base64URL  {
-
+contract WebAuthn_base64URL {
     function format(
         bytes calldata authenticatorData,
         bytes1 authenticatorDataFlagMask,
@@ -116,18 +138,18 @@ contract WebAuthn_base64URL  {
         bytes32 clientChallenge,
         uint256 clientChallengeDataOffset,
         uint256[2] calldata rs
-        ) external pure returns(bytes32 message) {
+    ) external pure returns (bytes32 message) {
         message = FCL_WebAuthn.WebAuthn_format(
-                authenticatorData, // authenticator data
-                authenticatorDataFlagMask, // authenticator data flag mask
-                clientData, // client data
-                clientChallenge, // client challenge
-                clientChallengeDataOffset, // client challenge data offset
-                rs // signature r and s 
-            );
+            authenticatorData, // authenticator data
+            authenticatorDataFlagMask, // authenticator data flag mask
+            clientData, // client data
+            clientChallenge, // client challenge
+            clientChallengeDataOffset, // client challenge data offset
+            rs // signature r and s
+        );
     }
 
-    function verify( 
+    function verify(
         bytes calldata authenticatorData,
         bytes1 authenticatorDataFlagMask,
         bytes calldata clientData,
@@ -135,7 +157,7 @@ contract WebAuthn_base64URL  {
         uint256 clientChallengeDataOffset,
         uint256[2] calldata rs,
         uint256[2] calldata Q
-    ) external returns (bool result){
+    ) external returns (bool result) {
         result = FCL_WebAuthn.checkSignature(
             authenticatorData, // authenticator data
             authenticatorDataFlagMask, // authenticator data flag mask
@@ -149,15 +171,14 @@ contract WebAuthn_base64URL  {
 }
 
 // A contract with the logic directly embedded to provide logs to see how the encoding is working
-contract Helper is Test { 
-
+contract Helper is Test {
     error InvalidAuthenticatorData();
     error InvalidClientData();
     error InvalidSignature();
+
     uint256 constant n = 0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551;
 
-    string internal constant ENCODING_TABLE =
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+    string internal constant ENCODING_TABLE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
     // removed pure due to console2.logs
     function WebAuthn_format(
@@ -218,5 +239,4 @@ contract Helper is Test {
 
         return sha256(verifyData);
     }
-
 }
