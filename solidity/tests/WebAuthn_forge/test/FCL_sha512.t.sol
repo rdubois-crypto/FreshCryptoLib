@@ -113,11 +113,13 @@ contract Sha512Test is Test {
  //reference norm sha512(abc)
  function test_SHA512_abc() public{
    
-   ctx.buffer[0]=0x6162638000000000; //"message abc";
-   ctx.buffer[15] = 0x18; //"padding"
+  uint64[16] memory buffer=[uint64(0),uint64(0),uint64(0),uint64(0),uint64(0),uint64(0),uint64(0),uint64(0),uint64(0),uint64(0),uint64(0),uint64(0),uint64(0),uint64(0),uint64(0),uint64(0)];
+
+   buffer[0]=0x6162638000000000; //"message abc";
+   buffer[15] = 0x18; //"padding"
 
     uint256 lowh;uint256 highh;
-    (lowh, highh)=sha512.SHA512(ctx.buffer);
+    (lowh, highh)=sha512.SHA512(buffer);
     
     assertEq(lowh, 0xddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a);
  }

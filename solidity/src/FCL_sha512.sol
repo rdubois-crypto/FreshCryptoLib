@@ -267,7 +267,7 @@ library sha512 {
 
 
 // a single step single block (padding included) of sha512 processing
-function SHA512(uint64[SHA512_BLOCK_LENGTH64] memory data) internal view returns(uint256 low, uint256 high){
+function SHA512(uint64[16] memory data) internal view returns(uint256 low, uint256 high){
   uint64[16] memory buffer;
   uint256[1] memory T;
 
