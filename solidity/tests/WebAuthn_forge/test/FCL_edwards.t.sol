@@ -11,7 +11,7 @@
 ///* FILE: FCL_Edwards.t.sol
 ///*
 ///*
-///* DESCRIPTION: test file for Edwards curves 
+///* DESCRIPTION: test file for Edwards curves
 ///*
 //**************************************************************************************/
 // SPDX-License-Identifier: UNLICENSED
@@ -172,29 +172,30 @@ contract EdwardsTest is Test {
         assertEq(p - x_res1, gx);
     }
 
-    function test_Sqrtmod() public{
-        uint256 val=mulmod(gx, gx, p);
-        uint256 rac=SqrtMod(val);
-        console.log("rac=",rac);
-        assertEq(mulmod(rac, rac, p),val);
-
+    function test_Sqrtmod() public {
+        uint256 val = mulmod(gx, gx, p);
+        uint256 rac = SqrtMod(val);
+        console.log("rac=", rac);
+        assertEq(mulmod(rac, rac, p), val);
     }
 
-    function test_ed_decompress() public{
-
-        uint256 x=Edwards.ed_decompress(gy, 1);
-        if(Edwards.ed_isOnCurve(x,gy,1)!=true){
+    function test_ed_decompress() public {
+        uint256 x = Edwards.ed_decompress(gy, 1);
+        if (Edwards.ed_isOnCurve(x, gy, 1) != true) {
             revert();
         }
-        if((x!=gx)&&(p-x!=gx)){
+        if ((x != gx) && (p - x != gx)) {
             revert();
         }
     }
 
-    function test_mulmuladd_opp() public{
-        uint256 x=Edwards.ed_mulmuladd(gx, p-gy,
-         0x1000000000000000000000000000000014def9dea2f79cd65812631a5cf5d3e0, 0x1000000000000000000000000000000014def9dea2f79cd65812631a5cf5d3e0);        
-        assertEq(x,0);
+    function test_mulmuladd_opp() public {
+        uint256 x = Edwards.ed_mulmuladd(
+            gx,
+            p - gy,
+            0x1000000000000000000000000000000014def9dea2f79cd65812631a5cf5d3e0,
+            0x1000000000000000000000000000000014def9dea2f79cd65812631a5cf5d3e0
+        );
+        assertEq(x, 0);
     }
-
 }
