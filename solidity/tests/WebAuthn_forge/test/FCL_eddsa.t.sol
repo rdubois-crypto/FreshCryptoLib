@@ -8,10 +8,10 @@
 ///* License: This software is licensed under MIT License
 ///* This Code may be reused including license and copyright notice.
 ///* See LICENSE file at the root folder of the project.
-///* FILE: FCL_eddsa.t.sol
+///* FILE: FCL_Edwards.t.sol
 ///*
 ///*
-///* DESCRIPTION: test file for eddsa signature protocol
+///* DESCRIPTION: test file for Edwards curves 
 ///*
 //**************************************************************************************/
 // SPDX-License-Identifier: UNLICENSED
@@ -21,154 +21,30 @@ import "forge-std/Test.sol";
 
 import "@solidity/FCL_eddsa.sol";
 
-contract EddsaTest is Test {
-    // Multiply an elliptic curve point by a scalar
-    function multiplyScalar(uint256 x0, uint256 y0, uint256 scalar)
-        public
-        returns (
-            //returns (uint256 x3, uint256 y3, uint256 z3, uint256 t3){
-            uint256 x1,
-            uint256 y1
-        )
-    {
-        if (scalar == 0) {
-            return (0, 1);
-        } else if (scalar == 1) {
-            return (x0, y0);
-        }
+contract EDDSATest is Test {
+   
+   //RFC8032, test vector 3
+   function test_RFC8032_3() public
+   {
+    uint64[16] memory buffer;
+    //public key:43933056957747458452560886832567536073542840507013052263144963060608791330050, 
+    //16962727616734173323702303146057009569815335830970791807500022961899349823996
+    uint256[2] memory kpub=[43933056957747458452560886832567536073542840507013052263144963060608791330050,16962727616734173323702303146057009569815335830970791807500022961899349823996];
 
-        uint256 base2X = x0;
-        uint256 base2Y = y0;
-        uint256 base2Z = 1;
-        uint256 base2t = mulmod(x0, y0, p);
-        //uint256 x1; uint256 y1;
+    //sig value:0x6291d657deec24024827e69c3abe01a30ce548a284743a445e3680d7db5ac3ac18ff9b538d16f290ae67f760984dc6594a7c15e9716ed28dc027beceea1ec40a
+    //msg:af82
+    buffer[0]=0x6291d657deec2402;//Rs
+    buffer[1]=0x4827e69c3abe01a3;
+    buffer[2]=0x0ce548a284743a44;
+    buffer[3]=0x5e3680d7db5ac3ac;
+    buffer[4]=0xfc51cd8e6218a1a3;//public y value, swapped
+    buffer[5]=0x8da47ed00230f058;
+    buffer[6]=0x0816ed13ba3303ac;
+    buffer[7]=0x5deb911548908025;
+    buffer[8]=0xaf82800000000000;//msg+padd
+    buffer[15]=0x210; //end of padding, 66bytes=0x210 bits
+    
+   }
 
-        x1 = x0;
-        y1 = y0;
-        uint256 z1 = 1;
-        uint256 t1 = base2t;
 
-        if (scalar % 2 == 0) {
-            x1 = 0;
-            y1 = 1;
-            z1 = 1;
-            t1 = 0;
-        }
-
-        scalar = scalar >> 1;
-
-        while (scalar > 0) {
-            //(base2X, base2Y, base2Z,base2t ) = EDDSA.ed_Dbl(base2X, base2Y, base2Z);
-            (base2X, base2Y, base2Z, base2t) = EDDSA.ed_Dbl(base2X, base2Y, base2Z);
-
-            if (scalar & 1 == 1) {
-                (x1, y1, z1, t1) = EDDSA.ed_Add(base2X, base2Y, base2Z, base2t, x1, y1, z1, t1);
-            }
-
-            scalar = scalar >> 1;
-        }
-
-        return EDDSA.ed_z2Aff(x1, y1, z1);
-        //return (x1, y1, z1,t1);
-    }
-
-    function test_z2Aff(uint256 scramble) public {
-        if (scramble != 0) {
-            uint256 x = mulmod(gx, scramble, p);
-            uint256 y = mulmod(gy, scramble, p);
-            uint256 z = scramble;
-            uint256 t = mulmod(x, y, p);
-            (x, y) = EDDSA.ed_z2Aff(x, y, z);
-            assertEq(x, gx);
-            assertEq(y, gy);
-        }
-    }
-
-    function test_add() public {
-        uint256 x;
-        uint256 y;
-        uint256 z;
-        uint256 t;
-        uint256 x4;
-        uint256 y4;
-        uint256 z4;
-        uint256 t4;
-        uint256 minus_gx = p - gx; //-gy
-        uint256 mt;
-
-        (x, y, z, t) = EDDSA.ed_Add(gx, gy, 1, mulmod(gx, gy, p), gx, gy, 1, mulmod(gx, gy, p));
-
-        for (uint256 i = 1; i < 100; i++) {
-            (x, y, z, t) = EDDSA.ed_Add(x, y, z, t, x, y, z, t); //P=2P
-            minus_gx = p - x;
-            mt = mulmod(minus_gx, y, p);
-            (x4, y4, z4, t4) = EDDSA.ed_Add(x, y, z, t, x, y, z, t); //2P
-            (x4, y4, z4, t4) = EDDSA.ed_Add(x, y, z, t, x, y, z, t); //4P
-
-            (x4, y4, z4, t4) = EDDSA.ed_Add(x4, y4, z4, t4, minus_gx, y, z, mt); //4G-G=3P
-
-            (x4, y4, z4, t4) = EDDSA.ed_Add(x4, y4, z4, t4, minus_gx, y, z, mt); //4G-G=2P
-
-            (x4, y4, z4, t4) = EDDSA.ed_Add(x4, y4, z4, t4, minus_gx, y, z, mt); //4G-G=P
-        }
-
-        (x, y) = EDDSA.ed_z2Aff(x4, y4, z4);
-        (x4, y4) = EDDSA.ed_z2Aff(x4, y4, z4);
-        assertEq(x4, x);
-    }
-
-    function test_dbl() public {
-        uint256 x;
-        uint256 y;
-        uint256 z;
-        uint256 t;
-        uint256 x4;
-        uint256 y4;
-        uint256 z4;
-        uint256 t4;
-
-        (x, y, z, t) = EDDSA.ed_Add(gx, gy, 1, mulmod(gx, gy, p), gx, gy, 1, mulmod(gx, gy, p)); //2G
-        (x4, y4, z4, t4) = EDDSA.ed_Dbl(gx, gy, 1); //2G
-        (x4, y4) = EDDSA.ed_z2Aff(x4, y4, z4);
-        (x, y) = EDDSA.ed_z2Aff(x, y, z);
-
-        assertEq(x4, x);
-
-        assertEq(y4, y);
-    }
-
-    function test_oncurve() public {
-        assertEq(EDDSA.ed_isOnCurve(gx, gy, 1, mulmod(gx, gy, p)), true);
-    }
-
-    function test_mul() public {
-        uint256 x_res1;
-        uint256 x_res;
-        uint256 y_res1;
-        uint256 z_res1;
-        uint256 t_res1;
-        //(n-1)G==-G ?
-        (x_res1, y_res1) = multiplyScalar(gx, gy, 0x1000000000000000000000000000000014def9dea2f79cd65812631a5cf5d3ec);
-
-        console.log("---res mul:", x_res1, y_res1);
-
-        assertEq(p - x_res1, gx);
-        //(n+1)G==-G ?
-        (x_res1, y_res1) = multiplyScalar(gx, gy, 0x1000000000000000000000000000000014def9dea2f79cd65812631a5cf5d3ee);
-        assertEq(x_res1, gx);
-    }
-
-    function test_mulmuladd() public {
-        uint256 x_res1;
-        uint256 x_res;
-        uint256 y_res1;
-        uint256 z_res1;
-        uint256 t_res1;
-        //(n-1)G==-G ?
-        (x_res1) = EDDSA.ed_mulmuladd(gx, gy, 0x1000000000000000000000000000000014def9dea2f79cd65812631a5cf5d3ec, 0);
-
-        console.log("---res mul:", x_res1, y_res1);
-
-        assertEq(p - x_res1, gx);
-    }
 }
