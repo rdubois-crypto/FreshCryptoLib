@@ -63,7 +63,7 @@ The following repos have been used in benchmarks:
 * Cartridge https://github.com/cartridge-gg/cairo-secp256r1/pull/3
 * EIP665 PR#7515 :https://github.com/ethereum/EIPs/pull/7515
 * Presentation made at EthCC 2023 in Paris: https://www.youtube.com/live/Rlq21oA_FA8
-
+* Forum DAO :https://github.com/forumdaos/forum-contracts/tree/main/src/libraries
 
 
 ## License 
