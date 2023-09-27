@@ -101,12 +101,13 @@ library FCL_WebAuthn {
         uint[2] calldata rs,
         uint[2] calldata Q
     ) internal  returns (bool) {
-    	 // Let the caller check if User Presence (0x01) or User Verification (0x04) are set
-      
-       bytes32 message= FCL_WebAuthn.WebAuthn_format(authenticatorData, authenticatorDataFlagMask, clientData, clientChallenge, clientChallengeDataOffset, rs);
-       
-	bool result=FCL_Elliptic_ZZ.ecdsa_verify(message, rs, Q);
-	
+        // Let the caller check if User Presence (0x01) or User Verification (0x04) are set
+        bytes32 message= FCL_WebAuthn.WebAuthn_format(authenticatorData, authenticatorDataFlagMask, clientData, clientChallenge, clientChallengeDataOffset, rs);
+        uint256 r = rs[0];
+        uint256 s = rs[1];
+        uint256 Qx = Q[0];
+        uint256 Qy = Q[1];
+        bool result=FCL_Elliptic_ZZ.ecdsa_verify(message, r, s, Qx, Qy);
         return result;
     }
     
@@ -126,7 +127,7 @@ library FCL_WebAuthn {
        
        console.log("input to prec:",uint256(message));
        
-	bool result=FCL_Elliptic_ZZ.ecdsa_precomputed_verify(message, rs,  dataPointer);
+	bool result=FCL_Elliptic_ZZ.ecdsa_precomputed_verify(message, rs[0], rs[1],  dataPointer);
 	
 
         return result;
@@ -148,7 +149,7 @@ library FCL_WebAuthn {
        bytes32 message= FCL_WebAuthn.WebAuthn_format(authenticatorData, authenticatorDataFlagMask, clientData, clientChallenge, clientChallengeDataOffset, rs);
        
        
-	bool result=FCL_Elliptic_ZZ.ecdsa_precomputed_hackmem(message, rs,  dataPointer);
+	bool result=FCL_Elliptic_ZZ.ecdsa_precomputed_hackmem(message, rs[0], rs[1],  dataPointer);
 	
 
         return result;

@@ -107,7 +107,7 @@ contract Webauthn_prec3{
    //  console.log("hash=", uint(hash));
    // console.log("rs0=", rs[0]);
     
-     bool result=FCL_Elliptic_ZZ.ecdsa_precomputed_verify(bytes32(hash), rs, dataPointer);
+     bool result=FCL_Elliptic_ZZ.ecdsa_precomputed_verify(bytes32(hash), rs[0], rs[1], dataPointer);
     // console.log("result= %s", result);
 
     }

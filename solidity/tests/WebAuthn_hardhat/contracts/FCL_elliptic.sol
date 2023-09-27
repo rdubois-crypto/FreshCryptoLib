@@ -19,7 +19,7 @@
 // Code is optimized for a=-3 only curves with prime order, constant like -1, -2 shall be replaced
 // if ever used for other curve than sec256R1
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.17;
 
 
 
@@ -51,17 +51,17 @@ library FCL_Elliptic_ZZ {
     uint constant minus_2modn = 0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC63254F; 
        
     uint constant minus_1=      0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+    
     /* p - gy */
-    uint constant minus_3= 0xB01CBD1C01E58065711814B583F061E9D431CCA994CEA1313449BF97C840AE0A;
+    uint256 constant gy_subtractedfrom_p = 0xB01CBD1C01E58065711814B583F061E9D431CCA994CEA1313449BF97C840AE0A;
     /* p - gx */
-    uint constant minus_4= 0x94E82E0C1ED3BDB90743191A9C5BBF0D88FC827FD214CC5F0B5EC6BA27673D69;
+    uint256 constant gx_subtractedfrom_p = 0x94E82E0C1ED3BDB90743191A9C5BBF0D88FC827FD214CC5F0B5EC6BA27673D69;
     
     /**
     /* inversion mod n via a^(n-2), use of precompiled using little Fermat theorem*/
-    function FCL_nModInv(uint256 u) internal  returns (uint256 result) {
-        uint[6] memory pointer;
-        assembly {
-            
+    function FCL_nModInv(uint256 u) internal view returns (uint256 result) {
+         assembly {
+            let pointer := mload(0x40)
             // Define length of base, exponent and modulus. 0x20 == 32 bytes
             mstore(pointer, 0x20)
             mstore(add(pointer, 0x20), 0x20)
@@ -70,20 +70,18 @@ library FCL_Elliptic_ZZ {
             mstore(add(pointer, 0x60), u)
             mstore(add(pointer, 0x80), minus_2modn)
             mstore(add(pointer, 0xa0), n)
-          
+
             // Call the precompiled contract 0x05 = ModExp
-            if iszero(call(not(0), 0x05, 0, pointer, 0xc0, pointer, 0x20)) {
-                revert(0, 0)
-            }
-            result:=mload(pointer)
+            if iszero(staticcall(not(0), 0x05, pointer, 0xc0, pointer, 0x20)) { revert(0, 0) }
+            result := mload(pointer)
         }
        
     }
      /**
     /* @dev inversion mod nusing little Fermat theorem via a^(n-2), use of precompiled*/
-    function FCL_pModInv(uint256 u)   internal returns (uint256 result) {
-        uint[6] memory pointer;
-        assembly {  
+    function FCL_pModInv(uint256 u) internal view returns (uint256 result) {
+        assembly {
+            let pointer := mload(0x40)
             // Define length of base, exponent and modulus. 0x20 == 32 bytes
             mstore(pointer, 0x20)
             mstore(add(pointer, 0x20), 0x20)
@@ -92,12 +90,10 @@ library FCL_Elliptic_ZZ {
             mstore(add(pointer, 0x60), u)
             mstore(add(pointer, 0x80), minus_2)
             mstore(add(pointer, 0xa0), p)
-          
+
             // Call the precompiled contract 0x05 = ModExp
-            if iszero(call(not(0), 0x05, 0, pointer, 0xc0, pointer, 0x20)) {
-                revert(0, 0)
-            }
-            result:=mload(pointer)
+            if iszero(staticcall(not(0), 0x05, pointer, 0xc0, pointer, 0x20)) { revert(0, 0) }
+            result := mload(pointer)
         }
     }
     
@@ -121,12 +117,12 @@ library FCL_Elliptic_ZZ {
     function ecZZ_SetAff( uint x,
         uint y,
         uint zz,
-        uint zzz) internal  returns (uint x1, uint y1)
+        uint zzz) internal view returns (uint x1, uint y1)
     {
       uint zzzInv = FCL_pModInv(zzz); //1/zzz
       y1=mulmod(y,zzzInv,p);//Y/zzz
-      uint b=mulmod(zz, zzzInv,p); //1/z
-      zzzInv= mulmod(b,b,p); //1/zz
+      uint _b=mulmod(zz, zzzInv,p); //1/z
+      zzzInv= mulmod(_b,_b,p); //1/zz
       x1=mulmod(x,zzzInv,p);//X/zz
     }
     
@@ -207,6 +203,7 @@ library FCL_Elliptic_ZZ {
      */
     function ecZZ_IsZero (uint x0, uint y0, uint zz0, uint zzz0) internal pure returns (bool)
     {
+    (x0, zz0, zzz0);
      if ( (y0 == 0)  ) {
             return true;
         }
@@ -223,22 +220,29 @@ library FCL_Elliptic_ZZ {
      * @dev Check if the curve is the zero curve in affine rep.
      */
    function ecAff_IsZero(uint x, uint y) internal pure returns (bool flag) {
+    (x);
         return (y==0);
     }
 
     /**
      * @dev Check if a point in affine coordinates is on the curve (reject Neutral that is indeed on the curve).
      */
-    function ecAff_isOnCurve(uint x, uint y) internal pure returns (bool) {
-        if (0 == x || x == p || 0 == y || y == p) {
-            return false;
-        }
-        unchecked {
-            uint LHS = mulmod(y, y, p); // y^2
-            uint RHS = addmod(mulmod(mulmod(x, x, p), x, p), mulmod(x, a, p), p); // x^3+ax
-                 RHS = addmod(RHS, b, p); // x^3 + a*x + b
-           
-            return LHS == RHS;
+    function ecAff_isOnCurve(uint x, uint y) internal pure returns (bool onCurve) {
+        // if(0 == x || x == p || 0 == y || y == p) {
+        //     return false;
+        // }
+        assembly {
+            /*
+            if(x>0 && y>0 && x<p && y<p){
+                ...
+            }
+            */
+            if and(gt(mul(x, y), 0),and(gt(p, x), gt(p, y))) {
+                let LHS := mulmod(y, y, p) // y^2
+                let RHS := addmod(mulmod(mulmod(x, x, p), x, p), mulmod(x, a, p), p) // x^3+ax
+                RHS := addmod(RHS, b, p) // x^3 + a*x + b
+                onCurve := eq(LHS, RHS)
+            }
         }
     }
     
@@ -252,7 +256,7 @@ library FCL_Elliptic_ZZ {
         uint y0,
         uint x1,
         uint y1
-    ) internal returns (uint, uint) {
+    ) internal view returns (uint, uint) {
         uint zz0;
         uint zzz0;
         
@@ -264,22 +268,22 @@ library FCL_Elliptic_ZZ {
         return ecZZ_SetAff(x0, y0, zz0, zzz0);
     }
 
-    function ecAff_add2(
+    function ecAff_add_affinepoint(
         uint x1,
         uint y1
     ) internal view returns (uint _x1, uint _y1) {
        assembly{
           let _x, _y, _zz, _zzz
           {
-            let _y2:=addmod(mulmod(y1, 1,p),minus_3,p)  
-            let _x2:=addmod(mulmod(x1, 1,p),minus_4,p)  
+            let _y2:=addmod(mulmod(y1, 1,p),gy_subtractedfrom_p,p)  
+            let _x2:=addmod(mulmod(x1, 1,p),gx_subtractedfrom_p,p)  
             _x:=mulmod(_x2, _x2, p)//PP = P^2
             _y:=mulmod(_x,_x2,p)//PPP = P*PP
             _zz:=mulmod(1,_x,p) ////ZZ3 = ZZ1*PP
             _zzz:= mulmod(1,_y,p) ////ZZZ3 = ZZZ1*PPP
             let _zz1:=mulmod(gx, _x, p)//Q = X1*PP
             _x:=addmod(addmod(mulmod(_y2,_y2, p), sub(p,_y),p ), mulmod(minus_2, _zz1,p) ,p )//R^2-PPP-2*Q
-            _y:=addmod(mulmod(addmod(_zz1, sub(p,_x),p), _y2, p), mulmod(minus_3, _y,p),p)//R*(Q-X3)
+            _y:=addmod(mulmod(addmod(_zz1, sub(p,_x),p), _y2, p), mulmod(gy_subtractedfrom_p, _y,p),p)//R*(Q-X3)
           }
           let zzzInv
           {
@@ -326,11 +330,10 @@ library FCL_Elliptic_ZZ {
      uint H0;
      uint H1;
      //(H0,H1 )=ecAff_add(gx,gy,Q0, Q1);//will not work if Q=P, obvious forbidden private key
-    (H0,H1 )=ecAff_add2(Q0, Q1);
+     (H0, H1) = ecAff_add_affinepoint(Q0, Q1);
      assembly {
-
       // if(scalar_u==0 && scalar_v==0) return 0;
-      if and(eq(scalar_u,0),eq(scalar_v,0)) {
+      if iszero(add(scalar_u, scalar_v)) {
         return(X, 0x20)
       }
       /*
@@ -339,7 +342,7 @@ library FCL_Elliptic_ZZ {
         }
       */
       for{ zz:=add( shl(1, and(shr(index, scalar_v),1)), and(shr(index, scalar_u),1) )
-      } eq(zz,0) {
+      } iszero(zz) {
         index := sub(index, 1)
         zz:=add( shl(1, and(shr(index, scalar_v),1)), and(shr(index, scalar_u),1) )
       }
@@ -402,7 +405,7 @@ library FCL_Elliptic_ZZ {
       	 T1:=H0
       	 T2:= H1
       	 }
-      if eq(zz,0) {
+      if iszero(zz) {
        X:=T1
        Y:=T2
        zz:=1
@@ -418,8 +421,8 @@ library FCL_Elliptic_ZZ {
       
       //special extremely rare case accumulator where EcAdd is replaced by EcDbl, no need to optimize this
       //todo : construct edge vector case
-      if eq(y2,0){
-             if eq(T2,0){
+      if iszero(y2){
+             if iszero(T2){
        
        T1:=mulmod(minus_2, Y, p) //U = 2*Y1, y free
        T2:=mulmod(T1,T1,p)  // V=U^2
@@ -499,7 +502,7 @@ library FCL_Elliptic_ZZ {
       //(thx to Lakhdar https://github.com/Kelvyne for EVM storage explanations and tricks)
       // the external tool to generate tables from public key is in the /sage directory
     function ecZZ_mulmuladd_S8_extcode(uint scalar_u, uint scalar_v, address dataPointer) 
-    internal  returns(uint X/*, uint Y*/)
+    internal view returns(uint X/*, uint Y*/)
     {
     
       unchecked{ 
@@ -585,8 +588,8 @@ library FCL_Elliptic_ZZ {
       let T2:=addmod(mulmod(mload(T), zz,p),sub(p,X),p)  
       
       //special case ecAdd(P,P)=EcDbl
-      if eq(y2,0){
-       if eq(T2,0){
+      if iszero(y2){
+       if iszero(T2){
        
        let T1:=mulmod(minus_2, Y, p) //U = 2*Y1, y free
        T2:=mulmod(T1,T1,p)  // V=U^2
@@ -637,7 +640,7 @@ library FCL_Elliptic_ZZ {
       mstore(add(T, 0xa0), p)
                
       // Call the precompiled contract 0x05 = ModExp
-      if iszero(call(not(0), 0x05, 0, T, 0xc0, T, 0x20)) {
+      if iszero(staticcall(not(0), 0x05, T, 0xc0, T, 0x20)) {
             revert(0, 0)
       }
       
@@ -651,7 +654,7 @@ library FCL_Elliptic_ZZ {
      
       // improving the extcodecopy trick : append array at end of contract
     function ecZZ_mulmuladd_S8_hackmem(uint scalar_u, uint scalar_v, uint dataPointer) 
-    internal  returns(uint X/*, uint Y*/)
+    internal view returns(uint X/*, uint Y*/)
     {
       uint zz; // third and  coordinates of the point
      
@@ -747,7 +750,7 @@ library FCL_Elliptic_ZZ {
       mstore(add(T, 0xa0), p)
                
       // Call the precompiled contract 0x05 = ModExp
-      if iszero(call(not(0), 0x05, 0, T, 0xc0, T, 0x20)) {
+      if iszero(staticcall(not(0), 0x05, T, 0xc0, T, 0x20)) {
             revert(0, 0)
       }
       
@@ -762,34 +765,42 @@ library FCL_Elliptic_ZZ {
      */
     function ecdsa_verify(
         bytes32 message,
-        uint[2] calldata rs,
-        uint[2] calldata Q
-    ) internal  returns (bool) {
-        if (rs[0] == 0 || rs[0] >= n || rs[1] == 0||rs[1]>=n) {
+        uint256 r,
+        uint256 s,
+        uint256 Qx,
+        uint256 Qy
+    ) internal view returns (bool success) {
+        assembly {
+            /* 
+             if (r == 0 || r >= n || s == 0 || s >= n) {
+                return false;
+             }
+             */
+            if iszero(mul(mul(r, s), and(gt(n, r), gt(n, s)))){
+                revert(0, 0)
+            }
+        }
+
+        if (!ecAff_isOnCurve(Qx, Qy)) {
             return false;
         }
-        
-        
-        if (!ecAff_isOnCurve(Q[0], Q[1])) {
-            return false;
-        }
-  	
-        uint sInv = FCL_nModInv(rs[1]);
-        
-        uint scalar_u=mulmod(uint(message), sInv, n);
-        uint scalar_v= mulmod(rs[0], sInv, n);
-        uint x1;
-	
-       x1=ecZZ_mulmuladd_S_asm(Q[0], Q[1],scalar_u, scalar_v);
-       	
-       	
+
+        uint256 sInv = FCL_nModInv(s); // sInv
+
+        // uint scalar_u=mulmod(uint(message), sInv, n);
+        // uint scalar_v= mulmod(r, sInv, n);
+        sInv = ecZZ_mulmuladd_S_asm(
+            Qx, 
+            Qy,
+            mulmod(uint(message), sInv, n) /* scalar_u */, 
+            mulmod(r, sInv, n)             /* scalar_v */
+        );
+
         assembly{
-	 x1:=addmod(x1,sub(n,calldataload(rs)), n)
-	}
-	//return true; 	
-        return x1 == 0;
-        
-       }
+            // return addmod(sInv, sub(n, r), n) == 0
+            success:= iszero(addmod(sInv, sub(n, r), n))
+        }
+    }
      
       /**
       * @dev ECDSA verification using a precomputed table of multiples of P and Q stored in contract at address Shamir8
@@ -799,28 +810,37 @@ library FCL_Elliptic_ZZ {
         
       function ecdsa_precomputed_verify(
         bytes32 message,
-        uint[2] calldata rs,
+        uint256 r,
+        uint256 s,
         address Shamir8
-    ) internal  returns (bool) {
-     if (rs[0] == 0 || rs[0] >= n || rs[1] == 0) {
-            return false;
+    ) internal view returns (bool) {
+        assembly {
+            /* 
+             if (r == 0 || r >= n || s == 0 || s >= n) {
+                return false;
+             }
+             */
+            if iszero(mul(mul(r, s), and(gt(n, r), gt(n, s)))){
+                revert(0, 0)
+            }
         }
+
         /* Q is pushed via bytecode assumed to be correct
         if (!isOnCurve(Q[0], Q[1])) {
             return false;
         }*/
         
-       uint sInv =FCL_nModInv(rs[1]);
+       uint sInv =FCL_nModInv(s);
        //uint sInv =2;
        
      	uint X;
          
        //Shamir 8 dimensions	
-        X=ecZZ_mulmuladd_S8_extcode(mulmod(uint(message), sInv, n), mulmod(rs[0], sInv, n), Shamir8);
+        X=ecZZ_mulmuladd_S8_extcode(mulmod(uint(message), sInv, n), mulmod(r, sInv, n), Shamir8);
       
 	assembly{
 	
-	 X:=addmod(X,sub(n,calldataload(rs)), n)
+	 X:=addmod(X,sub(n,r), n)
 	}
 	
 	 
@@ -837,25 +857,34 @@ library FCL_Elliptic_ZZ {
         
       function ecdsa_precomputed_hackmem(
         bytes32 message,
-        uint[2] calldata rs,
+        uint256 r,
+        uint256 s,
         uint256 endcontract
-    ) internal  returns (bool) {
-     if (rs[0] == 0 || rs[0] >= n || rs[1] == 0) {
-            return false;
+    ) internal view returns (bool) {
+        assembly {
+            /* 
+             if (r == 0 || r >= n || s == 0 || s >= n) {
+                return false;
+             }
+             */
+            if iszero(mul(mul(r, s), and(gt(n, r), gt(n, s)))){
+                revert(0, 0)
+            }
         }
+
         /* Q is pushed via bytecode assumed to be correct
         if (!isOnCurve(Q[0], Q[1])) {
             return false;
         }*/
         
-        uint sInv =FCL_nModInv(rs[1]);
+        uint sInv =FCL_nModInv(s);
      	uint X;
          
        //Shamir 8 dimensions	
-        X=ecZZ_mulmuladd_S8_hackmem(mulmod(uint(message), sInv, n), mulmod(rs[0], sInv, n), endcontract);
+        X=ecZZ_mulmuladd_S8_hackmem(mulmod(uint(message), sInv, n), mulmod(r, sInv, n), endcontract);
       
 	assembly{
-	 X:=addmod(X,sub(n,calldataload(rs)), n)
+	 X:=addmod(X,sub(n,r), n)
 	}
         return X == 0;
         

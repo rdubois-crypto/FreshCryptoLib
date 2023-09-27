@@ -22,8 +22,12 @@ contract Webauthn {
         // bytes32 message = sha256(verifyData);
         console.log("hash=", uint(hash));
         console.log("rs0=", rs[0]);
+        uint256 r = rs[0];
+        uint256 s = rs[1];
+        uint256 Qx = Q[0];
+        uint256 Qy = Q[1];
         uint256 gasleft1 = gasleft();
-        bool result=FCL_Elliptic_ZZ.ecdsa_verify(bytes32(hash), rs, Q);
+        bool result=FCL_Elliptic_ZZ.ecdsa_verify(bytes32(hash), r, s, Qx, Qy);
         uint256 gasleft2 = gasleft();
         uint256 gasused = gasleft1 - gasleft2;
         if(result){
