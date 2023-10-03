@@ -73,6 +73,9 @@ contract EdwardsTest is Test {
     }
 
     function test_z2Aff(uint256 scramble) public {
+        vm.assume(scramble!=0);
+        vm.assume(scramble<p);
+        
         if (scramble != 0) {
             uint256 x = mulmod(gx, scramble, p);
             uint256 y = mulmod(gy, scramble, p);

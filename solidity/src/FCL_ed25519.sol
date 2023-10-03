@@ -43,11 +43,11 @@ uint256 constant sqrtm1=0x2b8324804fc1df0b2b4d00993dfbd7a72f431806ad2fe478c4ee1b
 //P+3 div 8
 uint256 constant pp3div8=0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe;
 
-/// @notice Calculate the modular inverse of a given integer, which is the inverse of this integer modulo n.
+
+/// @notice Calculate one modular square root of a given integer.
 /// @dev Uses the ModExp precompiled contract at address 0x05 for fast computation using little Fermat theorem
 /// @param self The integer of which to find the modular inverse
 /// @return result The modular inverse of the input integer. If the modular inverse doesn't exist, it revert the tx
-
 
 function SqrtMod(uint256 self) returns (uint256 result){
  assembly ("memory-safe") {
@@ -94,6 +94,11 @@ function SqrtMod(uint256 self) returns (uint256 result){
    }
    return result;
 }
+
+/// @notice Calculate the modular inverse of a given integer, which is the inverse of this integer modulo n.
+/// @dev Uses the ModExp precompiled contract at address 0x05 for fast computation using little Fermat theorem
+/// @param self The integer of which to find the modular inverse
+/// @return result The modular inverse of the input integer. If the modular inverse doesn't exist, it revert the tx
 
 function nModInv(uint256 self) returns (uint256 result) {
     assembly ("memory-safe") {

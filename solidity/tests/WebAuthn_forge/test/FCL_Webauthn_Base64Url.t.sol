@@ -14,7 +14,7 @@ import {Base64Url} from "@solidity/utils/Base64Url.sol";
  * @notice Mock data is used in these tests. Here I will explain how this mock data was derived to ensure its accuracy.
  * This is the response object from the WebAuthn Authentication API call:
  * {
- *      response: 
+ *      response:
  *         authenticatorData: "SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MFAAAAAA"
  *         clientDataJSON: "eyJ0eXBlIjoid2ViYXV0aG4uZ2V0IiwiY2hhbGxlbmdlIjoibkNMX1h5SHd1QnNSUG1QMzIyMnBULTN2RWJJUm0wQ0l1SlprLTVvOHRsZyIsIm9yaWdpbiI6Imh0dHA6Ly9sb2NhbGhvc3Q6MzAwMCIsImNyb3NzT3JpZ2luIjpmYWxzZX0"
  *         signature: "MEUCIECRE8S97mXV1Dwqqp3uF_CW3c6XvQMQrkrgjnx1lVnLAiEA00ucboY5T_qXn5MJdpYyzvid-8MROOS9-Q3QRPvqsl4"
