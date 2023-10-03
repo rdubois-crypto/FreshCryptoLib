@@ -3,7 +3,7 @@ src = "src"
 out = "out"
 libs = ["lib"]
 optimizer = true
-optimizer_runs = 15000
+optimizer_runs = 1000000
 allow_paths = ["../../../solidity"]
 #remappings = ["@solidity/=../../solidity/"]
 

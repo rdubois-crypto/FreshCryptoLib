@@ -67,6 +67,33 @@ contract ArithmeticTest is Test {
     }
     //ecAff_isOnCurve
 
+    function test_Fuzz_SqrtMod(uint256 i_u256a) public{
+         vm.assume(i_u256a < FCL_Elliptic_ZZ.p);
+       uint256 sqrt=FCL_Elliptic_ZZ.SqrtMod(i_u256a);
+       bool flag=(mulmod(sqrt, sqrt, FCL_Elliptic_ZZ.p)==i_u256a);
+       if(flag==false)
+       {
+        i_u256a=mulmod(i_u256a, p-1, p);//if a is not a square, -a shall be
+        sqrt=FCL_Elliptic_ZZ.SqrtMod(i_u256a);
+        flag=(mulmod(sqrt, sqrt, FCL_Elliptic_ZZ.p)==i_u256a);
+
+       } 
+       assertEq(flag, true);
+
+    }
+
+    function test_Fuzz_ecDecompress(uint256 x, uint256 parity) public{
+        vm.assume(x < FCL_Elliptic_ZZ.p);
+        vm.assume(x >0);
+        
+        uint256 y=FCL_Elliptic_ZZ.ec_Decompress(x, parity&1);
+        if(y!=FCL_Elliptic_ZZ._NOTONCURVE){
+            console.log("on curve y=",y);
+            assertEq(FCL_Elliptic_ZZ.ecAff_isOnCurve(x,y), true);
+            assertEq(y&1, parity&1);
+        }
+    }
+   
     //check consistency of ecmulmuladd and Add
     function test_invariant_FCL_Ecmulmuladd() public {
         uint256 ecpoint_Rx = 0;
