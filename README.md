@@ -30,6 +30,8 @@ signature_opt.cairo : optimisation of ECDSA verification using ec_mulmuladd_W fu
 <!---*FCL_musig2: Original implementation of the Schnorr verification algorithm. Please note that it is a custom implementation (cryptographically equivalent, but not identical to BlockStream implementation).
 Namely arbitrary domain separator, choice of hash, byte ordering and annoying little choices are not compatible with Musig2 BIP proposal.-->
 
+Note : The language is now deprecated since its transition from python-like to rust-like language.
+
 ### Directory sage:
 
 * FCL_ecdsa_precompute.sage : precompute bytecode contract to speed up ecdsa verification for a given key.
