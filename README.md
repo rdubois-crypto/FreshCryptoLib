@@ -14,7 +14,7 @@ The implemented content is:
 ### Directory solidity:
 * FCL_elliptic.sol: an EVM optimized implementation of sec256r1(P256), using language hacks and specificities, as described in paper https://eprint.iacr.org/2023/939.pdf.
 * FCL_eddsa.sol   : an EVM optimized implementation of ed25519, using same paper tricks.
-* FCL_sha512.sol : implementation of the SHA512 primitive (WIP, not working)
+* FCL_sha512.sol : implementation of the SHA512 primitive (single bloc implementation)
 * FLC_Webauthn.sol: implementation of the WebAuthn2/FIDO2 authentication over ECDSA with P256
 <!--- FCL_ecdaa.sol: an EVM version of the ECDAA anonymous attestation for anonymous airdrops -->
 
@@ -29,6 +29,8 @@ signature_opt.cairo : optimisation of ECDSA verification using ec_mulmuladd_W fu
 
 <!---*FCL_musig2: Original implementation of the Schnorr verification algorithm. Please note that it is a custom implementation (cryptographically equivalent, but not identical to BlockStream implementation).
 Namely arbitrary domain separator, choice of hash, byte ordering and annoying little choices are not compatible with Musig2 BIP proposal.-->
+
+Note : The language is now deprecated since its transition from python-like to rust-like language.
 
 ### Directory sage:
 
