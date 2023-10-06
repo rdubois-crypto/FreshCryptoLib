@@ -402,9 +402,9 @@ function SqrtMod(uint256 self) internal  returns (uint256 result){
                                 T2 := mulmod(T1, T1, p) // V=U^2
                                 T3 := mulmod(X, T2, p) // S = X1*V
 
-                                let TT1 := mulmod(T1, T2, p) // W=UV
-                                y2 := addmod(X, zz, p)
-                                TT1 := addmod(X, sub(p, zz), p)
+                                T1 := mulmod(T1, T2, p) // W=UV
+                                y2 := addmod(X, zz, p)  //X+ZZ
+                                let TT1 := addmod(X, sub(p, zz), p) //X-ZZ
                                 y2 := mulmod(y2, TT1, p) //(X-ZZ)(X+ZZ)
                                 T4 := mulmod(3, y2, p) //M
 
@@ -559,9 +559,9 @@ function SqrtMod(uint256 self) internal  returns (uint256 result){
                                 T2 := mulmod(T1, T1, p) // V=U^2
                                 T3 := mulmod(X, T2, p) // S = X1*V
 
-                                let TT1 := mulmod(T1, T2, p) // W=UV
-                                y2 := addmod(X, zz, p)
-                                TT1 := addmod(X, sub(p, zz), p)
+                                T1 := mulmod(T1, T2, p) // W=UV
+                                y2 := addmod(X, zz, p) //X+ZZ
+                                let TT1 := addmod(X, sub(p, zz), p) //X-ZZ
                                 y2 := mulmod(y2, TT1, p) //(X-ZZ)(X+ZZ)
                                 T4 := mulmod(3, y2, p) //M
 
@@ -711,9 +711,9 @@ function SqrtMod(uint256 self) internal  returns (uint256 result){
                                 T2 := mulmod(T1, T1, p) // V=U^2
                                 let T3 := mulmod(X, T2, p) // S = X1*V
 
-                                let TT1 := mulmod(T1, T2, p) // W=UV
-                                y2 := addmod(X, zz, p)
-                                TT1 := addmod(X, sub(p, zz), p)
+                                T1 := mulmod(T1, T2, p) // W=UV
+                                y2 := addmod(X, zz, p) //X+ZZ
+                                let TT1 := addmod(X, sub(p, zz), p) //X-ZZ
                                 y2 := mulmod(y2, TT1, p) //(X-ZZ)(X+ZZ)
                                 let T4 := mulmod(3, y2, p) //M
 
