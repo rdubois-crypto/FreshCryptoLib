@@ -91,6 +91,43 @@ library FCL_Elliptic_ZZ {
         }
     }
 
+    //Coron projective shuffling, take as input alpha as blinding factor
+   function ecZZ_Coronize(uint256 alpha, uint256 x, uint256 y,  uint256 zz, uint256 zzz) public pure  returns (uint256 x3, uint256 y3, uint256 zz3, uint256 zzz3)
+   {
+       
+        uint256 alpha2=mulmod(alpha,alpha,p);
+       
+        x3=mulmod(alpha2, x,p); //alpha^-2.x
+        y3=mulmod(mulmod(alpha, alpha2,p), y,p);
+
+        zz3=mulmod(zz,alpha2,p);//alpha^2 zz
+        zzz3=mulmod(zzz,mulmod(alpha, alpha2,p),p);//alpha^3 zzz
+        
+        return (x3, y3, zz3, zzz3);
+   }
+
+
+ function ecZZ_Add(uint256 x1, uint256 y1, uint256 zz1, uint256 zzz1, uint256 x2, uint256 y2, uint256 zz2, uint256 zzz2) internal pure  returns (uint256 x3, uint256 y3, uint256 zz3, uint256 zzz3)
+  {
+    uint256 u1=mulmod(x1,zz2,p); // U1 = X1*ZZ2
+    uint256 u2=mulmod(x2, zz1,p);               //  U2 = X2*ZZ1
+    u2=addmod(u2, p-u1, p);//  P = U2-U1
+    x1=mulmod(u2, u2, p);//PP
+    x2=mulmod(x1, u2, p);//PPP
+    
+    zz3=mulmod(x1, mulmod(zz1, zz2, p),p);//ZZ3 = ZZ1*ZZ2*PP  
+    zzz3=mulmod(zzz1, mulmod(zzz2, x2, p),p);//ZZZ3 = ZZZ1*ZZZ2*PPP
+
+    zz1=mulmod(y1, zzz2,p);  // S1 = Y1*ZZZ2
+    zz2=mulmod(y2, zzz1, p);    // S2 = Y2*ZZZ1 
+    zz2=addmod(zz2, p-zz1, p);//R = S2-S1
+    zzz1=mulmod(u1, x1,p); //Q = U1*PP
+    x3= addmod(addmod(mulmod(zz2, zz2, p), p-x2,p), mulmod(minus_2, zzz1,p),p); //X3 = R2-PPP-2*Q
+    y3=addmod( mulmod(zz2, addmod(zzz1, p-x3, p),p), p-mulmod(zz1, x2, p),p);//R*(Q-X3)-S1*PPP
+
+    return (x3, y3, zz3, zzz3);
+  }
+
 /// @notice Calculate one modular square root of a given integer. Assume that p=3 mod 4.
 /// @dev Uses the ModExp precompiled contract at address 0x05 for fast computation using little Fermat theorem
 /// @param self The integer of which to find the modular inverse

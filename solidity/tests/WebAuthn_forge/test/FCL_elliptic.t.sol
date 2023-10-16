@@ -67,33 +67,107 @@ contract ArithmeticTest is Test {
     }
     //ecAff_isOnCurve
 
-    function test_Fuzz_SqrtMod(uint256 i_u256a) public{
-         vm.assume(i_u256a < FCL_Elliptic_ZZ.p);
-       uint256 sqrt=FCL_Elliptic_ZZ.SqrtMod(i_u256a);
-       bool flag=(mulmod(sqrt, sqrt, FCL_Elliptic_ZZ.p)==i_u256a);
-       if(flag==false)
-       {
-        i_u256a=mulmod(i_u256a, p-1, p);//if a is not a square, -a shall be
-        sqrt=FCL_Elliptic_ZZ.SqrtMod(i_u256a);
-        flag=(mulmod(sqrt, sqrt, FCL_Elliptic_ZZ.p)==i_u256a);
-
-       } 
-       assertEq(flag, true);
-
+    function test_Fuzz_SqrtMod(uint256 i_u256a) public {
+        vm.assume(i_u256a < FCL_Elliptic_ZZ.p);
+        uint256 sqrt = FCL_Elliptic_ZZ.SqrtMod(i_u256a);
+        bool flag = (mulmod(sqrt, sqrt, FCL_Elliptic_ZZ.p) == i_u256a);
+        if (flag == false) {
+            i_u256a = mulmod(i_u256a, p - 1, p); //if a is not a square, -a shall be
+            sqrt = FCL_Elliptic_ZZ.SqrtMod(i_u256a);
+            flag = (mulmod(sqrt, sqrt, FCL_Elliptic_ZZ.p) == i_u256a);
+        }
+        assertEq(flag, true);
     }
 
-    function test_Fuzz_ecDecompress(uint256 x, uint256 parity) public{
+    function test_Fuzz_ecDecompress(uint256 x, uint256 parity) public {
         vm.assume(x < FCL_Elliptic_ZZ.p);
-        vm.assume(x >0);
-        
-        uint256 y=FCL_Elliptic_ZZ.ec_Decompress(x, parity&1);
-        if(y!=FCL_Elliptic_ZZ._NOTONCURVE){
-            console.log("on curve y=",y);
-            assertEq(FCL_Elliptic_ZZ.ecAff_isOnCurve(x,y), true);
-            assertEq(y&1, parity&1);
+        vm.assume(x > 0);
+
+        uint256 y = FCL_Elliptic_ZZ.ec_Decompress(x, parity & 1);
+        if (y != FCL_Elliptic_ZZ._NOTONCURVE) {
+            console.log("on curve y=", y);
+            assertEq(FCL_Elliptic_ZZ.ecAff_isOnCurve(x, y), true);
+            assertEq(y & 1, parity & 1);
         }
     }
-   
+
+    //testing Coron Shuffling
+    function test_Fuzz_Coronize(uint256 x, uint256 alpha, uint256 beta) public {
+        uint256 x2;
+        uint256 y2;
+        uint256 zz2;
+        uint256 zzz2;
+
+        vm.assume(x < FCL_Elliptic_ZZ.p);
+        vm.assume(x > 0);
+        vm.assume(alpha < FCL_Elliptic_ZZ.p);
+        vm.assume(alpha > 0);
+        vm.assume(beta < FCL_Elliptic_ZZ.p);
+        vm.assume(beta > 0);
+
+        vm.assume(FCL_Elliptic_ZZ.ec_Decompress(x, 0) != FCL_Elliptic_ZZ._NOTONCURVE);
+        uint256 y = FCL_Elliptic_ZZ.ec_Decompress(x, 0);
+        assertEq(FCL_Elliptic_ZZ.ecAff_isOnCurve(x, y), true);
+
+        (x2, y2, zz2, zzz2) = FCL_Elliptic_ZZ.ecZZ_Coronize(alpha, x, y, 1, 1);
+        (x2, y2, zz2, zzz2) = FCL_Elliptic_ZZ.ecZZ_Coronize(beta, x2, y2, zz2, zzz2);
+
+        (x2, y2) = FCL_Elliptic_ZZ.ecZZ_SetAff(x2, y2, zz2, zzz2);
+
+        assertEq(FCL_Elliptic_ZZ.ecAff_isOnCurve(x2, y2), true);
+
+        assertEq(x, x2);
+    }
+
+    //TODO:fuzzing checking compliancy of ecAdd and ecAddN
+    function test_Fuzz_ecAdd(uint256 x, uint256 x2, uint256 rand1, uint256 rand2) public {
+        vm.assume(x < FCL_Elliptic_ZZ.p);
+        vm.assume(x > 0);
+        vm.assume(x2 < FCL_Elliptic_ZZ.p);
+        vm.assume(x2 > 0);
+        vm.assume(x != x2);
+        vm.assume(rand2 < FCL_Elliptic_ZZ.p);
+        vm.assume(rand2 > 0);
+        vm.assume(rand1 < FCL_Elliptic_ZZ.p);
+        vm.assume(rand1 > 0);
+
+        vm.assume(FCL_Elliptic_ZZ.ec_Decompress(x, 0) != FCL_Elliptic_ZZ._NOTONCURVE);
+        vm.assume(FCL_Elliptic_ZZ.ec_Decompress(x2, 0) != FCL_Elliptic_ZZ._NOTONCURVE);
+
+        uint256 y = FCL_Elliptic_ZZ.ec_Decompress(x, 0);
+        uint256 y2 = FCL_Elliptic_ZZ.ec_Decompress(x2, 0);
+        uint256 zz;
+        uint256 zzz;
+
+        uint256[4] memory P2;
+        uint256[4] memory P3;
+
+        uint256 radd;
+        uint256 raddN;
+
+        assertEq(FCL_Elliptic_ZZ.ecAff_isOnCurve(x, y), true);
+        assertEq(FCL_Elliptic_ZZ.ecAff_isOnCurve(x2, y2), true);
+
+        (x, y, zz, zzz) = FCL_Elliptic_ZZ.ecZZ_Coronize(rand1, x, y, 1, 1);
+        (radd, raddN) = FCL_Elliptic_ZZ.ecZZ_SetAff(x, y, zz, zzz);
+        assertEq(FCL_Elliptic_ZZ.ecAff_isOnCurve(radd, raddN), true);
+
+        (P3[0], P3[1], P3[2], P3[3]) = FCL_Elliptic_ZZ.ecZZ_AddN(x, y, zz, zzz, x2, y2);
+        (radd,) = FCL_Elliptic_ZZ.ecZZ_SetAff(P3[0], P3[1], P3[2], P3[3]);
+        // assertEq(FCL_Elliptic_ZZ.ecAff_isOnCurve(radd,raddN), true);
+
+        (x2, y2, P2[2], P2[3]) = FCL_Elliptic_ZZ.ecZZ_Coronize(rand2, x2, y2, 1, 1);
+
+        (rand1, rand2) = FCL_Elliptic_ZZ.ecZZ_SetAff(x2, y2, P2[2], P2[3]);
+        //      assertEq(FCL_Elliptic_ZZ.ecAff_isOnCurve(radd,raddN), true);
+
+        (P3[0], P3[1], P3[2], P3[3]) = FCL_Elliptic_ZZ.ecZZ_Add(x, y, zz, zzz, x2, y2, P2[2], P2[3]);
+
+        (raddN,) = FCL_Elliptic_ZZ.ecZZ_SetAff(P3[0], P3[1], P3[2], P3[3]);
+
+        assertEq(radd, raddN);
+    }
+
     //check consistency of ecmulmuladd and Add
     function test_invariant_FCL_Ecmulmuladd() public {
         uint256 ecpoint_Rx = 0;

@@ -89,18 +89,17 @@ contract Wrap_ecdsa_FCL {
     constructor() {}
 }
 
-
 //ideally the signer shall provide value v, we test both and consider result valid if one succeeds
-contract wrap_ecrecover{
+contract wrap_ecrecover {
     function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) public returns (bool) {
-    address Q1=FCL_Elliptic_ZZ.ec_recover_r1(uint256(message), 27, rs[0], rs[1]);
-    address Q2=FCL_Elliptic_ZZ.ec_recover_r1(uint256(message), 28, rs[0], rs[1]);
-    address expected=address(uint160(uint256(keccak256(abi.encodePacked(Q[0], Q[1])))));
+        address Q1 = FCL_Elliptic_ZZ.ec_recover_r1(uint256(message), 27, rs[0], rs[1]);
+        address Q2 = FCL_Elliptic_ZZ.ec_recover_r1(uint256(message), 28, rs[0], rs[1]);
+        address expected = address(uint160(uint256(keccak256(abi.encodePacked(Q[0], Q[1])))));
 
-    if( (Q1==expected)||(Q2==expected)){
-        return true;
-    }
-    return false;
+        if ((Q1 == expected) || (Q2 == expected)) {
+            return true;
+        }
+        return false;
     }
 }
 
@@ -358,7 +357,6 @@ contract EcdsaTest is Test {
 
             assertEq(res, valid_flag);
 
-
             checkpointGasLeft[0] = gasleft();
             res = wrap2.wrap_ecdsa_core(bytes32(message), rs);
 
@@ -497,5 +495,4 @@ contract EcdsaTest is Test {
 
         return true;
     }
-
 }
