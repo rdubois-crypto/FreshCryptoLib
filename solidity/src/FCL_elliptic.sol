@@ -52,9 +52,9 @@ library FCL_Elliptic_ZZ {
     /**
      * /* inversion mod n via a^(n-2), use of precompiled using little Fermat theorem
      */
-    function FCL_nModInv(uint256 u) internal returns (uint256 result) {
-        uint256[6] memory pointer;
+    function FCL_nModInv(uint256 u) internal view returns (uint256 result) {
         assembly {
+            let pointer := mload(0x40)
             // Define length of base, exponent and modulus. 0x20 == 32 bytes
             mstore(pointer, 0x20)
             mstore(add(pointer, 0x20), 0x20)
@@ -65,7 +65,7 @@ library FCL_Elliptic_ZZ {
             mstore(add(pointer, 0xa0), n)
 
             // Call the precompiled contract 0x05 = ModExp
-            if iszero(call(not(0), 0x05, 0, pointer, 0xc0, pointer, 0x20)) { revert(0, 0) }
+            if iszero(staticcall(not(0), 0x05, pointer, 0xc0, pointer, 0x20)) { revert(0, 0) }
             result := mload(pointer)
         }
     }
@@ -73,9 +73,9 @@ library FCL_Elliptic_ZZ {
      * /* @dev inversion mod nusing little Fermat theorem via a^(n-2), use of precompiled
      */
 
-    function FCL_pModInv(uint256 u) internal returns (uint256 result) {
-        uint256[6] memory pointer;
+    function FCL_pModInv(uint256 u) internal view returns (uint256 result) {
         assembly {
+            let pointer := mload(0x40)
             // Define length of base, exponent and modulus. 0x20 == 32 bytes
             mstore(pointer, 0x20)
             mstore(add(pointer, 0x20), 0x20)
@@ -86,7 +86,7 @@ library FCL_Elliptic_ZZ {
             mstore(add(pointer, 0xa0), p)
 
             // Call the precompiled contract 0x05 = ModExp
-            if iszero(call(not(0), 0x05, 0, pointer, 0xc0, pointer, 0x20)) { revert(0, 0) }
+            if iszero(staticcall(not(0), 0x05, pointer, 0xc0, pointer, 0x20)) { revert(0, 0) }
             result := mload(pointer)
         }
     }
@@ -96,7 +96,7 @@ library FCL_Elliptic_ZZ {
 /// @param self The integer of which to find the modular inverse
 /// @return result The modular inverse of the input integer. If the modular inverse doesn't exist, it revert the tx
 
-function SqrtMod(uint256 self) internal  returns (uint256 result){
+function SqrtMod(uint256 self) internal view returns (uint256 result){
  assembly ("memory-safe") {
         // load the free memory pointer value
         let pointer := mload(0x40)
@@ -119,10 +119,9 @@ function SqrtMod(uint256 self) internal  returns (uint256 result){
 
         // Call the precompiled ModExp (0x05) https://www.evm.codes/precompiled#0x05
         if iszero(
-            call(
+            staticcall(
                 not(0), // amount of gas to send
                 MODEXP_PRECOMPILE, // target
-                0x00, // value in wei
                 pointer, // argsOffset
                 0xc0, // argsSize (6 * 32 bytes)
                 _result, // retOffset (we override M to avoid paying for the memory expansion)
@@ -151,7 +150,7 @@ function SqrtMod(uint256 self) internal  returns (uint256 result){
         }
     }
 
-    function ec_Decompress(uint256 x, uint256 parity) internal returns(uint256 y){ 
+    function ec_Decompress(uint256 x, uint256 parity) internal view returns(uint256 y){ 
 
         uint256 y2=mulmod(x,mulmod(x,x,p),p);//x3
         y2=addmod(b,addmod(y2,mulmod(x,a,p),p),p);//x3+ax+b
@@ -169,7 +168,7 @@ function SqrtMod(uint256 self) internal  returns (uint256 result){
      * /* @dev Convert from XYZZ rep to affine rep
      */
     /*    https://hyperelliptic.org/EFD/g1p/auto-shortw-xyzz-3.html#addition-add-2008-s*/
-    function ecZZ_SetAff(uint256 x, uint256 y, uint256 zz, uint256 zzz) internal returns (uint256 x1, uint256 y1) {
+    function ecZZ_SetAff(uint256 x, uint256 y, uint256 zz, uint256 zzz) internal view returns (uint256 x1, uint256 y1) {
         uint256 zzzInv = FCL_pModInv(zzz); //1/zzz
         y1 = mulmod(y, zzzInv, p); //Y/zzz
         uint256 _b = mulmod(zz, zzzInv, p); //1/z
@@ -286,7 +285,7 @@ function SqrtMod(uint256 self) internal  returns (uint256 result){
      * @dev Add two elliptic curve points in affine coordinates.
      */
 
-    function ecAff_add(uint256 x0, uint256 y0, uint256 x1, uint256 y1) internal returns (uint256, uint256) {
+    function ecAff_add(uint256 x0, uint256 y0, uint256 x1, uint256 y1) internal view returns (uint256, uint256) {
         uint256 zz0;
         uint256 zzz0;
 
@@ -307,12 +306,11 @@ function SqrtMod(uint256 self) internal  returns (uint256 result){
         uint256 Q1, //affine rep for input point Q
         uint256 scalar_u,
         uint256 scalar_v
-    ) internal returns (uint256 X) {
+    ) internal view returns (uint256 X) {
         uint256 zz;
         uint256 zzz;
         uint256 Y;
         uint256 index = 255;
-        uint256[6] memory T;
         uint256 H0;
         uint256 H1;
 
@@ -380,7 +378,7 @@ function SqrtMod(uint256 self) internal  returns (uint256 result){
                             T1 := H0
                             T2 := H1
                         }
-                        if eq(zz, 0) {
+                        if iszero(zz) {
                             X := T1
                             Y := T2
                             zz := 1
@@ -396,8 +394,8 @@ function SqrtMod(uint256 self) internal  returns (uint256 result){
 
                         //special extremely rare case accumulator where EcAdd is replaced by EcDbl, no need to optimize this
                         //todo : construct edge vector case
-                        if eq(y2, 0) {
-                            if eq(T2, 0) {
+                        if iszero(y2) {
+                            if iszero(T2) {
                                 T1 := mulmod(minus_2, Y, p) //U = 2*Y1, y free
                                 T2 := mulmod(T1, T1, p) // V=U^2
                                 T3 := mulmod(X, T2, p) // S = X1*V
@@ -431,6 +429,7 @@ function SqrtMod(uint256 self) internal  returns (uint256 result){
                         X := T4
                     }
                 } //end loop
+                let T := mload(0x40)
                 mstore(add(T, 0x60), zz)
                 //(X,Y)=ecZZ_SetAff(X,Y,zz, zzz);
                 //T[0] = inverseModp_Hard(T[0], p); //1/zzz, inline modular inversion using precompile:
@@ -444,7 +443,7 @@ function SqrtMod(uint256 self) internal  returns (uint256 result){
                 mstore(add(T, 0xa0), p)
 
                 // Call the precompiled contract 0x05 = ModExp
-                if iszero(call(not(0), 0x05, 0, T, 0xc0, T, 0x20)) { revert(0, 0) }
+                if iszero(staticcall(not(0), 0x05, T, 0xc0, T, 0x20)) { revert(0, 0) }
 
                 //Y:=mulmod(Y,zzz,p)//Y/zzz
                 //zz :=mulmod(zz, mload(T),p) //1/z
@@ -466,7 +465,7 @@ function SqrtMod(uint256 self) internal  returns (uint256 result){
         uint256 Q1, //affine rep for input point Q
         uint256 scalar_u,
         uint256 scalar_v
-    ) internal returns (uint256 X, uint256 Y) {
+    ) internal view returns (uint256 X, uint256 Y) {
         uint256 zz;
         uint256 zzz;
         uint256 index = 255;
@@ -537,7 +536,7 @@ function SqrtMod(uint256 self) internal  returns (uint256 result){
                             T1 := mload(H)
                             T2 := mload(add(H,32))
                         }
-                        if eq(zz, 0) {
+                        if iszero(zz) {
                             X := T1
                             Y := T2
                             zz := 1
@@ -553,8 +552,8 @@ function SqrtMod(uint256 self) internal  returns (uint256 result){
 
                         //special extremely rare case accumulator where EcAdd is replaced by EcDbl, no need to optimize this
                         //todo : construct edge vector case
-                        if eq(y2, 0) {
-                            if eq(T2, 0) {
+                        if iszero(y2) {
+                            if iszero(T2) {
                                 T1 := mulmod(minus_2, Y, p) //U = 2*Y1, y free
                                 T2 := mulmod(T1, T1, p) // V=U^2
                                 T3 := mulmod(X, T2, p) // S = X1*V
@@ -601,7 +600,7 @@ function SqrtMod(uint256 self) internal  returns (uint256 result){
                 mstore(add(T, 0xa0), p)
 
                 // Call the precompiled contract 0x05 = ModExp
-                if iszero(call(not(0), 0x05, 0, T, 0xc0, T, 0x20)) { revert(0, 0) }
+                if iszero(staticcall(not(0), 0x05, T, 0xc0, T, 0x20)) { revert(0, 0) }
 
                 Y:=mulmod(Y,mload(T),p)//Y/zzz
                 zz :=mulmod(zz, mload(T),p) //1/z
@@ -618,7 +617,7 @@ function SqrtMod(uint256 self) internal  returns (uint256 result){
     //(thx to Lakhdar https://github.com/Kelvyne for EVM storage explanations and tricks)
     // the external tool to generate tables from public key is in the /sage directory
     function ecZZ_mulmuladd_S8_extcode(uint256 scalar_u, uint256 scalar_v, address dataPointer)
-        internal
+        internal view
         returns (uint256 X /*, uint Y*/ )
     {
         unchecked {
@@ -705,8 +704,8 @@ function SqrtMod(uint256 self) internal  returns (uint256 result){
                         let T2 := addmod(mulmod(mload(T), zz, p), sub(p, X), p)
 
                         //special case ecAdd(P,P)=EcDbl
-                        if eq(y2, 0) {
-                            if eq(T2, 0) {
+                        if iszero(y2) {
+                            if iszero(T2) {
                                 let T1 := mulmod(minus_2, Y, p) //U = 2*Y1, y free
                                 T2 := mulmod(T1, T1, p) // V=U^2
                                 let T3 := mulmod(X, T2, p) // S = X1*V
@@ -753,7 +752,7 @@ function SqrtMod(uint256 self) internal  returns (uint256 result){
                 mstore(add(T, 0xa0), p)
 
                 // Call the precompiled contract 0x05 = ModExp
-                if iszero(call(not(0), 0x05, 0, T, 0xc0, T, 0x20)) { revert(0, 0) }
+                if iszero(staticcall(not(0), 0x05, T, 0xc0, T, 0x20)) { revert(0, 0) }
 
                 zz := mload(T)
                 X := mulmod(X, zz, p) //X/zz
@@ -765,7 +764,7 @@ function SqrtMod(uint256 self) internal  returns (uint256 result){
 
     // improving the extcodecopy trick : append array at end of contract
     function ecZZ_mulmuladd_S8_hackmem(uint256 scalar_u, uint256 scalar_v, uint256 dataPointer)
-        internal
+        internal view
         returns (uint256 X /*, uint Y*/ )
     {
         uint256 zz; // third and  coordinates of the point
@@ -858,7 +857,7 @@ function SqrtMod(uint256 self) internal  returns (uint256 result){
                 mstore(add(T, 0xa0), p)
 
                 // Call the precompiled contract 0x05 = ModExp
-                if iszero(call(not(0), 0x05, 0, T, 0xc0, T, 0x20)) { revert(0, 0) }
+                if iszero(staticcall(not(0), 0x05, T, 0xc0, T, 0x20)) { revert(0, 0) }
 
                 zz := mload(T)
                 X := mulmod(X, zz, p) //X/zz
@@ -869,25 +868,28 @@ function SqrtMod(uint256 self) internal  returns (uint256 result){
     /**
      * @dev ECDSA verification, given , signature, and public key.
      */
-    function ecdsa_verify(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) internal returns (bool) {
-        if (rs[0] == 0 || rs[0] >= n || rs[1] == 0 || rs[1] >= n) {
+    function ecdsa_verify(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) internal view returns (bool) {
+        uint256 r = rs[0];
+        uint256 s = rs[1];
+        if (r == 0 || r >= n || s == 0 || s >= n) {
+            return false;
+        }
+        uint256 Q0 = Q[0];
+        uint256 Q1 = Q[1];
+        if (!ecAff_isOnCurve(Q0, Q1)) {
             return false;
         }
 
-        if (!ecAff_isOnCurve(Q[0], Q[1])) {
-            return false;
-        }
-
-        uint256 sInv = FCL_nModInv(rs[1]);
+        uint256 sInv = FCL_nModInv(s);
 
         uint256 scalar_u = mulmod(uint256(message), sInv, n);
-        uint256 scalar_v = mulmod(rs[0], sInv, n);
+        uint256 scalar_v = mulmod(r, sInv, n);
         uint256 x1;
 
-        x1 = ecZZ_mulmuladd_S_asm(Q[0], Q[1], scalar_u, scalar_v);
+        x1 = ecZZ_mulmuladd_S_asm(Q0, Q1, scalar_u, scalar_v);
 
         assembly {
-            x1 := addmod(x1, sub(n, calldataload(rs)), n)
+            x1 := addmod(x1, sub(n, r), n)
         }
         //return true;
         return x1 == 0;
@@ -900,10 +902,12 @@ function SqrtMod(uint256 self) internal  returns (uint256 result){
      */
 
     function ecdsa_precomputed_verify(bytes32 message, uint256[2] calldata rs, address Shamir8)
-        internal
+        internal view
         returns (bool)
     {
-        if (rs[0] == 0 || rs[0] >= n || rs[1] == 0 || rs[1] >= n) {
+        uint256 r = rs[0];
+        uint256 s = rs[1];
+        if (r == 0 || r >= n || s == 0 || s >= n) {
             return false;
         }
         /* Q is pushed via bytecode assumed to be correct
@@ -911,15 +915,15 @@ function SqrtMod(uint256 self) internal  returns (uint256 result){
             return false;
         }*/
 
-        uint256 sInv = FCL_nModInv(rs[1]);
+        uint256 sInv = FCL_nModInv(s);
 
         uint256 X;
 
         //Shamir 8 dimensions
-        X = ecZZ_mulmuladd_S8_extcode(mulmod(uint256(message), sInv, n), mulmod(rs[0], sInv, n), Shamir8);
+        X = ecZZ_mulmuladd_S8_extcode(mulmod(uint256(message), sInv, n), mulmod(r, sInv, n), Shamir8);
 
         assembly {
-            X := addmod(X, sub(n, calldataload(rs)), n)
+            X := addmod(X, sub(n, r), n)
         }
 
         return X == 0;
@@ -932,10 +936,12 @@ function SqrtMod(uint256 self) internal  returns (uint256 result){
      */
 
     function ecdsa_precomputed_hackmem(bytes32 message, uint256[2] calldata rs, uint256 endcontract)
-        internal
+        internal view
         returns (bool)
     {
-        if (rs[0] == 0 || rs[0] >= n || rs[1] == 0 || rs[1] >= n) {
+        uint256 r = rs[0];
+        uint256 s = rs[1];
+        if (r == 0 || r >= n || s == 0 || s >= n) {
             return false;
         }
         /* Q is pushed via bytecode assumed to be correct
@@ -943,19 +949,19 @@ function SqrtMod(uint256 self) internal  returns (uint256 result){
             return false;
         }*/
 
-        uint256 sInv = FCL_nModInv(rs[1]);
+        uint256 sInv = FCL_nModInv(s);
         uint256 X;
 
         //Shamir 8 dimensions
-        X = ecZZ_mulmuladd_S8_hackmem(mulmod(uint256(message), sInv, n), mulmod(rs[0], sInv, n), endcontract);
+        X = ecZZ_mulmuladd_S8_hackmem(mulmod(uint256(message), sInv, n), mulmod(r, sInv, n), endcontract);
 
         assembly {
-            X := addmod(X, sub(n, calldataload(rs)), n)
+            X := addmod(X, sub(n, r), n)
         }
         return X == 0;
     } //end  ecdsa_precomputed_verify()
 
-    function ec_recover_r1(uint256 h, uint256 v, uint256 r, uint256 s) internal returns (address)
+    function ec_recover_r1(uint256 h, uint256 v, uint256 r, uint256 s) internal view returns (address)
     {
          if (r == 0 || r >= n || s == 0 || s >= n) {
             return address(0);
