@@ -178,39 +178,38 @@ contract ArithmeticTest is Test {
         uint256 checkpointGasLeft2;
 
         //Uncomment the library to test/bench here, todo: replace with switch case
-        //(ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz, ecpoint_Rzzz )= FCL_Elliptic_ZZ.ecZZ_Dbl(gx, gy,1,1);
+        (ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz, ecpoint_Rzzz )= FCL_Elliptic_ZZ.ecZZ_Dbl(gx, gy,1,1);
         //(ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz )= ECops.twiceProj(gx, gy,1);
         // (ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz )=Secp256r1._modifiedJacobianDouble(gx, gy,1);
-        (ecpoint_Rx, ecpoint_Ry, ecpoint_Rzz) = Secp256r1_maxrobot._jDouble(gx, gy, 1);
+        //(ecpoint_Rx, ecpoint_Ry, ecpoint_Rzz) = Secp256r1_maxrobot._jDouble(gx, gy, 1);
 
         checkpointGasLeft = gasleft();
 
         for (uint256 i = 3; i <= _NUM_TEST_ECMULMULADD; i++) {
-            // (ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz, ecpoint_Rzzz )= FCL_Elliptic_ZZ.ecZZ_AddN(ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz, ecpoint_Rzzz , gx, gy);
+             (ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz, ecpoint_Rzzz )= FCL_Elliptic_ZZ.ecZZ_AddN(ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz, ecpoint_Rzzz , gx, gy);
 
             //(ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz)= ECops.addProj(ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz,gx,gy,1);
             // (ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz )=Secp256r1._jAdd(ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz,gx,gy,1);
-            (ecpoint_Rx, ecpoint_Ry, ecpoint_Rzz) =
-                Secp256r1_maxrobot._jAdd(ecpoint_Rx, ecpoint_Ry, ecpoint_Rzz, gx, gy, 1);
+           // (ecpoint_Rx, ecpoint_Ry, ecpoint_Rzz) =                Secp256r1_maxrobot._jAdd(ecpoint_Rx, ecpoint_Ry, ecpoint_Rzz, gx, gy, 1);
         }
         checkpointGasLeft2 = gasleft();
         console.log(
             "Add number test and gas cost :", _NUM_TEST_ECMULMULADD, checkpointGasLeft - checkpointGasLeft2 - 100
         );
 
-        //(ecpoint_Rx, ecpoint_Ry)=FCL_Elliptic_ZZ.ecZZ_SetAff(ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz, ecpoint_Rzzz);
+        (ecpoint_Rx, ecpoint_Ry)=FCL_Elliptic_ZZ.ecZZ_SetAff(ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz, ecpoint_Rzzz);
         // (ecpoint_Rx, ecpoint_Ry)=ECops.toAffinePoint(ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz);
-        (ecpoint_Rx, ecpoint_Ry) = Secp256r1._affineFromJacobian(ecpoint_Rx, ecpoint_Ry, ecpoint_Rzz);
+        //(ecpoint_Rx, ecpoint_Ry) = Secp256r1._affineFromJacobian(ecpoint_Rx, ecpoint_Ry, ecpoint_Rzz);
 
         //generate a small multiple of G using scalar
         assertEq(ecpoint_Rx, FCL_Elliptic_ZZ.ecZZ_mulmuladd_S_asm(0, 0, _NUM_TEST_ECMULMULADD, 0));
 
         checkpointGasLeft = gasleft();
         for (uint256 i = 3; i <= _NUM_TEST_DBL; i++) {
-            //(ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz, ecpoint_Rzzz )=FCL_Elliptic_ZZ.ecZZ_Dbl(ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz, ecpoint_Rzzz );
+            (ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz, ecpoint_Rzzz )=FCL_Elliptic_ZZ.ecZZ_Dbl(ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz, ecpoint_Rzzz );
 
             //   (ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz )= Secp256r1._modifiedJacobianDouble(ecpoint_Rx, ecpoint_Ry,ecpoint_Rzz);
-            (ecpoint_Rx, ecpoint_Ry, ecpoint_Rzz) = Secp256r1_maxrobot._jDouble(ecpoint_Rx, ecpoint_Ry, ecpoint_Rzz);
+            //(ecpoint_Rx, ecpoint_Ry, ecpoint_Rzz) = Secp256r1_maxrobot._jDouble(ecpoint_Rx, ecpoint_Ry, ecpoint_Rzz);
         }
         checkpointGasLeft2 = gasleft();
         console.log(

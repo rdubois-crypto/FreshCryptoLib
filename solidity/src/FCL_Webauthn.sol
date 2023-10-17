@@ -81,7 +81,7 @@ library FCL_WebAuthn {
         return sha256(verifyData);
     }
 
-    function checkSignature(
+    function  checkSignature (
         bytes calldata authenticatorData,
         bytes1 authenticatorDataFlagMask,
         bytes calldata clientData,
@@ -89,7 +89,7 @@ library FCL_WebAuthn {
         uint256 clientChallengeDataOffset,
         uint256[2] calldata rs,
         uint256[2] calldata Q
-    ) internal returns (bool) {
+    ) internal view returns (bool) {
         // Let the caller check if User Presence (0x01) or User Verification (0x04) are set
 
         bytes32 message = FCL_WebAuthn.WebAuthn_format(
@@ -109,7 +109,7 @@ library FCL_WebAuthn {
         uint256 clientChallengeDataOffset,
         uint256[2] calldata rs,
         address dataPointer
-    ) internal returns (bool) {
+    ) internal view returns (bool) {
         // Let the caller check if User Presence (0x01) or User Verification (0x04) are set
 
         bytes32 message = FCL_WebAuthn.WebAuthn_format(
@@ -130,7 +130,7 @@ library FCL_WebAuthn {
         uint256 clientChallengeDataOffset,
         uint256[2] calldata rs,
         uint256 dataPointer
-    ) internal returns (bool) {
+    ) internal view returns (bool) {
         // Let the caller check if User Presence (0x01) or User Verification (0x04) are set
 
         bytes32 message = FCL_WebAuthn.WebAuthn_format(

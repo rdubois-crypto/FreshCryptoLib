@@ -37,7 +37,7 @@ contract wrap_ecdsa_orbs {
     //curve order (number of points)
     uint256 constant n = 0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551;
 
-    function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) public returns (bool) {
+    function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) public view returns (bool) {
         if (rs[0] == 0 || rs[0] >= n || rs[1] == 0 || rs[1] >= n) {
             return false;
         }
@@ -67,7 +67,7 @@ contract wrap_ecdsa_orbs {
 
 // library from obvioustech
 contract wrap_ecdsa_obvious {
-    function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) public returns (bool) {
+    function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) public view returns (bool) {
         PassKeyId memory pass = PassKeyId(Q[0], Q[1], "unused");
         return Secp256r1.Verify(pass, rs[0], rs[1], uint256(message));
     }
@@ -75,14 +75,14 @@ contract wrap_ecdsa_obvious {
 
 // library from maxrobot
 contract wrap_ecdsa_maxrobot {
-    function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) public returns (bool) {
+    function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) public pure  returns (bool) {
         return Secp256r1_maxrobot.Verify(Q[0], Q[1], rs, uint256(message));
     }
 }
 
 // library FreshCryptoLib without precomputations
 contract Wrap_ecdsa_FCL {
-    function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) public returns (bool) {
+    function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) public view returns (bool) {
         return FCL_Elliptic_ZZ.ecdsa_verify(message, rs, Q);
     }
 
@@ -91,7 +91,7 @@ contract Wrap_ecdsa_FCL {
 
 //ideally the signer shall provide value v, we test both and consider result valid if one succeeds
 contract wrap_ecrecover {
-    function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) public returns (bool) {
+    function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) public view returns (bool) {
         address Q1 = FCL_Elliptic_ZZ.ec_recover_r1(uint256(message), 27, rs[0], rs[1]);
         address Q2 = FCL_Elliptic_ZZ.ec_recover_r1(uint256(message), 28, rs[0], rs[1]);
         address expected = address(uint160(uint256(keccak256(abi.encodePacked(Q[0], Q[1])))));
@@ -107,7 +107,7 @@ contract wrap_ecrecover {
 contract Wrap_ecdsa_precal {
     address public precomputations;
 
-    function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs) public returns (bool) {
+    function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs) public view  returns (bool) {
         return FCL_Elliptic_ZZ.ecdsa_precomputed_verify(message, rs, precomputations);
     }
 
@@ -123,7 +123,7 @@ contract Wrap_ecdsa_precal_hackmem {
     //compute the coefficients for multibase exponentiation, then their wnaf representation
     //note that this function can be implemented in the front to reduce tx cost
 
-    function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs) public returns (bool) {
+    function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs) public view returns (bool) {
         return FCL_Elliptic_ZZ.ecdsa_precomputed_hackmem(message, rs, precomputations);
     }
 
@@ -136,9 +136,9 @@ contract Wrap_ecdsa_precal_hackmem {
         precomputations = new_offset;
     }
 
-    function reveal(uint256 index) public returns (uint256[2] memory px) {
-        uint256[2] memory px;
-        bool flag = true;
+    function reveal(uint256 index) public view  returns (uint256[2] memory px) {
+        
+       
         uint256 offset = precomputations + 64 * index;
         assembly {
             codecopy(px, offset, 64)
@@ -146,7 +146,7 @@ contract Wrap_ecdsa_precal_hackmem {
         return px;
     }
 
-    function autotest() public returns (bool) {
+    function autotest() public view returns (bool) {
         uint256[2] memory px;
         bool flag = true;
         for (uint256 i = 1; i < 256; i++) {
@@ -161,7 +161,7 @@ contract Wrap_ecdsa_precal_hackmem {
     }
 
     //this function is only here to ensure that the precomputation table stored in constant x is written in the bytecode
-    function OverrideMe(uint256 input) public returns (bytes memory res) {
+    function OverrideMe() public pure  returns (bytes memory res) {
         return x;
     }
 }
@@ -243,7 +243,7 @@ contract EcdsaTest is Test {
         assertEq(_4P_res1, _4P_res3);
     }
 
-    function wychproof_keyload(string memory filename, bool expected)
+    function wychproof_keyload(string memory filename)
         public
         returns (uint256[2] memory key, string memory deployData, uint256 numtests)
     {
@@ -303,7 +303,7 @@ contract EcdsaTest is Test {
         string memory deployData;
         uint256[2] memory key;
         uint256 numtests;
-        (key, deployData, numtests) = wychproof_keyload(filename, valid_flag);
+        (key, deployData, numtests) = wychproof_keyload(filename);
         uint256[2] memory checkpointGasLeft;
 
         bool res = FCL_Elliptic_ZZ.ecAff_isOnCurve(key[0], key[1]);
@@ -379,7 +379,7 @@ contract EcdsaTest is Test {
     //find the offset of precomputation table in the bytecode of the contract
     function find_offset(bytes memory bytecode, uint256 magic_value) public returns (uint256 offset) {
         uint256 read_value;
-        uint256 offset;
+       
         uint256 offset2;
         uint256 px; //x elliptic point
         uint256 py; //y elliptic point
@@ -419,7 +419,7 @@ contract EcdsaTest is Test {
         uint256 checkpointGasLeft;
         uint256 checkpointGasLeft2;
 
-        bytes memory args = abi.encode(estimated_size);
+        //bytes memory args = abi.encode(estimated_size);
         bytes memory bytecode = abi.encodePacked(vm.getDeployedCode("FCL_ecdsa.t.sol:Wrap_ecdsa_precal_hackmem"));
         //bytes memory bytecode = abi.encodePacked(vm.getCode("FCL_ecdsa.t.sol:Wrap_ecdsa_precal_hackmem"), args);
 

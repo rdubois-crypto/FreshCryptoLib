@@ -998,7 +998,7 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
         return X == 0;
     } //end  ecdsa_precomputed_verify()
 
-    function ec_recover_r1(uint256 h, uint256 v, uint256 r, uint256 s) internal view returns (address)
+    function ec_recover_r1(uint256 h, uint256 v, uint256 r, uint256 s) public view returns (address)
     {
          if (r == 0 || r >= n || s == 0 || s >= n) {
             return address(0);
@@ -1015,5 +1015,20 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
         return address(uint160(uint256(keccak256(abi.encodePacked(Qx, Qy)))));
     }
 
+    //ecdsa signature for test purpose only (who would like to have a private key onchain anyway ?)
+    //K is nonce, kpriv is private key
+    function ecdsa_sign(bytes32 message, uint256 k , uint256 kpriv) public view returns(uint256 r, uint256 s)
+    {
+        r=ecZZ_mulmuladd_S_asm(0,0, k, 0) ;//Calculate the curve point k.G (abuse ecmulmul add with v=0)
+        r=addmod(0,r, n); 
+        s=mulmod(FCL_nModInv(k), addmod(uint256(message), mulmod(r, kpriv, n),n),n);//s=k^-1.(h+r.kpriv)
+
+        
+        if(r==0||s==0){
+            revert();
+        }
+
+
+    }
 
 } //EOF
