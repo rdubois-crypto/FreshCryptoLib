@@ -37,7 +37,11 @@ contract wrap_ecdsa_orbs {
     //curve order (number of points)
     uint256 constant n = 0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551;
 
-    function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) public view returns (bool) {
+    function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q)
+        public
+        view
+        returns (bool)
+    {
         if (rs[0] == 0 || rs[0] >= n || rs[1] == 0 || rs[1] >= n) {
             return false;
         }
@@ -67,7 +71,11 @@ contract wrap_ecdsa_orbs {
 
 // library from obvioustech
 contract wrap_ecdsa_obvious {
-    function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) public view returns (bool) {
+    function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q)
+        public
+        view
+        returns (bool)
+    {
         PassKeyId memory pass = PassKeyId(Q[0], Q[1], "unused");
         return Secp256r1.Verify(pass, rs[0], rs[1], uint256(message));
     }
@@ -75,14 +83,22 @@ contract wrap_ecdsa_obvious {
 
 // library from maxrobot
 contract wrap_ecdsa_maxrobot {
-    function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) public pure  returns (bool) {
+    function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q)
+        public
+        pure
+        returns (bool)
+    {
         return Secp256r1_maxrobot.Verify(Q[0], Q[1], rs, uint256(message));
     }
 }
 
 // library FreshCryptoLib without precomputations
 contract Wrap_ecdsa_FCL {
-    function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) public view returns (bool) {
+    function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q)
+        public
+        view
+        returns (bool)
+    {
         return FCL_Elliptic_ZZ.ecdsa_verify(message, rs, Q);
     }
 
@@ -91,7 +107,11 @@ contract Wrap_ecdsa_FCL {
 
 //ideally the signer shall provide value v, we test both and consider result valid if one succeeds
 contract wrap_ecrecover {
-    function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) public view returns (bool) {
+    function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q)
+        public
+        view
+        returns (bool)
+    {
         address Q1 = FCL_Elliptic_ZZ.ec_recover_r1(uint256(message), 27, rs[0], rs[1]);
         address Q2 = FCL_Elliptic_ZZ.ec_recover_r1(uint256(message), 28, rs[0], rs[1]);
         address expected = address(uint160(uint256(keccak256(abi.encodePacked(Q[0], Q[1])))));
@@ -107,7 +127,7 @@ contract wrap_ecrecover {
 contract Wrap_ecdsa_precal {
     address public precomputations;
 
-    function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs) public view  returns (bool) {
+    function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs) public view returns (bool) {
         return FCL_Elliptic_ZZ.ecdsa_precomputed_verify(message, rs, precomputations);
     }
 
@@ -136,9 +156,7 @@ contract Wrap_ecdsa_precal_hackmem {
         precomputations = new_offset;
     }
 
-    function reveal(uint256 index) public view  returns (uint256[2] memory px) {
-        
-       
+    function reveal(uint256 index) public view returns (uint256[2] memory px) {
         uint256 offset = precomputations + 64 * index;
         assembly {
             codecopy(px, offset, 64)
@@ -161,7 +179,7 @@ contract Wrap_ecdsa_precal_hackmem {
     }
 
     //this function is only here to ensure that the precomputation table stored in constant x is written in the bytecode
-    function OverrideMe() public pure  returns (bytes memory res) {
+    function OverrideMe() public pure returns (bytes memory res) {
         return x;
     }
 }
@@ -379,7 +397,7 @@ contract EcdsaTest is Test {
     //find the offset of precomputation table in the bytecode of the contract
     function find_offset(bytes memory bytecode, uint256 magic_value) public returns (uint256 offset) {
         uint256 read_value;
-       
+
         uint256 offset2;
         uint256 px; //x elliptic point
         uint256 py; //y elliptic point
