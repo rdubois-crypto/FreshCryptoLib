@@ -127,7 +127,7 @@ def Print_Table_sol( Q, Curve):
  
  Prec=Precompute_Pubkey(Q, Curve);
  
- chain="// Public key\n//x:"+print_setlength(Q[0],64)+ " y:"+print_setlength(Q[1],64);
+ chain="// Public key\n//x:"+print_setlength(Q[0],64)+ " y:"+print_setlength(Q[1],64) +"\n pragma solidity >=0.8.19 <0.9.0;";
  
  filep.write(chain);
  chain="\n bytes constant x=hex\"";
