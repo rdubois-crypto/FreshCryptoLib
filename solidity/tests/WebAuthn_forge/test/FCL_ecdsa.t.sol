@@ -30,6 +30,9 @@ import "@external/ECops.sol";
 //echo "itsakindofmagic" | sha256sum, used as a label to find precomputations inside bytecode
 uint256 constant _MAGIC_ENCODING = 0x9a8295d6f225e4f07313e2e1440ab76e26d4c6ed2d1eb4cbaa84827c8b7caa8d;
 
+
+
+
 // library elliptic solidity from orbs network
 contract wrap_ecdsa_orbs {
     uint256 constant gx = 0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296;

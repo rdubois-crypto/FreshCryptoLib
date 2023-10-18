@@ -905,15 +905,15 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
     /**
      * @dev ECDSA verification, given , signature, and public key.
      */
-    function ecdsa_verify(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) internal view returns (bool) {
+    function ecdsa_verify(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) public view returns (bool) {
         uint256 r = rs[0];
         uint256 s = rs[1];
         if (r == 0 || r >= n || s == 0 || s >= n) {
             return false;
         }
-        uint256 Q0 = Q[0];
-        uint256 Q1 = Q[1];
-        if (!ecAff_isOnCurve(Q0, Q1)) {
+        uint256 Qx = Q[0];
+        uint256 Qy = Q[1];
+        if (!ecAff_isOnCurve(Qx, Qy)) {
             return false;
         }
 
@@ -923,13 +923,41 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
         uint256 scalar_v = mulmod(r, sInv, n);
         uint256 x1;
 
-        x1 = ecZZ_mulmuladd_S_asm(Q0, Q1, scalar_u, scalar_v);
+        x1 = ecZZ_mulmuladd_S_asm(Qx, Qy, scalar_u, scalar_v);
 
         assembly {
             x1 := addmod(x1, sub(n, r), n)
         }
-        //return true;
+       
         return x1 == 0;
+    }
+
+    /**
+     * @dev ECDSA verification, given , signature, and public key, no calldata version
+     */
+    function ecdsa_verify(bytes32 message, uint256 r, uint256 s, uint256 Qx, uint256 Qy)  public view returns (bool){
+        if (r == 0 || r >= n || s == 0 || s >= n) {
+            return false;
+        }
+        
+        if (!ecAff_isOnCurve(Qx, Qy)) {
+            return false;
+        }
+
+        uint256 sInv = FCL_nModInv(s);
+
+        uint256 scalar_u = mulmod(uint256(message), sInv, n);
+        uint256 scalar_v = mulmod(r, sInv, n);
+        uint256 x1;
+
+        x1 = ecZZ_mulmuladd_S_asm(Qx, Qy, scalar_u, scalar_v);
+
+        assembly {
+            x1 := addmod(x1, sub(n, r), n)
+        }
+       
+        return x1 == 0;
+
     }
 
     /**
@@ -947,7 +975,7 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
         if (r == 0 || r >= n || s == 0 || s >= n) {
             return false;
         }
-        /* Q is pushed via bytecode assumed to be correct
+        /* Q is pushed via the contract at address Shamir8 assumed to be correct
         if (!isOnCurve(Q[0], Q[1])) {
             return false;
         }*/
