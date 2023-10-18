@@ -23,7 +23,7 @@ import "@solidity/FCL_eddsa.sol";
 
 contract EDDSATest is Test {
     //RFC8032, test vector 3
-    function test_RFC8032_3() public pure{
+    function test_RFC8032_3() public pure {
         uint64[16] memory buffer;
         //public key:43933056957747458452560886832567536073542840507013052263144963060608791330050,
         //16962727616734173323702303146057009569815335830970791807500022961899349823996

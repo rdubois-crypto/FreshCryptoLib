@@ -242,6 +242,7 @@ contract EcdsaTest is Test {
         vm.removeFile("scriptz.sh");
         console.log("precalc done");
     }
+
     function wychproof_keyload(string memory filename)
         public
         returns (uint256[2] memory key, string memory deployData, uint256 numtests)

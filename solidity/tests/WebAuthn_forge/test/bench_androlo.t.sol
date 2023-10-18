@@ -81,7 +81,7 @@ contract test_Androlo is Test {
         return true; //comparizon set to true: the aim is only to bench gas cost here
     }
 
-    function test_sig() public  view returns (bool) {
+    function test_sig() public view returns (bool) {
         uint256 checkpointGasLeft;
         uint256 checkpointGasLeft2;
 

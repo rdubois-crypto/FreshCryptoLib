@@ -52,7 +52,7 @@ contract Sha512Test is Test {
 
     function SHA_setUp() internal {
         uint256 _prec_address = 0xcaca;
-       // uint256[4] memory T;
+        // uint256[4] memory T;
         //uint64 val;
 
         string memory deployData = vm.readFile("test/sha512_const.json");
@@ -147,7 +147,7 @@ contract Sha512Test is Test {
         );
     }
 
-    function test_red512modq() public view{
+    function test_red512modq() public view {
         uint256[2] memory tstv = [
             0xbf62c3fb850acebf2d240df6fe5f136359ab6728da6056e3c6ddabb4ae574854,
             0x9ec08df799a1bc959b0558f8675832c0648b4a939956f62e8ff39319ffb4bf09

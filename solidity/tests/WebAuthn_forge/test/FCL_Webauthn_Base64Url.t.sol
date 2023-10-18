@@ -36,7 +36,7 @@ contract FCL_Webauthn_Base64Url is Test {
         webauthn = new WebAuthn_base64URL();
     }
 
-    function test_base64URL_format() external view{
+    function test_base64URL_format() external view {
         // mock data, see notice above for details on how this was derived
         bytes memory authenticatorDataMock =
             hex"49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000";
@@ -99,7 +99,7 @@ contract FCL_Webauthn_Base64Url is Test {
         assertTrue(result, "authentication failed");
     }
 
-    function test_webauthn_format_details() public view{
+    function test_webauthn_format_details() public view {
         // mock data, see notice above for details on how this was derived
         bytes memory authenticatorDataMock =
             hex"49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000";
@@ -149,7 +149,7 @@ contract WebAuthn_base64URL {
         );
     }
 
-    function verify (
+    function verify(
         bytes calldata authenticatorData,
         bytes1 authenticatorDataFlagMask,
         bytes calldata clientData,

@@ -190,35 +190,32 @@ contract ArithmeticTest is Test {
         assertEq(_4P_res1, _4P_res3);
     }
 
-
-    function test_Fuzz_SigVerif(uint256 k, uint256 kpriv, uint256 message) public 
-    {
+    function test_Fuzz_SigVerif(uint256 k, uint256 kpriv, uint256 message) public {
         vm.assume(k < FCL_Elliptic_ZZ.n);
         vm.assume(k > 1);
         vm.assume(kpriv < FCL_Elliptic_ZZ.n);
         vm.assume(kpriv > 1);
-        
+
         vm.assume(message < FCL_Elliptic_ZZ.n);
         vm.assume(message > 1);
 
-        message=8329;
-        k=5;
-        kpriv=7598;
-        
-        k=n-k;//ensure high hamming weight of fuzzing vectors
+        message = 8329;
+        k = 5;
+        kpriv = 7598;
 
-        uint256 xpub=FCL_Elliptic_ZZ.ecZZ_mulmuladd_S_asm(0,0, kpriv, 0); //deriv public key
+        k = n - k; //ensure high hamming weight of fuzzing vectors
+
+        uint256 xpub = FCL_Elliptic_ZZ.ecZZ_mulmuladd_S_asm(0, 0, kpriv, 0); //deriv public key
         uint256 ypub = FCL_Elliptic_ZZ.ec_Decompress(xpub, 0);
         uint256 r;
         uint256 s;
         assertEq(FCL_Elliptic_ZZ.ecAff_isOnCurve(xpub, ypub), true);
 
-        (r,s)= FCL_ecdsa.ecdsa_sign(bytes32(message), k, kpriv);
+        (r, s) = FCL_ecdsa.ecdsa_sign(bytes32(message), k, kpriv);
 
-
-        bool res1=FCL_ecdsa.ecdsa_verify(bytes32(message), r,s, xpub, ypub);
-        bool res2=FCL_ecdsa.ecdsa_verify(bytes32(message), r,s, xpub, p-ypub);
-        bool res=res1||res2;
+        bool res1 = FCL_ecdsa.ecdsa_verify(bytes32(message), r, s, xpub, ypub);
+        bool res2 = FCL_ecdsa.ecdsa_verify(bytes32(message), r, s, xpub, p - ypub);
+        bool res = res1 || res2;
 
         assertEq(res, true);
     }
