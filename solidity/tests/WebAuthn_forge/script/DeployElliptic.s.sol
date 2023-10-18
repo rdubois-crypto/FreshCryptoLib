@@ -20,8 +20,6 @@ contract LibraryWrapper {
         return FCL_ecdsa.ecdsa_verify(message, rs, Q);
     }
 
-
-
     function ecdsa_precomputed_verify(bytes32 message, uint256[2] calldata rs, address Shamir8)
         external
         view
