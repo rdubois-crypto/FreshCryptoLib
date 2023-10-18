@@ -19,10 +19,12 @@ Intended to be used by EdDSA only.
 
 ### FCL_eddsa.sol: 
 
-Unfinished optimized implementation of EDDSA over ed25519 as specified by RFC 8032 https://datatracker.ietf.org/doc/html/rfc8032.
+Optimized implementation of EDDSA over ed25519 as specified by RFC 8032 https://datatracker.ietf.org/doc/html/rfc8032.
+API are not mature, only one block message can be handled
+
 Gas cost: 270K, (compared to best of our knowledge here at 1.2M: https://github.com/javgh/ed25519-solidity
 
-ToDO: implement same hack as for secp256r1, integrate SHA512
+
 
 ### FCL_Webauthn:
 implementation of WebAuthn authentication mechanism on top of P256/sec256r1 ecdsa
