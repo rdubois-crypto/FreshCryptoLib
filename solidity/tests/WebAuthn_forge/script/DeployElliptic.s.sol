@@ -28,7 +28,11 @@ contract LibraryWrapper {
         return FCL_Elliptic_ZZ.ecdsa_precomputed_verify(message, rs, Shamir8);
     }
 
-    function ecdsa_sign(bytes32 message, uint256 k, uint256 kpriv)  external view returns (uint256 r, uint256 s) {
+    function ecdsa_sign(bytes32 message, uint256 k, uint256 kpriv)
+        external
+        view
+        returns (uint256 r, uint256 s)
+    {
         return FCL_ecdsa.ecdsa_sign(message, k, kpriv);
     }
 }
@@ -37,7 +41,7 @@ contract LibraryWrapper {
 contract MyScript is BaseScript {
     function run() external broadcast returns (address addressOfLibrary) {
         // deploy the library contract and return the address
-        addressOfLibrary = address(new LibraryWrapper());
+        addressOfLibrary = address(new LibraryWrapper{salt:0}());
     }
 }
 
