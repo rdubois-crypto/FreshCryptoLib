@@ -63,7 +63,7 @@ forge-lint-check:
 
 .PHONY: forge-lint
 forge-lint:
-	@runcmd forge fmt test ../../solidity
+	@runcmd forge fmt script test ../../solidity
 
 .PHONY: forge-clean
 forge-clean:
