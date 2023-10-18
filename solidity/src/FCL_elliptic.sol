@@ -19,7 +19,7 @@
 // Code is optimized for a=-3 only curves with prime order, constant like -1, -2 shall be replaced
 // if ever used for other curve than sec256R1
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+ pragma solidity >=0.8.19 <0.9.0;
 
 library FCL_Elliptic_ZZ {
     // Set parameters for curve sec256r1.
@@ -94,15 +94,15 @@ library FCL_Elliptic_ZZ {
     //Coron projective shuffling, take as input alpha as blinding factor
    function ecZZ_Coronize(uint256 alpha, uint256 x, uint256 y,  uint256 zz, uint256 zzz) public pure  returns (uint256 x3, uint256 y3, uint256 zz3, uint256 zzz3)
    {
-       
+
         uint256 alpha2=mulmod(alpha,alpha,p);
-       
+
         x3=mulmod(alpha2, x,p); //alpha^-2.x
         y3=mulmod(mulmod(alpha, alpha2,p), y,p);
 
         zz3=mulmod(zz,alpha2,p);//alpha^2 zz
         zzz3=mulmod(zzz,mulmod(alpha, alpha2,p),p);//alpha^3 zzz
-        
+
         return (x3, y3, zz3, zzz3);
    }
 
@@ -114,12 +114,12 @@ library FCL_Elliptic_ZZ {
     u2=addmod(u2, p-u1, p);//  P = U2-U1
     x1=mulmod(u2, u2, p);//PP
     x2=mulmod(x1, u2, p);//PPP
-    
-    zz3=mulmod(x1, mulmod(zz1, zz2, p),p);//ZZ3 = ZZ1*ZZ2*PP  
+
+    zz3=mulmod(x1, mulmod(zz1, zz2, p),p);//ZZ3 = ZZ1*ZZ2*PP
     zzz3=mulmod(zzz1, mulmod(zzz2, x2, p),p);//ZZZ3 = ZZZ1*ZZZ2*PPP
 
     zz1=mulmod(y1, zzz2,p);  // S1 = Y1*ZZZ2
-    zz2=mulmod(y2, zzz1, p);    // S2 = Y2*ZZZ1 
+    zz2=mulmod(y2, zzz1, p);    // S2 = Y2*ZZZ1
     zz2=addmod(zz2, p-zz1, p);//R = S2-S1
     zzz1=mulmod(u1, x1,p); //Q = U1*PP
     x3= addmod(addmod(mulmod(zz2, zz2, p), p-x2,p), mulmod(minus_2, zzz1,p),p); //X3 = R2-PPP-2*Q
@@ -172,7 +172,7 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
    if(mulmod(result,result,p)!=self){
      result=_NOTSQUARE;
    }
-  
+
    return result;
 }
     /**
@@ -187,7 +187,7 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
         }
     }
 
-    function ec_Decompress(uint256 x, uint256 parity) internal view returns(uint256 y){ 
+    function ec_Decompress(uint256 x, uint256 parity) internal view returns(uint256 y){
 
         uint256 y2=mulmod(x,mulmod(x,x,p),p);//x3
         y2=addmod(b,addmod(y2,mulmod(x,a,p),p),p);//x3+ax+b
@@ -336,7 +336,7 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
 
     /**
      * @dev Computation of uG+vQ using Strauss-Shamir's trick, G basepoint, Q public key
-     *       Returns only x for ECDSA use            
+     *       Returns only x for ECDSA use
      *      */
     function ecZZ_mulmuladd_S_asm(
         uint256 Q0,
@@ -495,7 +495,7 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
 
     /**
      * @dev Computation of uG+vQ using Strauss-Shamir's trick, G basepoint, Q public key
-     *       Returns affine representation of point (normalized)       
+     *       Returns affine representation of point (normalized)
      *      */
     function ecZZ_mulmuladd(
         uint256 Q0,
@@ -508,7 +508,7 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
         uint256 index = 255;
         uint256[6] memory T;
         uint256[2] memory H;
- 
+
         unchecked {
             if (scalar_u == 0 && scalar_v == 0) return (0,0);
 
@@ -797,7 +797,7 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
         } //end unchecked
     }
 
-   
+
 
     // improving the extcodecopy trick : append array at end of contract
     function ecZZ_mulmuladd_S8_hackmem(uint256 scalar_u, uint256 scalar_v, uint256 dataPointer)
@@ -928,7 +928,7 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
         assembly {
             x1 := addmod(x1, sub(n, r), n)
         }
-       
+
         return x1 == 0;
     }
 
@@ -939,7 +939,7 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
         if (r == 0 || r >= n || s == 0 || s >= n) {
             return false;
         }
-        
+
         if (!ecAff_isOnCurve(Qx, Qy)) {
             return false;
         }
@@ -955,7 +955,7 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
         assembly {
             x1 := addmod(x1, sub(n, r), n)
         }
-       
+
         return x1 == 0;
 
     }
@@ -1048,10 +1048,10 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
     function ecdsa_sign(bytes32 message, uint256 k , uint256 kpriv) public view returns(uint256 r, uint256 s)
     {
         r=ecZZ_mulmuladd_S_asm(0,0, k, 0) ;//Calculate the curve point k.G (abuse ecmulmul add with v=0)
-        r=addmod(0,r, n); 
+        r=addmod(0,r, n);
         s=mulmod(FCL_nModInv(k), addmod(uint256(message), mulmod(r, kpriv, n),n),n);//s=k^-1.(h+r.kpriv)
 
-        
+
         if(r==0||s==0){
             revert();
         }

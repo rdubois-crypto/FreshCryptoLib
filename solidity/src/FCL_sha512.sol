@@ -17,7 +17,7 @@
 //Initialize hash values:
 //(first 32 bits of the fractional parts of the square roots of the first 8 primes 2..19):
 
-pragma solidity ^0.8.20;
+ pragma solidity >=0.8.19 <0.9.0;
 
 library sha512 {
     uint256 constant SHA512_BLOCK_LENGTH8 = 128;
@@ -31,7 +31,7 @@ library sha512 {
         uint64[SHA512_BLOCK_LENGTH64] buffer;
     }
 
-   
+
     function Swap512(uint256[2] memory w) internal pure returns(uint256[2] memory r)
     {
         r[0]=Swap256(w[1]);
@@ -53,8 +53,8 @@ library sha512 {
 
     function Swap64(uint64 w) internal pure returns (uint64 x){
      uint64 tmp= (w >> 32) | (w << 32);
-	 tmp = ((tmp & 0xff00ff00ff00ff00) >> 8) |    ((tmp & 0x00ff00ff00ff00ff) << 8); 
-	 x = ((tmp & 0xffff0000ffff0000) >> 16) |   ((tmp & 0x0000ffff0000ffff) << 16); 
+	 tmp = ((tmp & 0xff00ff00ff00ff00) >> 8) |    ((tmp & 0x00ff00ff00ff00ff) << 8);
+	 x = ((tmp & 0xffff0000ffff0000) >> 16) |   ((tmp & 0x0000ffff0000ffff) << 16);
     }
 
     function Sigma1_512(uint64 h) internal pure returns (uint64 x){
@@ -94,18 +94,18 @@ library sha512 {
          context.state[5]=   0x9b05688c2b3e6c1f;
          context.state[6]=   0x1f83d9abfb41bd6b;
          context.state[7]=   0x5be0cd19137e2179;
-        
-      
+
+
        context.usedspace64=0;
        for(uint i=0;i<SHA512_BLOCK_LENGTH64;i++) {
         context.buffer[i]=0;
        }
     }
 
-    
+
     function SHA512_Transform(SHA512_CTX memory i_context, uint64[SHA512_BLOCK_LENGTH64] memory data) internal view returns(SHA512_CTX memory context)  {
         unchecked {
-            
+
         context=i_context;
 
         uint64 a = context.state[0];
@@ -117,11 +117,11 @@ library sha512 {
         uint64 g = context.state[6];
         uint64 h = context.state[7];
         uint64 j = 0;
-    
+
         do {
-            context.buffer[j] = Swap64(data[j]);   
-           
-            uint64 T1 = h + (((((e) >> (14)) | ((e) << (64 - (14)))) ^ (((e) >> (18)) | ((e) << (64 - (18))))^ (((e) >> (41)) | ((e) << (64 - (41)))))) + Ch(e, f, g) + uint64(k512(j)) + context.buffer[j];           
+            context.buffer[j] = Swap64(data[j]);
+
+            uint64 T1 = h + (((((e) >> (14)) | ((e) << (64 - (14)))) ^ (((e) >> (18)) | ((e) << (64 - (18))))^ (((e) >> (41)) | ((e) << (64 - (41)))))) + Ch(e, f, g) + uint64(k512(j)) + context.buffer[j];
             uint64 T2 = Sigma0_512(a) + Maj(a, b, c);
             h = g;
             g = f;
@@ -135,13 +135,13 @@ library sha512 {
         } while (j < 16);
 
         do {
-           
+
             /* Part of the message block expansion: */
             uint64 T1 = context.buffer[(j + 1) & 0x0f];
             T1 = sigma0_512(T1);
             uint64 T2 = context.buffer[(j+14)&0x0f];
 		    T2 =  sigma1_512(T2);
-          
+
             /* Apply the SHA-512 compression function to update a..h */
             T1 = h + Sigma1_512(e) + Ch(e, f, g) + uint64(k512(j)) +
 		     (context.buffer[j&0x0f] += T2 + context.buffer[(j+9)&0x0f] + T1);
@@ -158,7 +158,7 @@ library sha512 {
 
             j++;
         } while (j < 80);
-        
+
         /* Compute the current intermediate hash value */
         context.state[0] += a;
         context.state[1] += b;
@@ -183,7 +183,7 @@ library sha512 {
 
         return r;
     }
-    //update hash with a 64-multiple bit block 
+    //update hash with a 64-multiple bit block
 
     function Sha_Update64(SHA512_CTX memory context, uint64[SHA512_BLOCK_LENGTH64] calldata datain, uint256 len64)
         public view
@@ -211,7 +211,7 @@ library sha512 {
                 /* The buffer is not yet full */
                 for(uint i=0; i<len64;i++){
                     context.buffer[context.usedspace64]=datain[i];
-                    
+
 
                 }
                 //ADDINC128(context->bitcount, len << 3);
@@ -219,7 +219,7 @@ library sha512 {
            //     usedspace = freespace = 0;
                 return;
             }
-        
+
         }
     }
 
@@ -237,7 +237,7 @@ library sha512 {
 		} else {
 			if (context.usedspace64 < SHA512_BLOCK_LENGTH64) {
 				for(uint i=0;i<SHA512_BLOCK_LENGTH64 - context.usedspace64;i++){
-			      context.buffer[context.usedspace64]=0;  
+			      context.buffer[context.usedspace64]=0;
 			    }
             }
 			/* Do second-to-last transform: */
@@ -262,7 +262,7 @@ library sha512 {
 
 	/* final transform: */
 	SHA512_Transform(context, context.buffer);
-    
+
     }
 
 
@@ -280,23 +280,23 @@ function SHA512(uint64[16] memory data) internal view returns(uint256 low, uint2
   uint64 g = 0x1f83d9abfb41bd6b;
   uint64 h = 0x5be0cd19137e2179;
   uint64 j = 0;
- unchecked{       
+ unchecked{
  do {
-          
+
 assembly{
-            let T1:= mload(add(data,mul(32,j))) // buffer[j] =T1= (data[j]);   
-            
-            mstore(add(buffer, mul(32,j)), T1)    
+            let T1:= mload(add(data,mul(32,j))) // buffer[j] =T1= (data[j]);
+
+            mstore(add(buffer, mul(32,j)), T1)
 
 
             extcodecopy(0xcaca, T, mul(j,8), 8)
             T1:=    add(T1, shr(192, mload(T)))
-            T1:=    add(add(h,T1),xor( and(e,f), and(not(e), g)))            
+            T1:=    add(add(h,T1),xor( and(e,f), and(not(e), g)))
 
 
             T1:= and(0xffffffffffffffff,add(T1, xor(xor( or(shr(14,e), shl(50,e)) , or(shr(18,e), shl(46,e))), or(shr(41,e), shl(23,e)))      ))
-           
-            let T2:= xor(xor( or(shr(28,a), shl(36,a)) , or(shr(34,a), shl(30,a))), or(shr(39,a), shl(25,a)))   
+
+            let T2:= xor(xor( or(shr(28,a), shl(36,a)) , or(shr(34,a), shl(30,a))), or(shr(39,a), shl(25,a)))
             T2:= and(0xffffffffffffffff,add(T2, xor(xor(and(a,b), and(b,c)), and(a,c)))) //MAJ
             h := g
             g := f
@@ -308,35 +308,35 @@ assembly{
             a := and(0xffffffffffffffff,add(T1 , T2))
             j :=add(j,1)
             }
-                      
+
 
         } while (j < 16);
 
         do {
-           
+
             /* Part of the message block expansion: */
             //uint64 T1 = buffer[(j + 1) & 0x0f];
             uint64 T1;uint64 T2;
                assembly{
-                T1:= mload(add(buffer, mul(32,and(0x0f, add(j,1)))))   
-                  T1:=  xor(xor( or(shr(1,T1), shl(63,T1)) , or(shr(8,T1), shl(56,T1))), shr(7,T1)     ) 
-                T2:=mload(add(buffer, mul(32,and(0x0f, add(j,14)))))   
-            
-                T2:=  xor(xor( or(shr(19,T2), shl(45,T2)) , or(shr(61,T2), shl(3,T2))), shr(6,T2)     ) 
-                T1:=add(T1,mload(add(buffer, mul(32,and(0x0f, add(j,9))))))   
+                T1:= mload(add(buffer, mul(32,and(0x0f, add(j,1)))))
+                  T1:=  xor(xor( or(shr(1,T1), shl(63,T1)) , or(shr(8,T1), shl(56,T1))), shr(7,T1)     )
+                T2:=mload(add(buffer, mul(32,and(0x0f, add(j,14)))))
+
+                T2:=  xor(xor( or(shr(19,T2), shl(45,T2)) , or(shr(61,T2), shl(3,T2))), shr(6,T2)     )
+                T1:=add(T1,mload(add(buffer, mul(32,and(0x0f, add(j,9))))))
                 T2:=add(T2,T1)
 
                 let addr:=add(buffer, mul(32,and(0x0f, j)))
                 mstore(addr, and(0xffffffffffffffff,add(mload(addr), T2) ))
-                  T1 :=mload(addr) 
-          
-            T1:=    add(add(h,T1),xor( and(e,f), and(not(e), g)))            
+                  T1 :=mload(addr)
+
+            T1:=    add(add(h,T1),xor( and(e,f), and(not(e), g)))
              T1:= and(0xffffffffffffffff,add(T1, xor(xor( or(shr(14,e), shl(50,e)) , or(shr(18,e), shl(46,e))), or(shr(41,e), shl(23,e)))      ))
-           
+
             extcodecopy(0xcaca, T, mul(j,8), 8)
             T1:=    add(T1, shr(192, mload(T)))
 
-            let T3:= xor(xor( or(shr(28,a), shl(36,a)) , or(shr(34,a), shl(30,a))), or(shr(39,a), shl(25,a)))   
+            let T3:= xor(xor( or(shr(28,a), shl(36,a)) , or(shr(34,a), shl(30,a))), or(shr(39,a), shl(25,a)))
             T3:= and(0xffffffffffffffff,add(T3, xor(xor(and(a,b), and(b,c)), and(a,c)))) //MAJ
             h := g
             g := f
@@ -349,7 +349,7 @@ assembly{
             j :=add(j,1)
             }
         } while (j < 80);
- 
+
          a+=0x6a09e667f3bcc908;
            b += 0xbb67ae8584caa73b;
    c += 0x3c6ef372fe94f82b;
@@ -359,7 +359,7 @@ assembly{
    g += 0x1f83d9abfb41bd6b;
    h += 0x5be0cd19137e2179;
 }
-         
+
         low=(uint256(a)<<192)+(uint256(b)<<128)+(uint256(c)<<64)+d;
         high=(uint256(e)<<192)+(uint256(f)<<128)+(uint256(g)<<64)+h;
 
