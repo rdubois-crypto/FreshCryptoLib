@@ -18,6 +18,8 @@ pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
 import "@solidity/FCL_elliptic.sol";
+import "@solidity/FCL_ecdsa.sol";
+
 import "@solidity/FCL_Webauthn.sol";
 
 //external implementation to bench
@@ -168,26 +170,55 @@ contract ArithmeticTest is Test {
         assertEq(radd, raddN);
     }
 
-    function test_Fuzz_SigVerif(uint256 k, uint256 kpriv, uint256 message) public {
+    function test_Invariant_edge() public {
+        //choose Q=2P, then verify duplication is ok
+        uint256[4] memory Q;
+        (Q[0], Q[1], Q[2], Q[3]) = FCL_Elliptic_ZZ.ecZZ_Dbl(gx, gy, 1, 1);
+        uint256[4] memory _4P;
+        (_4P[0], _4P[1], _4P[2], _4P[3]) = FCL_Elliptic_ZZ.ecZZ_Dbl(Q[0], Q[1], Q[2], Q[3]);
+        uint256 _4P_res1;
+
+        (_4P_res1,) = FCL_Elliptic_ZZ.ecZZ_SetAff(_4P[0], _4P[1], _4P[2], _4P[3]);
+
+        uint256 _4P_res2 = FCL_Elliptic_ZZ.ecZZ_mulmuladd_S_asm(gx, gy, 4, 0);
+        assertEq(_4P_res1, _4P_res2);
+
+        uint256[2] memory nQ;
+        (nQ[0], nQ[1]) = FCL_Elliptic_ZZ.ecZZ_SetAff(Q[0], Q[1], Q[2], Q[3]);
+        uint256 _4P_res3 = FCL_Elliptic_ZZ.ecZZ_mulmuladd_S_asm(nQ[0], nQ[1], 2, 1);
+
+        assertEq(_4P_res1, _4P_res3);
+    }
+
+
+    function test_Fuzz_SigVerif(uint256 k, uint256 kpriv, uint256 message) public 
+    {
         vm.assume(k < FCL_Elliptic_ZZ.n);
         vm.assume(k > 1);
         vm.assume(kpriv < FCL_Elliptic_ZZ.n);
         vm.assume(kpriv > 1);
-
+        
         vm.assume(message < FCL_Elliptic_ZZ.n);
         vm.assume(message > 1);
 
-        uint256 xpub = FCL_Elliptic_ZZ.ecZZ_mulmuladd_S_asm(0, 0, kpriv, 0); //deriv public key
+        message=8329;
+        k=5;
+        kpriv=7598;
+        
+        k=n-k;//ensure high hamming weight of fuzzing vectors
+
+        uint256 xpub=FCL_Elliptic_ZZ.ecZZ_mulmuladd_S_asm(0,0, kpriv, 0); //deriv public key
         uint256 ypub = FCL_Elliptic_ZZ.ec_Decompress(xpub, 0);
         uint256 r;
         uint256 s;
         assertEq(FCL_Elliptic_ZZ.ecAff_isOnCurve(xpub, ypub), true);
 
-        (r, s) = FCL_Elliptic_ZZ.ecdsa_sign(bytes32(message), k, kpriv);
+        (r,s)= FCL_ecdsa.ecdsa_sign(bytes32(message), k, kpriv);
 
-        bool res1 = FCL_Elliptic_ZZ.ecdsa_verify(bytes32(message), r, s, xpub, ypub);
-        bool res2 = FCL_Elliptic_ZZ.ecdsa_verify(bytes32(message), r, s, xpub, p - ypub);
-        bool res = res1 || res2;
+
+        bool res1=FCL_ecdsa.ecdsa_verify(bytes32(message), r,s, xpub, ypub);
+        bool res2=FCL_ecdsa.ecdsa_verify(bytes32(message), r,s, xpub, p-ypub);
+        bool res=res1||res2;
 
         assertEq(res, true);
     }

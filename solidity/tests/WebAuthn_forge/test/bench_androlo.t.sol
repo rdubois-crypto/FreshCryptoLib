@@ -22,7 +22,7 @@ contract test_Androlo is Test {
     uint256 constant _NUM_TEST_ECMULMULADD = 1000;
     uint256 constant _NUM_TEST_DBL = 100;
 
-    function test_DblnAdd() public returns (bool) {
+    function test_DblnAdd() public view returns (bool) {
         uint256[3] memory ecpoint_R = [uint256(0), uint256(0), uint256(1)];
         uint256[2] memory ecpoint_G = [Gx, Gy];
 
@@ -54,7 +54,7 @@ contract test_Androlo is Test {
     }
 
     /// @dev See Curve.validateSignature
-    function bench_Signature(uint256 e, uint256[2] memory rs, uint256[2] memory Q) internal returns (bool) {
+    function bench_Signature(uint256 e, uint256[2] memory rs, uint256[2] memory Q) internal pure returns (bool) {
         uint256 n = nn;
         uint256 p = pp;
         if (rs[0] == 0 || rs[0] >= n || rs[1] == 0 || rs[1] > lowSmax) {
@@ -81,7 +81,7 @@ contract test_Androlo is Test {
         return true; //comparizon set to true: the aim is only to bench gas cost here
     }
 
-    function test_sig() public returns (bool) {
+    function test_sig() public  view returns (bool) {
         uint256 checkpointGasLeft;
         uint256 checkpointGasLeft2;
 

@@ -80,7 +80,7 @@ contract EdwardsTest is Test {
             uint256 x = mulmod(gx, scramble, p);
             uint256 y = mulmod(gy, scramble, p);
             uint256 z = scramble;
-            uint256 t = mulmod(x, y, p);
+           // uint256 t = mulmod(x, y, p);
             (x, y) = Edwards.ed_z2Aff(x, y, z);
             assertEq(x, gx);
             assertEq(y, gy);
@@ -146,10 +146,10 @@ contract EdwardsTest is Test {
 
     function test_mul() public {
         uint256 x_res1;
-        uint256 x_res;
+       // uint256 x_res;
         uint256 y_res1;
-        uint256 z_res1;
-        uint256 t_res1;
+       // uint256 z_res1;
+       // uint256 t_res1;
         //(n-1)G==-G ?
         (x_res1, y_res1) = multiplyScalar(gx, gy, 0x1000000000000000000000000000000014def9dea2f79cd65812631a5cf5d3ec);
 
@@ -163,10 +163,10 @@ contract EdwardsTest is Test {
 
     function test_mulmuladd() public {
         uint256 x_res1;
-        uint256 x_res;
+        //uint256 x_res;
         uint256 y_res1;
-        uint256 z_res1;
-        uint256 t_res1;
+       // uint256 z_res1;
+        //uint256 t_res1;
         //(n-1)G==-G ?
         (x_res1) = Edwards.ed_mulmuladd(gx, gy, 0x1000000000000000000000000000000014def9dea2f79cd65812631a5cf5d3ec, 0);
 

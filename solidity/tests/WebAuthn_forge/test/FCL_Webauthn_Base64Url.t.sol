@@ -36,7 +36,7 @@ contract FCL_Webauthn_Base64Url is Test {
         webauthn = new WebAuthn_base64URL();
     }
 
-    function test_base64URL_format() external {
+    function test_base64URL_format() external view{
         // mock data, see notice above for details on how this was derived
         bytes memory authenticatorDataMock =
             hex"49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000";
@@ -49,10 +49,10 @@ contract FCL_Webauthn_Base64Url is Test {
             29204351571054144655406732941989447033933540609767730374087271035220690033099,
             95571604233087243530638576272724546495790691135210520108106485630494705365598
         ];
-        uint256[2] memory QMock = [
+        /*uint256[2] memory QMock = [
             81682839938742543555082486110423905347664508641828409199518693630277409128887,
             17376078742205537968081477783760696603470208142043731074843150602836373389861
-        ];
+        ];*/
 
         // if this function call doesn't revert with an error, we believe it to have passed
         // the next test ensures that data is properly formated and successfully verified
@@ -99,7 +99,7 @@ contract FCL_Webauthn_Base64Url is Test {
         assertTrue(result, "authentication failed");
     }
 
-    function test_webauthn_format_details() public {
+    function test_webauthn_format_details() public view{
         // mock data, see notice above for details on how this was derived
         bytes memory authenticatorDataMock =
             hex"49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000";
@@ -149,7 +149,7 @@ contract WebAuthn_base64URL {
         );
     }
 
-    function verify(
+    function verify (
         bytes calldata authenticatorData,
         bytes1 authenticatorDataFlagMask,
         bytes calldata clientData,
@@ -157,7 +157,7 @@ contract WebAuthn_base64URL {
         uint256 clientChallengeDataOffset,
         uint256[2] calldata rs,
         uint256[2] calldata Q
-    ) external returns (bool result) {
+    ) external view returns (bool result) {
         result = FCL_WebAuthn.checkSignature(
             authenticatorData, // authenticator data
             authenticatorDataFlagMask, // authenticator data flag mask
@@ -188,7 +188,7 @@ contract Helper is Test {
         bytes32 clientChallenge,
         uint256 clientChallengeDataOffset,
         uint256[2] calldata // rs
-    ) public returns (bytes32 result) {
+    ) public view returns (bytes32 result) {
         // Let the caller check if User Presence (0x01) or User Verification (0x04) are set
         {
             if ((authenticatorData[32] & authenticatorDataFlagMask) != authenticatorDataFlagMask) {

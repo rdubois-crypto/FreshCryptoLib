@@ -8,7 +8,7 @@ contract test_Numerology is Test {
     uint256 constant _NUM_TEST_DBL = 100;
     //only for bench purposes
 
-    function test_DblnAdd() public returns (bool) {
+    function test_DblnAdd() public view returns (bool) {
         uint256[3] memory ecpoint_R = [
             0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798,
             0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8,
@@ -92,7 +92,7 @@ contract test_Numerology is Test {
         return Numerology.eqJacobian(kP_lQ, expected);
     }
 
-    function test_proof_verification_hack() public view returns (bool) {
+    function test_proof_verification_hack() public pure returns (bool) {
         // Verifier.deployed().then(function(inst) { return inst.test_proof_verification_hack.estimateGas(); })
 
         uint256[2] memory k_l = [
@@ -126,7 +126,7 @@ contract test_Numerology is Test {
         return sum_is_correct && kP_is_correct && lQ_is_correct;
     }
 
-    function test_add_eq_jac() public view returns (bool) {
+    function test_add_eq_jac() public pure returns (bool) {
         uint256 e0 = 0xaddcb45773b26a2f8ac2143627d54f47a12aab533dc1b41b4e791985e9eca496; // kP_x
         uint256 e1 = 0x72da5adb3a30a2cf147d309b0cf58c76b322c82a5edae164e13dbeed6429c41d; // kP_y
         uint256 e2 = 0xf07716879380e987f8b5551a1d989068d0003061088a869a33ceb9848771c6fd; // lQ_x

@@ -37,7 +37,7 @@ library Secp256k1 {
     // uint constant beta = "0x7ae96a2b657c07106e64479eac3434e99cf0497512f58995c1396c28719501ee";
 
     /// @dev See Curve.onCurve
-    function onCurve(uint256[2] memory P) internal returns (bool) {
+    function onCurve(uint256[2] memory P) internal pure returns (bool) {
         uint256 p = pp;
         if (0 == P[0] || P[0] == p || 0 == P[1] || P[1] == p) {
             return false;
@@ -48,12 +48,12 @@ library Secp256k1 {
     }
 
     /// @dev See Curve.isPubKey
-    function isPubKey(uint256[2] memory P) internal returns (bool isPK) {
+    function isPubKey(uint256[2] memory P) internal pure   returns(bool isPK) {
         isPK = onCurve(P);
     }
 
     /// @dev See Curve.validateSignature
-    function validateSignature(bytes32 message, uint256[2] memory rs, uint256[2] memory Q) internal returns (bool) {
+    function validateSignature(bytes32 message, uint256[2] memory rs, uint256[2] memory Q) internal pure returns (bool) {
         uint256 n = nn;
         uint256 p = pp;
         if (rs[0] == 0 || rs[0] >= n || rs[1] == 0 || rs[1] > lowSmax) {
@@ -78,13 +78,13 @@ library Secp256k1 {
     }
 
     /// @dev See Curve.compress
-    function compress(uint256[2] memory P) internal returns (uint8 yBit, uint256 x) {
+    function compress(uint256[2] memory P) internal pure returns (uint8 yBit, uint256 x) {
         x = P[0];
         yBit = P[1] & 1 == 1 ? 1 : 0;
     }
 
     /// @dev See Curve.decompress
-    function decompress(uint8 yBit, uint256 x) internal returns (uint256[2] memory P) {
+    function decompress(uint8 yBit, uint256 x) internal pure returns (uint256[2] memory P) {
         uint256 p = pp;
         uint256 y2 = addmod(mulmod(x, mulmod(x, x, p), p), 7, p);
         uint256 y_ = ECCMath.expmod(y2, (p + 1) / 4, p);
@@ -96,7 +96,7 @@ library Secp256k1 {
     // Point addition, P + Q
     // inData: Px, Py, Pz, Qx, Qy, Qz
     // outData: Rx, Ry, Rz
-    function _add(uint256[3] memory P, uint256[3] memory Q) public returns (uint256[3] memory R) {
+    function _add(uint256[3] memory P, uint256[3] memory Q) public pure returns (uint256[3] memory R) {
         if (P[2] == 0) {
             return Q;
         }
@@ -134,7 +134,7 @@ library Secp256k1 {
     // Point addition, P + Q. P Jacobian, Q affine.
     // inData: Px, Py, Pz, Qx, Qy
     // outData: Rx, Ry, Rz
-    function _addMixed(uint256[3] memory P, uint256[2] memory Q) internal returns (uint256[3] memory R) {
+    function _addMixed(uint256[3] memory P, uint256[2] memory Q) internal pure returns (uint256[3] memory R) {
         if (P[2] == 0) {
             return [Q[0], Q[1], 1];
         }
@@ -170,7 +170,7 @@ library Secp256k1 {
     }
 
     // Same as addMixed but params are different and mutates P.
-    function _addMixedM(uint256[3] memory P, uint256[2] memory Q) internal {
+    function _addMixedM(uint256[3] memory P, uint256[2] memory Q) internal pure{
         if (P[1] == 0) {
             P[0] = Q[0];
             P[1] = Q[1];
@@ -211,7 +211,7 @@ library Secp256k1 {
     // Point doubling, 2*P
     // Params: Px, Py, Pz
     // Not concerned about the 1 extra mulmod.
-    function _double(uint256[3] memory P) internal returns (uint256[3] memory Q) {
+    function _double(uint256[3] memory P) internal pure returns (uint256[3] memory Q) {
         uint256 p = pp;
         if (P[2] == 0) {
             return P;
@@ -228,7 +228,7 @@ library Secp256k1 {
     }
 
     // Same as double but mutates P and is internal only.
-    function _doubleM(uint256[3] memory P) internal {
+    function _doubleM(uint256[3] memory P) internal pure {
         uint256 p = pp;
         if (P[2] == 0) {
             return;
@@ -247,7 +247,7 @@ library Secp256k1 {
     // Multiplication dP. P affine, wNAF: w=5
     // Params: d, Px, Py
     // Output: Jacobian Q
-    function _mul(uint256 d, uint256[2] memory P) public returns (uint256[3] memory Q) {
+    function _mul(uint256 d, uint256[2] memory P) public pure returns (uint256[3] memory Q) {
         uint256 p = pp;
         if (
             d == 0 // TODO

@@ -52,8 +52,8 @@ contract Sha512Test is Test {
 
     function SHA_setUp() internal {
         uint256 _prec_address = 0xcaca;
-        uint256[4] memory T;
-        uint64 val;
+       // uint256[4] memory T;
+        //uint64 val;
 
         string memory deployData = vm.readFile("test/sha512_const.json");
         bytes memory K512 = abi.decode(vm.parseJson(deployData, ".K512"), (bytes));
@@ -132,7 +132,7 @@ contract Sha512Test is Test {
     //h mod q= 0x60ab51a60e3f1ceb60549479b152ae2f4a41d9dd8da0f6c3ef2892d51118e95
 
     //reduce a 512 bits number modulo N
-    function red512Modq(uint256[2] memory val) public returns (uint256) {
+    function red512Modq(uint256[2] memory val) public pure returns (uint256) {
         //2²⁵²+27742317777372353535851937790883648493
         //0x1000000000000000000000000000000014def9dea2f79cd65812631a5cf5d3ed
         //0xffffffffffffffffffffffffffffffec6ef5bf4737dcf70d6ec31748d98951d is 2^256%N
@@ -147,7 +147,7 @@ contract Sha512Test is Test {
         );
     }
 
-    function test_red512modq() public {
+    function test_red512modq() public view{
         uint256[2] memory tstv = [
             0xbf62c3fb850acebf2d240df6fe5f136359ab6728da6056e3c6ddabb4ae574854,
             0x9ec08df799a1bc959b0558f8675832c0648b4a939956f62e8ff39319ffb4bf09

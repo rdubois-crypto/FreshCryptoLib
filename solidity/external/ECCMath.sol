@@ -13,7 +13,7 @@ library ECCMath {
     /// @param a The number.
     /// @param p The mmodulus.
     /// @return x such that ax = 1 (mod p)
-    function invmod(uint256 a, uint256 p) internal returns (uint256) {
+    function invmod(uint256 a, uint256 p) internal pure returns (uint256) {
         unchecked {
             if (a == 0 || a == p || p == 0) {
                 revert();
@@ -44,7 +44,7 @@ library ECCMath {
     /// @param e The exponent.
     /// @param m The modulus.
     /// @return r such that x = b**e (mod m)
-    function expmod(uint256 b, uint256 e, uint256 m) internal returns (uint256 r) {
+    function expmod(uint256 b, uint256 e, uint256 m) internal pure returns (uint256 r) {
         if (b == 0) {
             return 0;
         }
@@ -73,7 +73,7 @@ library ECCMath {
     /// @param zInv The modular inverse of 'Pz'.
     /// @param z2Inv The square of zInv
     /// @param prime The prime modulus.
-    function toZ1(uint256[3] memory P, uint256 zInv, uint256 z2Inv, uint256 prime) internal {
+    function toZ1(uint256[3] memory P, uint256 zInv, uint256 z2Inv, uint256 prime) internal pure{
         P[0] = mulmod(P[0], z2Inv, prime);
         P[1] = mulmod(P[1], mulmod(zInv, z2Inv, prime), prime);
         P[2] = 1;
@@ -83,7 +83,7 @@ library ECCMath {
     /// Warning: Computes a modular inverse.
     /// @param PJ The point.
     /// @param prime The prime modulus.
-    function toZ1(uint256[3] memory PJ, uint256 prime) internal {
+    function toZ1(uint256[3] memory PJ, uint256 prime) internal pure {
         uint256 zInv = invmod(PJ[2], prime);
         uint256 zInv2 = mulmod(zInv, zInv, prime);
         PJ[0] = mulmod(PJ[0], zInv2, prime);
