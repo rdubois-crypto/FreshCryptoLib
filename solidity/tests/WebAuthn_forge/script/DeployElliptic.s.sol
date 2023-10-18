@@ -4,10 +4,12 @@ pragma solidity >=0.8.19 <0.9.0;
 import {BaseScript} from "./BaseScript.sol";
 import {FCL_Elliptic_ZZ} from "@solidity/FCL_elliptic.sol";
 
+import {FCL_ecdsa} from "@solidity/FCL_ecdsa.sol";
+
 /// @notice Wrap the FCL_Elliptic library in a contract to be able to deploy it
 contract LibraryWrapper {
     function ecdsa_verify(bytes32 message, uint256 r, uint256 s, uint256 Qx, uint256 Qy) external view returns (bool) {
-        return FCL_Elliptic_ZZ.ecdsa_verify(message, r, s, Qx, Qy);
+        return FCL_ecdsa.ecdsa_verify(message, r, s, Qx, Qy);
     }
 
     function ecdsa_verify(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q)
@@ -15,8 +17,10 @@ contract LibraryWrapper {
         view
         returns (bool)
     {
-        return FCL_Elliptic_ZZ.ecdsa_verify(message, rs, Q);
+        return FCL_ecdsa.ecdsa_verify(message, rs, Q);
     }
+
+
 
     function ecdsa_precomputed_verify(bytes32 message, uint256[2] calldata rs, address Shamir8)
         external
@@ -24,6 +28,11 @@ contract LibraryWrapper {
         returns (bool)
     {
         return FCL_Elliptic_ZZ.ecdsa_precomputed_verify(message, rs, Shamir8);
+    }
+
+    function ecdsa_sign(bytes32 message, uint256 k , uint256 kpriv)  external view returns(uint256 r, uint256 s)
+    {
+        return FCL_ecdsa.ecdsa_sign(message, k, kpriv);
     }
 }
 
