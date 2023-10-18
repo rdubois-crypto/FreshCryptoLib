@@ -11,7 +11,7 @@ on:
       - master
     # This action will only run on pull requests that include changes to the following files
     paths:
-      - "tests/WebAuthn_forge/**/*"
+      - "solidity/**/*"
       - "sage/FCL_ecdsa_precompute/FCL_ecdsa_precompute.sage"
 
 env:
@@ -64,16 +64,14 @@ jobs:
           version: nightly
 
       - name: Run Forge build
-        working-directory: tests/WebAuthn_forge
         run: |
           forge --version
-          forge build --sizes
+          forge build --root solidity/tests/WebAuthn_forge --sizes
         id: build
 
       - name: Run Forge tests
-        working-directory: tests/WebAuthn_forge
         run: |
-          forge test -vvvv --ffi
+          forge test --root solidity/tests/WebAuthn_forge -vvvv --ffi
         id: test
 
   lint:
@@ -93,14 +91,12 @@ jobs:
           version: nightly
 
       - name: Run Forge build
-        working-directory: tests/WebAuthn_forge
         run: |
           forge --version
-          forge build --sizes
+          forge build --root solidity/tests/WebAuthn_forge --sizes
         id: build
 
       - name: Run Forge fmt
-        working-directory: tests/WebAuthn_forge
         run: |
-          forge fmt --check
+          forge fmt --check --root solidity/tests/WebAuthn_forge
         id: lint
