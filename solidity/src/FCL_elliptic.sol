@@ -902,63 +902,6 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
         } //end unchecked
     }
 
-    /**
-     * @dev ECDSA verification, given , signature, and public key.
-     */
-    function ecdsa_verify(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) public view returns (bool) {
-        uint256 r = rs[0];
-        uint256 s = rs[1];
-        if (r == 0 || r >= n || s == 0 || s >= n) {
-            return false;
-        }
-        uint256 Qx = Q[0];
-        uint256 Qy = Q[1];
-        if (!ecAff_isOnCurve(Qx, Qy)) {
-            return false;
-        }
-
-        uint256 sInv = FCL_nModInv(s);
-
-        uint256 scalar_u = mulmod(uint256(message), sInv, n);
-        uint256 scalar_v = mulmod(r, sInv, n);
-        uint256 x1;
-
-        x1 = ecZZ_mulmuladd_S_asm(Qx, Qy, scalar_u, scalar_v);
-
-        assembly {
-            x1 := addmod(x1, sub(n, r), n)
-        }
-       
-        return x1 == 0;
-    }
-
-    /**
-     * @dev ECDSA verification, given , signature, and public key, no calldata version
-     */
-    function ecdsa_verify(bytes32 message, uint256 r, uint256 s, uint256 Qx, uint256 Qy)  public view returns (bool){
-        if (r == 0 || r >= n || s == 0 || s >= n) {
-            return false;
-        }
-        
-        if (!ecAff_isOnCurve(Qx, Qy)) {
-            return false;
-        }
-
-        uint256 sInv = FCL_nModInv(s);
-
-        uint256 scalar_u = mulmod(uint256(message), sInv, n);
-        uint256 scalar_v = mulmod(r, sInv, n);
-        uint256 x1;
-
-        x1 = ecZZ_mulmuladd_S_asm(Qx, Qy, scalar_u, scalar_v);
-
-        assembly {
-            x1 := addmod(x1, sub(n, r), n)
-        }
-       
-        return x1 == 0;
-
-    }
 
     /**
      * @dev ECDSA verification using a precomputed table of multiples of P and Q stored in contract at address Shamir8
@@ -1026,37 +969,6 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
         return X == 0;
     } //end  ecdsa_precomputed_verify()
 
-    function ec_recover_r1(uint256 h, uint256 v, uint256 r, uint256 s) public view returns (address)
-    {
-         if (r == 0 || r >= n || s == 0 || s >= n) {
-            return address(0);
-        }
-        uint256 y=ec_Decompress(r, v-27);
-        uint256 rinv=FCL_nModInv(r);
-        uint256 u1=mulmod(n-addmod(0,h,n), rinv,n);//-hr^-1
-        uint256 u2=mulmod(s, rinv,n);//sr^-1
 
-        uint256 Qx;
-        uint256 Qy;
-        (Qx,Qy)=ecZZ_mulmuladd(r,y, u1, u2);
-
-        return address(uint160(uint256(keccak256(abi.encodePacked(Qx, Qy)))));
-    }
-
-    //ecdsa signature for test purpose only (who would like to have a private key onchain anyway ?)
-    //K is nonce, kpriv is private key
-    function ecdsa_sign(bytes32 message, uint256 k , uint256 kpriv) public view returns(uint256 r, uint256 s)
-    {
-        r=ecZZ_mulmuladd_S_asm(0,0, k, 0) ;//Calculate the curve point k.G (abuse ecmulmul add with v=0)
-        r=addmod(0,r, n); 
-        s=mulmod(FCL_nModInv(k), addmod(uint256(message), mulmod(r, kpriv, n),n),n);//s=k^-1.(h+r.kpriv)
-
-        
-        if(r==0||s==0){
-            revert();
-        }
-
-
-    }
 
 } //EOF

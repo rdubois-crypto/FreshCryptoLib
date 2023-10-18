@@ -28,7 +28,7 @@ library EDDSA {
 
 
 
-function SHA512modq(uint64[16] memory Data) public returns (uint256 h)
+function SHA512modq(uint64[16] memory Data) public view returns (uint256 h)
 {
 
  uint256[2] memory val;

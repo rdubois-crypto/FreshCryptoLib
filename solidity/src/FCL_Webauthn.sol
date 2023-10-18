@@ -22,6 +22,8 @@ pragma solidity ^0.8.20;
 
 import {Base64Url} from "./utils/Base64Url.sol";
 import {FCL_Elliptic_ZZ} from "./FCL_elliptic.sol";
+import {FCL_ecdsa} from "./FCL_ecdsa.sol";
+
 
 library FCL_WebAuthn {
     error InvalidAuthenticatorData();
@@ -96,7 +98,7 @@ library FCL_WebAuthn {
             authenticatorData, authenticatorDataFlagMask, clientData, clientChallenge, clientChallengeDataOffset, rs
         );
 
-        bool result = FCL_Elliptic_ZZ.ecdsa_verify(message, rs, Q);
+        bool result = FCL_ecdsa.ecdsa_verify(message, rs, Q);
 
         return result;
     }
