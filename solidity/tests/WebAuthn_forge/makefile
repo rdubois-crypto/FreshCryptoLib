@@ -106,14 +106,8 @@ install: git-submodule-update
 #    PRIVATE_KEY=<PRIVATE_KEY> forge script DeployElliptic.s.sol:MyScript --rpc-url <RPC_URL> [--broadcast]
 https://ethereum-holesky.publicnode.com
 
-#deploy: forge script DeployElliptic.s.sol:MyScript --rpc-url https://ethereum-sepolia.blockpi.network/v1/rpc/public --private-key b3619b5eb554ae89e6c53ca7d4d1c4dee671a96d16c0a20e597e194609cc2cc2
-deploy:
-	forge script script/DeployElliptic.s.sol:MyScript --rpc-url https://ethereum-sepolia.blockpi.network/v1/rpc/public --private-key b3619b5eb554ae89e6c53ca7d4d1c4dee671a96d16c0a20e597e194609cc2cc2 --etherscan-api-key HURV4UYJZCCUTXEYM73M6J6CIJE1KN1W5X --verify 
+deploy:	forge script script/DeployElliptic.s.sol:MyScript --rpc-url https://ethereum-sepolia.blockpi.network/v1/rpc/public --private-key <private> --etherscan-api-key HURV4UYJZCCUTXEYM73M6J6CIJE1KN1W5X --verify 
 
-#verify: forge verify-contract --rpc-url https://ethereum-holesky.publicnode.com --etherscan-api-key HURV4UYJZCCUTXEYM73M6J6CIJE1KN1W5XHURV4UYJZCCUTXEYM73M6J6CIJE1KN1W5X 0x1695C55D8bFd9C9035a9197191448381e38d1bF9 DeployElliptic.s.sol:LibraryWrapper 
-
-
-#forge verify-contract --etherscan-api-key HURV4UYJZCCUTXEYM73M6J6CIJE1KN1W5XHURV4UYJZCCUTXEYM73M6J6CIJE1KN1W5X --chain holesky --force  0x1695C55D8bFd9C9035a9197191448381e38d1bF9 DeployElliptic.s.sol:LibraryWrapper 
 forge verify-contract --etherscan-api-key HURV4UYJZCCUTXEYM73M6J6CIJE1KN1W5XHURV4UYJZCCUTXEYM73M6J6CIJE1KN1W5X --chain sepolia --flatten --force  0x3c548295a71383976318819599937fC3daC75289 script/DeployElliptic.s.sol:LibraryWrapper --watch
 
 

@@ -92,7 +92,7 @@ library FCL_Elliptic_ZZ {
     }
 
     //Coron projective shuffling, take as input alpha as blinding factor
-   function ecZZ_Coronize(uint256 alpha, uint256 x, uint256 y,  uint256 zz, uint256 zzz) public pure  returns (uint256 x3, uint256 y3, uint256 zz3, uint256 zzz3)
+   function ecZZ_Coronize(uint256 alpha, uint256 x, uint256 y,  uint256 zz, uint256 zzz) internal pure  returns (uint256 x3, uint256 y3, uint256 zz3, uint256 zzz3)
    {
        
         uint256 alpha2=mulmod(alpha,alpha,p);
