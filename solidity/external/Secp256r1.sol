@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.20;
+pragma solidity >=0.8.19 <0.9.0;
 //
 // Heavily inspired from
 // https://github.com/maxrobot/elliptic-solidity/blob/master/contracts/Secp256r1.sol
@@ -153,7 +153,7 @@ library Secp256r1 {
     }
 
     /* _affineFromJacobian
-    * @desription returns affine coordinates from a jacobian input follows 
+    * @desription returns affine coordinates from a jacobian input follows
     * golang elliptic/crypto library
     */
     function _affineFromJacobian(uint256 x, uint256 y, uint256 z) internal view returns (uint256 ax, uint256 ay) {
