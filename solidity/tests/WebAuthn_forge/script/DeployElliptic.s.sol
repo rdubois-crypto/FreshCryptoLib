@@ -5,7 +5,6 @@ import {BaseScript} from "./BaseScript.sol";
 import {FCL_ecdsa} from "@solidity/FCL_ecdsa.sol";
 import {FCL_Elliptic_ZZ} from "@solidity/FCL_elliptic.sol";
 
-
 /// @notice Wrap the FCL_Elliptic library in a contract to be able to deploy it
 contract LibraryWrapper {
     function ecdsa_verify(bytes32 message, uint256 r, uint256 s, uint256 Qx, uint256 Qy) external view returns (bool) {
