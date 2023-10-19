@@ -2,8 +2,9 @@
 pragma solidity >=0.8.19 <0.9.0;
 
 import {BaseScript} from "./BaseScript.sol";
-import {FCL_Elliptic_ZZ} from "../../../src/FCL_elliptic.sol";
-import {FCL_ecdsa} from "../../../src/FCL_elliptic.sol";
+import {FCL_ecdsa} from "@solidity/FCL_ecdsa.sol";
+import {FCL_Elliptic_ZZ} from "@solidity/FCL_elliptic.sol";
+
 
 /// @notice Wrap the FCL_Elliptic library in a contract to be able to deploy it
 contract LibraryWrapper {

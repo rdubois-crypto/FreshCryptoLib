@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.8.19 <0.9.0;
+pragma solidity ^0.8.0;
 
 import {Test, console2} from "forge-std/Test.sol";
 import {FCL_WebAuthn} from "@solidity/FCL_Webauthn.sol";

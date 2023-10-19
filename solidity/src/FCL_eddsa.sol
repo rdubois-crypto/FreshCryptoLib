@@ -14,7 +14,7 @@
 ///* DESCRIPTION: Implementation of RFC8032 using FCL Shamir's trick
 ///*
 //**************************************************************************************/
-// License:MIT, SPDX Identifier is removed because it breaks with the flatten command.
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.8.19 <0.9.0;
 
 //import "./FCL_ed25519.sol" as Curve;

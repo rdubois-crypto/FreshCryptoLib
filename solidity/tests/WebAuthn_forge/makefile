@@ -97,17 +97,3 @@ lint-write: forge-lint
 clean: forge-clean
 
 install: git-submodule-update
-
-#  ℹ️ RUN THIS SCRIPT USING A LEDGER:
-#    forge script DeployElliptic.s.sol:MyScript --rpc-url <RPC_URL> --ledger --sender <ACCOUNT_ADDRESS> \
-#    [--broadcast]
-
-#    ℹ️ RUN THIS SCRIPT WITH AN ARBITRARY PRIVATE KEY (NOT RECOMMENDED):
-#    PRIVATE_KEY=<PRIVATE_KEY> forge script DeployElliptic.s.sol:MyScript --rpc-url <RPC_URL> [--broadcast]
-https://ethereum-holesky.publicnode.com
-
-deploy:	forge script script/DeployElliptic.s.sol:MyScript --rpc-url https://ethereum-sepolia.blockpi.network/v1/rpc/public --private-key <private> --etherscan-api-key HURV4UYJZCCUTXEYM73M6J6CIJE1KN1W5X --verify 
-
-forge verify-contract --etherscan-api-key HURV4UYJZCCUTXEYM73M6J6CIJE1KN1W5XHURV4UYJZCCUTXEYM73M6J6CIJE1KN1W5X --chain sepolia --flatten --force  0x3c548295a71383976318819599937fC3daC75289 script/DeployElliptic.s.sol:LibraryWrapper --watch
-
-

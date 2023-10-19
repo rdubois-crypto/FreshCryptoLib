@@ -16,7 +16,7 @@
 //**************************************************************************************/
 //Initialize hash values:
 //(first 32 bits of the fractional parts of the square roots of the first 8 primes 2..19):
-// License:MIT, SPDX Identifier is removed because it breaks with the flatten command.
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.8.19 <0.9.0;
 
 library sha512 {
