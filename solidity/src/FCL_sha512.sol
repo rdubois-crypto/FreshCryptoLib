@@ -16,8 +16,8 @@
 //**************************************************************************************/
 //Initialize hash values:
 //(first 32 bits of the fractional parts of the square roots of the first 8 primes 2..19):
-
-pragma solidity ^0.8.20;
+// License:MIT, SPDX Identifier is removed because it breaks with the flatten command.
+pragma solidity >=0.8.19 <0.9.0;
 
 library sha512 {
     uint256 constant SHA512_BLOCK_LENGTH8 = 128;

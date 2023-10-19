@@ -1,4 +1,4 @@
-pragma solidity ^0.8.20;
+pragma solidity >=0.8.19 <0.9.0;
 
 library Secp256r1_maxrobot {
     uint256 constant gx = 0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296;

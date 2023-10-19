@@ -1,4 +1,4 @@
-pragma solidity ^0.8.20;
+pragma solidity >=0.8.19 <0.9.0;
 
 /**
  * @title ECCMath

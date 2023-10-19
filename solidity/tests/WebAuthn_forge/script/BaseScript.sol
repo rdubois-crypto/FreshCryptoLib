@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// License:MIT, SPDX Identifier is removed because it breaks with the flatten command.
 pragma solidity >=0.8.19 <0.9.0;
 
 import {Script} from "../lib/forge-std/src/Script.sol";
