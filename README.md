@@ -19,6 +19,15 @@ The implemented content is:
 * FLC_Webauthn.sol: implementation of the WebAuthn2/FIDO2 authentication over ECDSA with P256
 <!--- FCL_ecdaa.sol: an EVM version of the ECDAA anonymous attestation for anonymous airdrops -->
 
+
+## Current Deployments
+
+| Commit # | Create2 | Mainnets | Testnets |
+|--------:|---------|:--:|:----|
+||         |  |         |
+|[37](https://github.com/rdubois-crypto/FreshCryptoLib/commit/29f60f19d3a07ec501ce36429f9688d9be372368)| 0xebcaae4af6844b5f24a4730c5f58130977e62a2b    | [Polygon](https://polygonscan.com/address/0xebcaae4af6844b5f24a4730c5f58130977e62a2b#code)  | [Optimism](https://goerli-optimism.etherscan.io/address/0xebcaae4af6844b5f24a4730c5f58130977e62a2b#code), [Sepolia](https://sepolia.etherscan.io/address/0xebcaae4af6844b5f24a4730c5f58130977e62a2b#code), [Linea](https://explorer.goerli.linea.build/address/0xEBCaaE4Af6844B5F24A4730C5f58130977E62A2B/contracts#address-tabs)  |  
+
+
 ### Directory cairo0.9:
 
 * FCL_ec_mulmuladd.cairo: an implementation of the operation aP+bQ (addition of the results of two distincts point multiplication by scalar a and b). It uses the Shamir's trick with the windowing method.
