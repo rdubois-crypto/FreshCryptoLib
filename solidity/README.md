@@ -30,4 +30,6 @@ A script to deploy FLC is in the directory tests/WebAuthn_forge/script/DeployEll
 
 ## Current Deployments
 
-TBD
+Contract shall be available on all chain at address 0xfdfbd703a269a0cb8e04304a14fbb616de68c424
+
+https://sepolia.etherscan.io/address/0xfdfbd703a269a0cb8e04304a14fbb616de68c424
