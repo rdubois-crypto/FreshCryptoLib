@@ -20,8 +20,6 @@ The implemented content is:
 <!--- FCL_ecdaa.sol: an EVM version of the ECDAA anonymous attestation for anonymous airdrops -->
 
 
-## Current Deployments
-
 | Commit # | Create2 | Mainnets | Testnets |
 |--------:|---------|:--:|:----|
 ||         |  |         |
