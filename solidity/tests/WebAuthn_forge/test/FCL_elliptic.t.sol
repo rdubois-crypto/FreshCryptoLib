@@ -220,6 +220,19 @@ contract ArithmeticTest is Test {
         assertEq(res, true);
     }
 
+    function test_derivKpub(uint256 kpriv) public {
+        // vm.assume(kpriv < FCL_Elliptic_ZZ.n);
+        // vm.assume(kpriv > 1);
+        uint256 x;
+        uint256 y;
+
+        (x, y) = FCL_ecdsa.ecdsa_derivKpub(kpriv);
+        if (FCL_Elliptic_ZZ.ecZZ_mulmuladd_S_asm(x, y, kpriv, FCL_Elliptic_ZZ.n - 1) != 0) {
+            revert();
+        }
+        console.log(FCL_Elliptic_ZZ.ecZZ_mulmuladd_S_asm(x, FCL_Elliptic_ZZ.p - y, kpriv, kpriv));
+    }
+
     //check consistency of ecmulmuladd and Add
     function test_invariant_FCL_Ecmulmuladd() public {
         uint256 ecpoint_Rx = 0;
