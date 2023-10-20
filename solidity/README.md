@@ -33,5 +33,8 @@ Will deploy the ecdsa_verify contract and verify it on chain. You need to provid
 
 ## Current Deployments
 
-Current create2 common to all networks address is :0xfdfbd703a269a0cb8e04304a14fbb616de68c424
-[Sepolia](https://sepolia.etherscan.io/address/0xfdfbd703a269a0cb8e04304a14fbb616de68c424#code)https://sepolia.etherscan.io/address/0xfdfbd703a269a0cb8e04304a14fbb616de68c424#code
+Current create2 common to all networks address is :0xfdfbd703a269a0cb8e04304a14fbb616de68c424.
+
+Code deployment can be check here:
+
+[Sepolia](https://sepolia.etherscan.io/address/0xfdfbd703a269a0cb8e04304a14fbb616de68c424#code)
