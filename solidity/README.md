@@ -26,7 +26,10 @@ will fix any linting problem
 
 ## Deploying
 
-A script to deploy FLC is in the directory tests/WebAuthn_forge/script/DeployElliptic.sol, follow instruction to easily (and safely) deploy and interact with FLC contracts using forge.
+>make deploy 
+Will deploy the ecdsa_verify contract and verify it on chain. You need to provide a private key and an etherscan API key to the makefile.
+
+
 
 ## Current Deployments
 
