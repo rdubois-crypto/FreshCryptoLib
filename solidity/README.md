@@ -26,10 +26,20 @@ will fix any linting problem
 
 ## Deploying
 
-A script to deploy FLC is in the directory tests/WebAuthn_forge/script/DeployElliptic.sol, follow instruction to easily (and safely) deploy and interact with FLC contracts using forge.
+>make deploy 
+Will deploy the ecdsa_verify contract and verify it on chain. You need to provide a private key and an etherscan API key to the makefile.
+
+
 
 ## Current Deployments
 
-Contract shall be available on all chain at address 0xfdfbd703a269a0cb8e04304a14fbb616de68c424
+Current create2 common to all networks address is :0xfdfbd703a269a0cb8e04304a14fbb616de68c424.
 
-https://sepolia.etherscan.io/address/0xfdfbd703a269a0cb8e04304a14fbb616de68c424
+Code deployment can be check here:
+
+[Sepolia](https://sepolia.etherscan.io/address/0xfdfbd703a269a0cb8e04304a14fbb616de68c424#code)
+
+Here is an example of a successfull ecdsa verification using forge cast over Sepolia :
+
+cast call 0xfdfbd703a269a0cb8e04304a14fbb616de68c424         "ecdsa_verify(bytes32,uint256,uint256,uint256,uint256)"         0xbb5a52f42f9c9261ed4361f59422a1e30036e7c32b270c8807a419feca605023         19738613187745101558623338726804762177711919211234071563652772152683725073944         34753961278895633991577816754222591531863837041401341770838584739693604822390         18614955573315897657680976650685450080931919913269223958732452353593824192568         90223116347859880166570198725387569567414254547569925327988539833150573990205 --rpc-url https://ethereum-sepolia.blockpi.network/v1/rpc/public
+
