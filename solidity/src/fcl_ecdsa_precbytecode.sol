@@ -1,3 +1,4 @@
+pragma solidity >=0.8.19 <0.9.0;
 // Public key
 //x:fdf8bce27f54e06f3aee3b6a542db1ab1f2418d7370a78b150d06965f942b14a y:470cdee69ab50e610c39b840681bf816b030f4a0a5d5af02ce27dcce6bede89f
 bytes constant x =

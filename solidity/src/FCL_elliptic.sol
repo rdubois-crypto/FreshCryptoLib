@@ -19,7 +19,7 @@
 // Code is optimized for a=-3 only curves with prime order, constant like -1, -2 shall be replaced
 // if ever used for other curve than sec256R1
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity >=0.8.19 <0.9.0;
 
 library FCL_Elliptic_ZZ {
     // Set parameters for curve sec256r1.
@@ -92,7 +92,7 @@ library FCL_Elliptic_ZZ {
     }
 
     //Coron projective shuffling, take as input alpha as blinding factor
-   function ecZZ_Coronize(uint256 alpha, uint256 x, uint256 y,  uint256 zz, uint256 zzz) public pure  returns (uint256 x3, uint256 y3, uint256 zz3, uint256 zzz3)
+   function ecZZ_Coronize(uint256 alpha, uint256 x, uint256 y,  uint256 zz, uint256 zzz) internal pure  returns (uint256 x3, uint256 y3, uint256 zz3, uint256 zzz3)
    {
        
         uint256 alpha2=mulmod(alpha,alpha,p);

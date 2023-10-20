@@ -28,7 +28,7 @@ library EDDSA {
 
 
 
-function SHA512modq(uint64[16] memory Data) public view returns (uint256 h)
+function SHA512modq(uint64[16] memory Data) internal view returns (uint256 h)
 {
 
  uint256[2] memory val;
@@ -42,7 +42,7 @@ function SHA512modq(uint64[16] memory Data) public view returns (uint256 h)
 
 //to reduce verification cost, the front shall present the concatenation
 // R || public ||Msg ||Padding || S  
-function Verify( uint256[2] calldata Q, uint64[16] memory RsPubMsgPad, uint256 s) public returns(bool res)
+function Verify( uint256[2] calldata Q, uint64[16] memory RsPubMsgPad, uint256 s) internal returns(bool res)
   {
 
     //todo check decompression of R

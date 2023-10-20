@@ -19,7 +19,7 @@
 // Code is optimized for a=-3 only curves with prime order, constant like -1, -2 shall be replaced
 // if ever used for other curve than sec256R1
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity >=0.8.19 <0.9.0;
 
 
 import {FCL_Elliptic_ZZ} from "./FCL_elliptic.sol";
@@ -27,14 +27,15 @@ import {FCL_Elliptic_ZZ} from "./FCL_elliptic.sol";
 
 
 library FCL_ecdsa {
-    // Set parameters for curve sec256r1.
+    // Set parameters for curve sec256r1.public
       //curve order (number of points)
     uint256 constant n = FCL_Elliptic_ZZ.n;
   
     /**
      * @dev ECDSA verification, given , signature, and public key.
      */
-    function ecdsa_verify(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) public view returns (bool) {
+
+    function ecdsa_verify(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) internal view returns (bool) {
         uint256 r = rs[0];
         uint256 s = rs[1];
         if (r == 0 || r >= FCL_Elliptic_ZZ.n || s == 0 || s >= FCL_Elliptic_ZZ.n) {
@@ -62,7 +63,7 @@ library FCL_ecdsa {
     /**
      * @dev ECDSA verification, given , signature, and public key, no calldata version
      */
-    function ecdsa_verify(bytes32 message, uint256 r, uint256 s, uint256 Qx, uint256 Qy)  public view returns (bool){
+    function ecdsa_verify(bytes32 message, uint256 r, uint256 s, uint256 Qx, uint256 Qy)  internal view returns (bool){
 
         if (r == 0 || r >= FCL_Elliptic_ZZ.n || s == 0 || s >= FCL_Elliptic_ZZ.n) {
             return false;
@@ -88,7 +89,7 @@ library FCL_ecdsa {
 
     }
 
-    function ec_recover_r1(uint256 h, uint256 v, uint256 r, uint256 s) public view returns (address)
+    function ec_recover_r1(uint256 h, uint256 v, uint256 r, uint256 s) internal view returns (address)
     {
          if (r == 0 || r >= FCL_Elliptic_ZZ.n || s == 0 || s >= FCL_Elliptic_ZZ.n) {
             return address(0);
@@ -108,7 +109,7 @@ library FCL_ecdsa {
 
     //ecdsa signature for test purpose only (who would like to have a private key onchain anyway ?)
     //K is nonce, kpriv is private key
-    function ecdsa_sign(bytes32 message, uint256 k , uint256 kpriv) public view returns(uint256 r, uint256 s)
+    function ecdsa_sign(bytes32 message, uint256 k , uint256 kpriv) internal view returns(uint256 r, uint256 s)
     {
         r=FCL_Elliptic_ZZ.ecZZ_mulmuladd_S_asm(0,0, k, 0) ;//Calculate the curve point k.G (abuse ecmulmul add with v=0)
         r=addmod(0,r, FCL_Elliptic_ZZ.n); 

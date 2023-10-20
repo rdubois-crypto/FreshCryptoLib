@@ -18,7 +18,7 @@
 // Code is optimized for a=-3 only curves with prime order, constant like -1, -2 shall be replaced
 // if ever used for other curve than sec256R1
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity >=0.8.19 <0.9.0;
 
 import {Base64Url} from "./utils/Base64Url.sol";
 import {FCL_Elliptic_ZZ} from "./FCL_elliptic.sol";
