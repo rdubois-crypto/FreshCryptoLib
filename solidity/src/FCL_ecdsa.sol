@@ -129,7 +129,7 @@ library FCL_ecdsa {
     {
         
         x=FCL_Elliptic_ZZ.ecZZ_mulmuladd_S_asm(0,0, kpriv, 0) ;//Calculate the curve point k.G (abuse ecmulmul add with v=0)
-        y=FCL_Elliptic_ZZ.ec_Decompress(x, 0);
+        y=FCL_Elliptic_ZZ.ec_Decompress(x, 1);
        
         if (FCL_Elliptic_ZZ.ecZZ_mulmuladd_S_asm(x, y, kpriv, FCL_Elliptic_ZZ.n - 1) != 0) //extract correct y value
         {

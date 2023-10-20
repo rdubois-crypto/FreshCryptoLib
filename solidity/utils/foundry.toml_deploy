@@ -5,7 +5,7 @@ libs = ["lib"]
 optimizer = true
 optimizer_runs = 1000000
 allow_paths = ["../solidity"]
-
+solc-version = "0.8.19"
 remappings = ["@solidity/=src/"]
 fs_permissions = [{ access = "read-write", path = "./" }]
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
