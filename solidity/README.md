@@ -28,7 +28,7 @@ Fix linting problem
 
 >make deploy
 
-Deploy the ecdsa_verify contract and verify it on chain. You need to provide a private key and an etherscan API key to the makefile.
+Deploy the ecdsa_verify contract and verify it on chain. You need to provide a private key and an etherscan API key to the makefile. More RPC's, ChainID's and faucets are available in utils/rpc.md.
 
 
 ## Current Deployments
