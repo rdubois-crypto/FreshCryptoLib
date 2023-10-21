@@ -22,13 +22,13 @@ CI's are implemented, PR will be successfull if linting and all tests are OK. Th
 
 >make lint-write 
 
-will fix any linting problem
+Fix linting problem
 
 ## Deploying
 
->make deploy 
-Will deploy the ecdsa_verify contract and verify it on chain. You need to provide a private key and an etherscan API key to the makefile.
+>make deploy
 
+Deploy the ecdsa_verify contract and verify it on chain. You need to provide a private key and an etherscan API key to the makefile.
 
 
 ## Current Deployments
@@ -37,6 +37,17 @@ Will deploy the ecdsa_verify contract and verify it on chain. You need to provid
 |--------:|---------|:--:|:----|
 ||         |  |         |
 |[37](https://github.com/rdubois-crypto/FreshCryptoLib/commit/29f60f19d3a07ec501ce36429f9688d9be372368)| 0xebcaae4af6844b5f24a4730c5f58130977e62a2b    | [Polygon](https://polygonscan.com/address/0xebcaae4af6844b5f24a4730c5f58130977e62a2b#code)  | [Optimism](https://goerli-optimism.etherscan.io/address/0xebcaae4af6844b5f24a4730c5f58130977e62a2b#code), [Sepolia](https://sepolia.etherscan.io/address/0xebcaae4af6844b5f24a4730c5f58130977e62a2b#code), [Linea](https://explorer.goerli.linea.build/address/0xEBCaaE4Af6844B5F24A4730C5f58130977E62A2B/contracts#address-tabs)  |  
+
+
+## On chain commands
+
+The following functions are available on-chain. 
+
+* ecdsa_verify(bytes32 message, uint256 r, uint256 s, uint256 Qx, uint256 Qy) : verify message signature (r,s) with public key (Qx, Qy)
+* ecdsa_sign(bytes32 message, uint256 k, uint256 kpriv) : sign message with private key kpriv and nonce k
+
+(Last function is provided for testing purpose only).
+
 
 
 Here is an example of a successfull ecdsa verification using forge cast over Sepolia :
