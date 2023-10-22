@@ -34,31 +34,6 @@ library FCL_ecdsa {
      * @dev ECDSA verification, given , signature, and public key.
      */
 
-    function ecdsa_verify(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) internal view returns (bool) {
-        uint256 r = rs[0];
-        uint256 s = rs[1];
-        if (r == 0 || r >= FCL_Elliptic_ZZ.n || s == 0 || s >= FCL_Elliptic_ZZ.n) {
-            return false;
-        }
-        uint256 Qx = Q[0];
-        uint256 Qy = Q[1];
-        if (!FCL_Elliptic_ZZ.ecAff_isOnCurve(Qx, Qy)) {
-            return false;
-        }
-
-        uint256 sInv = FCL_Elliptic_ZZ.FCL_nModInv(s);
-
-        uint256 scalar_u = mulmod(uint256(message), sInv, FCL_Elliptic_ZZ.n);
-        uint256 scalar_v = mulmod(r, sInv, FCL_Elliptic_ZZ.n);
-        uint256 x1;
-
-        x1 = FCL_Elliptic_ZZ.ecZZ_mulmuladd_S_asm(Qx, Qy, scalar_u, scalar_v);
-        x1= addmod(x1, n-r,n );
-        
-       
-        return x1 == 0;
-    }
-
     /**
      * @dev ECDSA verification, given , signature, and public key, no calldata version
      */

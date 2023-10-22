@@ -25,7 +25,7 @@ contract FCL_all_wrapper
         view
         returns (bool)
     {
-        return FCL_ecdsa.ecdsa_verify(message, rs, Q);
+        return FCL_ecdsa_utils.ecdsa_verify(message, rs, Q);
     }
 
     function ecdsa_precomputed_verify(bytes32 message, uint256[2] calldata rs, address Shamir8)
@@ -50,6 +50,10 @@ contract FCL_all_wrapper
         (x,y)=FCL_ecdsa_utils.ecdsa_derivKpub( kpriv);
     }
 
+    function ecdsa_precalc_8dim( uint256 Qx, uint256 Qy) internal view returns( uint[2][256] memory Prec)
+    {
+        return FCL_ecdsa_utils.Precalc_8dim( Qx, Qy);
+    }
 }
 
 

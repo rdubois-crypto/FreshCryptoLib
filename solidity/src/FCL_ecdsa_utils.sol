@@ -109,4 +109,62 @@ library FCL_ecdsa_utils {
 
     }
  
+    //precomputations for 8 dimensional trick
+    function Precalc_8dim( uint256 Qx, uint256 Qy) internal view returns( uint[2][256] memory Prec)
+    {
+    
+     uint[2][8] memory Pow64_PQ; //store P, 64P, 128P, 192P, Q, 64Q, 128Q, 192Q
+     
+     //the trivial private keys 1 and -1 are forbidden
+     if(Qx==FCL_Elliptic_ZZ.gx)
+     {
+        revert();
+     }
+     Pow64_PQ[0][0]=FCL_Elliptic_ZZ.gx;
+     Pow64_PQ[0][1]=FCL_Elliptic_ZZ.gy;
+    
+     Pow64_PQ[4][0]=Qx;
+     Pow64_PQ[4][1]=Qy;
+     
+     /* raise to multiplication by 64 by 6 consecutive doubling*/
+     for(uint j=1;j<4;j++){
+        uint256 x;
+        uint256 y;
+        uint256 zz;
+        uint256 zzz;
+        
+      	(x,y,zz,zzz)=FCL_Elliptic_ZZ.ecZZ_Dbl(Pow64_PQ[j-1][0],   Pow64_PQ[j-1][1], 1, 1);
+      	(Pow64_PQ[j][0],   Pow64_PQ[j][1])=FCL_Elliptic_ZZ.ecZZ_SetAff(x,y,zz,zzz);
+        (x,y,zz,zzz)=FCL_Elliptic_ZZ.ecZZ_Dbl(Pow64_PQ[j+3][0],   Pow64_PQ[j+3][1], 1, 1);
+     	(Pow64_PQ[j+4][0],   Pow64_PQ[j+4][1])=FCL_Elliptic_ZZ.ecZZ_SetAff(x,y,zz,zzz);
+
+     	for(uint i=0;i<63;i++){
+     	(x,y,zz,zzz)=FCL_Elliptic_ZZ.ecZZ_Dbl(Pow64_PQ[j][0],   Pow64_PQ[j][1],1,1);
+        (Pow64_PQ[j][0],   Pow64_PQ[j][1])=FCL_Elliptic_ZZ.ecZZ_SetAff(x,y,zz,zzz);
+     	(x,y,zz,zzz)=FCL_Elliptic_ZZ.ecZZ_Dbl(Pow64_PQ[j+4][0],   Pow64_PQ[j+4][1],1,1);
+        (Pow64_PQ[j+4][0],   Pow64_PQ[j+4][1])=FCL_Elliptic_ZZ.ecZZ_SetAff(x,y,zz,zzz);
+     	}
+     }
+     
+     /* neutral point */
+     Prec[0][0]=0;
+     Prec[0][1]=0;
+     
+     	
+     for(uint i=1;i<256;i++)
+     {       
+        Prec[i][0]=0;
+        Prec[i][1]=0;
+        
+        for(uint j=0;j<8;j++)
+        {
+        	if( (i&(1<<j))!=0){
+        		(Prec[i][0], Prec[i][1])=FCL_Elliptic_ZZ.ecAff_add(Pow64_PQ[j][0], Pow64_PQ[j][1], Prec[i][0], Prec[i][1]);
+        	}
+        }
+         
+     }
+     return Prec;
+    }
+
 }

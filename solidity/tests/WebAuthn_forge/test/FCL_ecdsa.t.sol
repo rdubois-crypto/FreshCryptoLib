@@ -101,7 +101,7 @@ contract Wrap_ecdsa_FCL {
         view
         returns (bool)
     {
-        return FCL_ecdsa.ecdsa_verify(message, rs, Q);
+        return FCL_ecdsa_utils.ecdsa_verify(message, rs, Q);
     }
 
     constructor() {}
