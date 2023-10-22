@@ -19,7 +19,7 @@ pragma solidity ^0.8.20;
 import "forge-std/Test.sol";
 import "@solidity/FCL_elliptic.sol";
 import "@solidity/FCL_ecdsa.sol";
-
+import "@solidity/FCL_ecdsa_utils.sol";
 import "@solidity/FCL_Webauthn.sol";
 
 //external implementation to bench
@@ -211,7 +211,7 @@ contract ArithmeticTest is Test {
         uint256 s;
         assertEq(FCL_Elliptic_ZZ.ecAff_isOnCurve(xpub, ypub), true);
 
-        (r, s) = FCL_ecdsa.ecdsa_sign(bytes32(message), k, kpriv);
+        (r, s) = FCL_ecdsa_utils.ecdsa_sign(bytes32(message), k, kpriv);
 
         bool res1 = FCL_ecdsa.ecdsa_verify(bytes32(message), r, s, xpub, ypub);
         bool res2 = FCL_ecdsa.ecdsa_verify(bytes32(message), r, s, xpub, p - ypub);
@@ -226,7 +226,7 @@ contract ArithmeticTest is Test {
         uint256 x;
         uint256 y;
 
-        (x, y) = FCL_ecdsa.ecdsa_derivKpub(kpriv);
+        (x, y) = FCL_ecdsa_utils.ecdsa_derivKpub(kpriv);
         if (FCL_Elliptic_ZZ.ecZZ_mulmuladd_S_asm(x, y, kpriv, FCL_Elliptic_ZZ.n - 1) != 0) {
             revert();
         }

@@ -1,3 +1,4 @@
+
 //********************************************************************************************/
 //  ___           _       ___               _         _    _ _
 // | __| _ ___ __| |_    / __|_ _ _  _ _ __| |_ ___  | |  (_) |__
@@ -25,7 +26,7 @@ import {FCL_Elliptic_ZZ} from "./FCL_elliptic.sol";
 
 
 
-library FCL_ecdsa {
+library FCL_ecdsa_utils {
     // Set parameters for curve sec256r1.public
       //curve order (number of points)
     uint256 constant n = FCL_Elliptic_ZZ.n;
@@ -59,35 +60,6 @@ library FCL_ecdsa {
         return x1 == 0;
     }
 
-    /**
-     * @dev ECDSA verification, given , signature, and public key, no calldata version
-     */
-    function ecdsa_verify(bytes32 message, uint256 r, uint256 s, uint256 Qx, uint256 Qy)  internal view returns (bool){
-
-        if (r == 0 || r >= FCL_Elliptic_ZZ.n || s == 0 || s >= FCL_Elliptic_ZZ.n) {
-            return false;
-        }
-        
-        if (!FCL_Elliptic_ZZ.ecAff_isOnCurve(Qx, Qy)) {
-            return false;
-        }
-
-        uint256 sInv = FCL_Elliptic_ZZ.FCL_nModInv(s);
-
-        uint256 scalar_u = mulmod(uint256(message), sInv, FCL_Elliptic_ZZ.n);
-        uint256 scalar_v = mulmod(r, sInv, FCL_Elliptic_ZZ.n);
-        uint256 x1;
-
-        x1 = FCL_Elliptic_ZZ.ecZZ_mulmuladd_S_asm(Qx, Qy, scalar_u, scalar_v);
-
-        x1= addmod(x1, n-r,n );
-        
-      
-       
-        return x1 == 0;
-
-    }
-
     function ec_recover_r1(uint256 h, uint256 v, uint256 r, uint256 s) internal view returns (address)
     {
          if (r == 0 || r >= FCL_Elliptic_ZZ.n || s == 0 || s >= FCL_Elliptic_ZZ.n) {
@@ -105,7 +77,7 @@ library FCL_ecdsa {
         return address(uint160(uint256(keccak256(abi.encodePacked(Qx, Qy)))));
     }
 
-/*
+
     //ecdsa signature for test purpose only (who would like to have a private key onchain anyway ?)
     //K is nonce, kpriv is private key
     function ecdsa_sign(bytes32 message, uint256 k , uint256 kpriv) internal view returns(uint256 r, uint256 s)
@@ -135,6 +107,6 @@ library FCL_ecdsa {
             y=FCL_Elliptic_ZZ.p-y;
         }        
 
-    }*/
+    }
  
 }
