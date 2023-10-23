@@ -60,7 +60,7 @@ contract EcdsaUtilsTest is Test {
         assertEq(res, true);
     }
 
-    function test_derivKpub(uint256 kpriv) public pure {
+    function test_derivKpub(uint256 kpriv) public view {
         vm.assume(kpriv < FCL_Elliptic_ZZ.n);
         vm.assume(kpriv > 1);
         uint256 x;
