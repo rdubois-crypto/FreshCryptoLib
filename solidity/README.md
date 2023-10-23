@@ -65,7 +65,7 @@ return value 0x5ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c8
 
 Qx=0x5ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c
 
-Qcy0x8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d5032
+Qy=0x8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d5032
 
 #### Sign a message (just for testing, insecure)
 ```
