@@ -24,6 +24,7 @@ import {Base64Url} from "./utils/Base64Url.sol";
 import {FCL_Elliptic_ZZ} from "./FCL_elliptic.sol";
 import {FCL_ecdsa} from "./FCL_ecdsa.sol";
 
+import {FCL_ecdsa_utils} from "./FCL_ecdsa_utils.sol";
 
 library FCL_WebAuthn {
     error InvalidAuthenticatorData();
@@ -98,7 +99,7 @@ library FCL_WebAuthn {
             authenticatorData, authenticatorDataFlagMask, clientData, clientChallenge, clientChallengeDataOffset, rs
         );
 
-        bool result = FCL_ecdsa.ecdsa_verify(message, rs, Q);
+        bool result = FCL_ecdsa_utils.ecdsa_verify(message, rs, Q);
 
         return result;
     }

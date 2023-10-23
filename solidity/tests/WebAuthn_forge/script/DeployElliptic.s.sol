@@ -3,10 +3,17 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import {BaseScript} from "./BaseScript.sol";
 import {FCL_ecdsa} from "@solidity/FCL_ecdsa.sol";
+import {FCL_ecdsa_utils} from "@solidity/FCL_ecdsa_utils.sol";
 import {FCL_Elliptic_ZZ} from "@solidity/FCL_elliptic.sol";
 
-/// @notice Wrap the FCL_Elliptic library in a contract to be able to deploy it
-contract LibraryWrapper {
+/// @notice Wrap the FCL_ecdsa library in a contract to be able to deploy it
+contract FCL_ecdsa_wrapper {
+    function ecdsa_verify(bytes32 message, uint256 r, uint256 s, uint256 Qx, uint256 Qy) external view returns (bool) {
+        return FCL_ecdsa.ecdsa_verify(message, r, s, Qx, Qy);
+    }
+}
+
+contract FCL_all_wrapper {
     function ecdsa_verify(bytes32 message, uint256 r, uint256 s, uint256 Qx, uint256 Qy) external view returns (bool) {
         return FCL_ecdsa.ecdsa_verify(message, r, s, Qx, Qy);
     }
@@ -16,7 +23,7 @@ contract LibraryWrapper {
         view
         returns (bool)
     {
-        return FCL_ecdsa.ecdsa_verify(message, rs, Q);
+        return FCL_ecdsa_utils.ecdsa_verify(message, rs, Q);
     }
 
     function ecdsa_precomputed_verify(bytes32 message, uint256[2] calldata rs, address Shamir8)
@@ -28,7 +35,20 @@ contract LibraryWrapper {
     }
 
     function ecdsa_sign(bytes32 message, uint256 k, uint256 kpriv) external view returns (uint256 r, uint256 s) {
-        return FCL_ecdsa.ecdsa_sign(message, k, kpriv);
+        return FCL_ecdsa_utils.ecdsa_sign(message, k, kpriv);
+    }
+
+    function ecdsa_DerivKpub(uint256 kpriv) external view returns (uint256 x, uint256 y) {
+        return FCL_ecdsa_utils.ecdsa_derivKpub(kpriv);
+    }
+
+    function ecdsa_GenKeyPair() external view returns (uint256 kpriv, uint256 x, uint256 y) {
+        kpriv = block.prevrandao;
+        (x, y) = FCL_ecdsa_utils.ecdsa_derivKpub(kpriv);
+    }
+
+    function ecdsa_precalc_8dim(uint256 Qx, uint256 Qy) internal view returns (uint256[2][256] memory Prec) {
+        return FCL_ecdsa_utils.Precalc_8dim(Qx, Qy);
     }
 }
 
@@ -36,7 +56,14 @@ contract LibraryWrapper {
 contract MyScript is BaseScript {
     function run() external broadcast returns (address addressOfLibrary) {
         // deploy the library contract and return the address
-        addressOfLibrary = address(new LibraryWrapper{salt:0}());
+        addressOfLibrary = address(new FCL_ecdsa_wrapper{salt:0}());
+    }
+}
+
+contract Script_Deploy_FCL_all is BaseScript {
+    function run() external broadcast returns (address addressOfLibrary) {
+        // deploy the library contract and return the address
+        addressOfLibrary = address(new FCL_all_wrapper{salt:0}());
     }
 }
 

@@ -1,3 +1,4 @@
+
 //********************************************************************************************/
 //  ___           _       ___               _         _    _ _
 // | __| _ ___ __| |_    / __|_ _ _  _ _ __| |_ ___  | |  (_) |__
@@ -25,7 +26,7 @@ import {FCL_Elliptic_ZZ} from "./FCL_elliptic.sol";
 
 
 
-library FCL_ecdsa {
+library FCL_ecdsa_utils {
     // Set parameters for curve sec256r1.public
       //curve order (number of points)
     uint256 constant n = FCL_Elliptic_ZZ.n;
@@ -34,15 +35,14 @@ library FCL_ecdsa {
      * @dev ECDSA verification, given , signature, and public key.
      */
 
-    /**
-     * @dev ECDSA verification, given , signature, and public key, no calldata version
-     */
-    function ecdsa_verify(bytes32 message, uint256 r, uint256 s, uint256 Qx, uint256 Qy)  internal view returns (bool){
-
+    function ecdsa_verify(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q) internal view returns (bool) {
+        uint256 r = rs[0];
+        uint256 s = rs[1];
         if (r == 0 || r >= FCL_Elliptic_ZZ.n || s == 0 || s >= FCL_Elliptic_ZZ.n) {
             return false;
         }
-        
+        uint256 Qx = Q[0];
+        uint256 Qy = Q[1];
         if (!FCL_Elliptic_ZZ.ecAff_isOnCurve(Qx, Qy)) {
             return false;
         }
@@ -54,13 +54,10 @@ library FCL_ecdsa {
         uint256 x1;
 
         x1 = FCL_Elliptic_ZZ.ecZZ_mulmuladd_S_asm(Qx, Qy, scalar_u, scalar_v);
-
         x1= addmod(x1, n-r,n );
         
-      
        
         return x1 == 0;
-
     }
 
     function ec_recover_r1(uint256 h, uint256 v, uint256 r, uint256 s) internal view returns (address)
@@ -80,7 +77,7 @@ library FCL_ecdsa {
         return address(uint160(uint256(keccak256(abi.encodePacked(Qx, Qy)))));
     }
 
-/*
+
     //ecdsa signature for test purpose only (who would like to have a private key onchain anyway ?)
     //K is nonce, kpriv is private key
     function ecdsa_sign(bytes32 message, uint256 k , uint256 kpriv) internal view returns(uint256 r, uint256 s)
@@ -110,6 +107,64 @@ library FCL_ecdsa {
             y=FCL_Elliptic_ZZ.p-y;
         }        
 
-    }*/
+    }
  
+    //precomputations for 8 dimensional trick
+    function Precalc_8dim( uint256 Qx, uint256 Qy) internal view returns( uint[2][256] memory Prec)
+    {
+    
+     uint[2][8] memory Pow64_PQ; //store P, 64P, 128P, 192P, Q, 64Q, 128Q, 192Q
+     
+     //the trivial private keys 1 and -1 are forbidden
+     if(Qx==FCL_Elliptic_ZZ.gx)
+     {
+        revert();
+     }
+     Pow64_PQ[0][0]=FCL_Elliptic_ZZ.gx;
+     Pow64_PQ[0][1]=FCL_Elliptic_ZZ.gy;
+    
+     Pow64_PQ[4][0]=Qx;
+     Pow64_PQ[4][1]=Qy;
+     
+     /* raise to multiplication by 64 by 6 consecutive doubling*/
+     for(uint j=1;j<4;j++){
+        uint256 x;
+        uint256 y;
+        uint256 zz;
+        uint256 zzz;
+        
+      	(x,y,zz,zzz)=FCL_Elliptic_ZZ.ecZZ_Dbl(Pow64_PQ[j-1][0],   Pow64_PQ[j-1][1], 1, 1);
+      	(Pow64_PQ[j][0],   Pow64_PQ[j][1])=FCL_Elliptic_ZZ.ecZZ_SetAff(x,y,zz,zzz);
+        (x,y,zz,zzz)=FCL_Elliptic_ZZ.ecZZ_Dbl(Pow64_PQ[j+3][0],   Pow64_PQ[j+3][1], 1, 1);
+     	(Pow64_PQ[j+4][0],   Pow64_PQ[j+4][1])=FCL_Elliptic_ZZ.ecZZ_SetAff(x,y,zz,zzz);
+
+     	for(uint i=0;i<63;i++){
+     	(x,y,zz,zzz)=FCL_Elliptic_ZZ.ecZZ_Dbl(Pow64_PQ[j][0],   Pow64_PQ[j][1],1,1);
+        (Pow64_PQ[j][0],   Pow64_PQ[j][1])=FCL_Elliptic_ZZ.ecZZ_SetAff(x,y,zz,zzz);
+     	(x,y,zz,zzz)=FCL_Elliptic_ZZ.ecZZ_Dbl(Pow64_PQ[j+4][0],   Pow64_PQ[j+4][1],1,1);
+        (Pow64_PQ[j+4][0],   Pow64_PQ[j+4][1])=FCL_Elliptic_ZZ.ecZZ_SetAff(x,y,zz,zzz);
+     	}
+     }
+     
+     /* neutral point */
+     Prec[0][0]=0;
+     Prec[0][1]=0;
+     
+     	
+     for(uint i=1;i<256;i++)
+     {       
+        Prec[i][0]=0;
+        Prec[i][1]=0;
+        
+        for(uint j=0;j<8;j++)
+        {
+        	if( (i&(1<<j))!=0){
+        		(Prec[i][0], Prec[i][1])=FCL_Elliptic_ZZ.ecAff_add(Pow64_PQ[j][0], Pow64_PQ[j][1], Prec[i][0], Prec[i][1]);
+        	}
+        }
+         
+     }
+     return Prec;
+    }
+
 }
