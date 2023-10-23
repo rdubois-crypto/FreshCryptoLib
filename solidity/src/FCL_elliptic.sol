@@ -319,7 +319,7 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
     }
 
     /**
-     * @dev Add two elliptic curve points in affine coordinates.
+     * @dev Add two elliptic curve points in affine coordinates. Deal with P=Q
      */
 
     function ecAff_add(uint256 x0, uint256 y0, uint256 x1, uint256 y1) internal view returns (uint256, uint256) {
@@ -328,8 +328,12 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
 
         if (ecAff_IsZero(x0, y0)) return (x1, y1);
         if (ecAff_IsZero(x1, y1)) return (x0, y0);
-
-        (x0, y0, zz0, zzz0) = ecZZ_AddN(x0, y0, 1, 1, x1, y1);
+        if((x0==x1)&&(y0==y1)) {
+            (x0, y0, zz0, zzz0) = ecZZ_Dbl(x0, y0,1,1);
+        }
+        else{
+            (x0, y0, zz0, zzz0) = ecZZ_AddN(x0, y0, 1, 1, x1, y1);
+        }
 
         return ecZZ_SetAff(x0, y0, zz0, zzz0);
     }
@@ -354,7 +358,7 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
         unchecked {
             if (scalar_u == 0 && scalar_v == 0) return 0;
 
-            (H0, H1) = ecAff_add(gx, gy, Q0, Q1); //will not work if Q=P, obvious forbidden private key
+            (H0, H1) = ecAff_add(gx, gy, Q0, Q1); 
 
             assembly {
                 for { let T4 := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1)) } eq(T4, 0) {

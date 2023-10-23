@@ -190,49 +190,6 @@ contract ArithmeticTest is Test {
         assertEq(_4P_res1, _4P_res3);
     }
 
-    function test_Fuzz_SigVerif(uint256 k, uint256 kpriv, uint256 message) public {
-        vm.assume(k < FCL_Elliptic_ZZ.n);
-        vm.assume(k > 1);
-        vm.assume(kpriv < FCL_Elliptic_ZZ.n);
-        vm.assume(kpriv > 1);
-
-        vm.assume(message < FCL_Elliptic_ZZ.n);
-        vm.assume(message > 1);
-
-        message = 8329;
-        k = 5;
-        kpriv = 7598;
-
-        k = n - k; //ensure high hamming weight of fuzzing vectors
-
-        uint256 xpub = FCL_Elliptic_ZZ.ecZZ_mulmuladd_S_asm(0, 0, kpriv, 0); //deriv public key
-        uint256 ypub = FCL_Elliptic_ZZ.ec_Decompress(xpub, 0);
-        uint256 r;
-        uint256 s;
-        assertEq(FCL_Elliptic_ZZ.ecAff_isOnCurve(xpub, ypub), true);
-
-        (r, s) = FCL_ecdsa_utils.ecdsa_sign(bytes32(message), k, kpriv);
-
-        bool res1 = FCL_ecdsa.ecdsa_verify(bytes32(message), r, s, xpub, ypub);
-        bool res2 = FCL_ecdsa.ecdsa_verify(bytes32(message), r, s, xpub, p - ypub);
-        bool res = res1 || res2;
-
-        assertEq(res, true);
-    }
-
-    function test_derivKpub(uint256 kpriv) public {
-        // vm.assume(kpriv < FCL_Elliptic_ZZ.n);
-        // vm.assume(kpriv > 1);
-        uint256 x;
-        uint256 y;
-
-        (x, y) = FCL_ecdsa_utils.ecdsa_derivKpub(kpriv);
-        if (FCL_Elliptic_ZZ.ecZZ_mulmuladd_S_asm(x, y, kpriv, FCL_Elliptic_ZZ.n - 1) != 0) {
-            revert();
-        }
-        console.log(FCL_Elliptic_ZZ.ecZZ_mulmuladd_S_asm(x, FCL_Elliptic_ZZ.p - y, kpriv, kpriv));
-    }
-
     //check consistency of ecmulmuladd and Add
     function test_invariant_FCL_Ecmulmuladd() public {
         uint256 ecpoint_Rx = 0;

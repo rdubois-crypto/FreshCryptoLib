@@ -8,13 +8,13 @@
 ///* License: This software is licensed under MIT License
 ///* This Code may be reused including license and copyright notice.
 ///* See LICENSE file at the root folder of the project.
-///* FILE: FCL_elliptic.t.sol
+///* FILE: FCL_ecdsa.t.sol
 ///*
 ///*
 ///* DESCRIPTION: test file for ecdsa signature protocol
 ///*
 //**************************************************************************************/
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
