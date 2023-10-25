@@ -40,10 +40,9 @@ contract EcdsaUtilsTest is Test {
         vm.assume(message < FCL_Elliptic_ZZ.n);
         vm.assume(message > 1);
 
-   
         k = FCL_Elliptic_ZZ.n - k; //ensure high hamming weight of fuzzing vectors
-       // kpriv=115792089210356248762697446949407573529996955224135760342422259061068512044365;
-        
+        // kpriv=115792089210356248762697446949407573529996955224135760342422259061068512044365;
+
         uint256 xpub = FCL_Elliptic_ZZ.ecZZ_mulmuladd_S_asm(0, 0, kpriv, 0); //deriv public key
         uint256 ypub = FCL_Elliptic_ZZ.ec_Decompress(xpub, 0);
         uint256 r;
@@ -73,12 +72,12 @@ contract EcdsaUtilsTest is Test {
     }
 
     function test_Fuzz_Precompute() public {
-        uint256 kpriv=3;
+        uint256 kpriv = 3;
         vm.assume(kpriv < FCL_Elliptic_ZZ.n);
         vm.assume(kpriv > 2);
         uint256 x;
         uint256 y;
-     
+
         (x, y) = FCL_ecdsa_utils.ecdsa_derivKpub(kpriv);
 
         uint256[2][256] memory Precs = FCL_ecdsa_utils.Precalc_8dim(x, y);

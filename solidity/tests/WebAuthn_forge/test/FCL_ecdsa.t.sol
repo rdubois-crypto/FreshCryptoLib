@@ -39,7 +39,7 @@ contract wrap_ecdsa_orbs {
     uint256 constant gy = 0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5;
     //curve order (number of points)
     uint256 constant n = 0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551;
- 
+
     function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q)
         public
         view
