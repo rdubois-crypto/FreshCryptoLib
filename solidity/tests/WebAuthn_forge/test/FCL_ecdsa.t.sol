@@ -15,7 +15,8 @@
 ///*
 //**************************************************************************************/
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+
+pragma solidity >=0.8.19 <0.9.0;
 
 import "forge-std/Test.sol";
 import "@solidity/FCL_elliptic.sol";
@@ -38,7 +39,7 @@ contract wrap_ecdsa_orbs {
     uint256 constant gy = 0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5;
     //curve order (number of points)
     uint256 constant n = 0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551;
-
+ 
     function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs, uint256[2] calldata Q)
         public
         view
@@ -130,7 +131,7 @@ contract Wrap_ecdsa_precal {
     address public precomputations;
 
     function wrap_ecdsa_core(bytes32 message, uint256[2] calldata rs) public view returns (bool) {
-        return FCL_Elliptic_ZZ.ecdsa_precomputed_verify(message, rs, precomputations);
+        return FCL_ecdsa.ecdsa_precomputed_verify(message, rs, precomputations);
     }
 
     constructor(address bytecode) {
@@ -418,7 +419,6 @@ contract EcdsaTest is Test {
 
         uint256 checkpointGasLeft;
         uint256 checkpointGasLeft2;
-
         //bytes memory args = abi.encode(estimated_size);
         bytes memory bytecode = abi.encodePacked(vm.getDeployedCode("FCL_ecdsa.t.sol:Wrap_ecdsa_precal_hackmem"));
         //bytes memory bytecode = abi.encodePacked(vm.getCode("FCL_ecdsa.t.sol:Wrap_ecdsa_precal_hackmem"), args);

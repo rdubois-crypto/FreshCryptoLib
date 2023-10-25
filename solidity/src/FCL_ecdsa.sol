@@ -56,11 +56,8 @@ library FCL_ecdsa {
         x1 = FCL_Elliptic_ZZ.ecZZ_mulmuladd_S_asm(Qx, Qy, scalar_u, scalar_v);
 
         x1= addmod(x1, n-r,n );
-        
-      
-       
+    
         return x1 == 0;
-
     }
 
     function ec_recover_r1(uint256 h, uint256 v, uint256 r, uint256 s) internal view returns (address)
@@ -80,36 +77,55 @@ library FCL_ecdsa {
         return address(uint160(uint256(keccak256(abi.encodePacked(Qx, Qy)))));
     }
 
-/*
-    //ecdsa signature for test purpose only (who would like to have a private key onchain anyway ?)
-    //K is nonce, kpriv is private key
-    function ecdsa_sign(bytes32 message, uint256 k , uint256 kpriv) internal view returns(uint256 r, uint256 s)
+    function ecdsa_precomputed_verify(bytes32 message, uint256 r, uint256 s, address Shamir8)
+        internal view
+        returns (bool)
     {
-        r=FCL_Elliptic_ZZ.ecZZ_mulmuladd_S_asm(0,0, k, 0) ;//Calculate the curve point k.G (abuse ecmulmul add with v=0)
-        r=addmod(0,r, FCL_Elliptic_ZZ.n); 
-        s=mulmod(FCL_Elliptic_ZZ.FCL_nModInv(k), addmod(uint256(message), mulmod(r, kpriv, FCL_Elliptic_ZZ.n),FCL_Elliptic_ZZ.n),FCL_Elliptic_ZZ.n);//s=k^-1.(h+r.kpriv)
-
-        
-        if(r==0||s==0){
-            revert();
-        }
-
-
-    }
-
-    //ecdsa key derivation
-    //kpriv is private key return (x,y) coordinates of associated Pubkey
-    function ecdsa_derivKpub(uint256 kpriv) internal view returns(uint256 x, uint256 y)
-    {
-        
-        x=FCL_Elliptic_ZZ.ecZZ_mulmuladd_S_asm(0,0, kpriv, 0) ;//Calculate the curve point k.G (abuse ecmulmul add with v=0)
-        y=FCL_Elliptic_ZZ.ec_Decompress(x, 1);
        
-        if (FCL_Elliptic_ZZ.ecZZ_mulmuladd_S_asm(x, y, kpriv, FCL_Elliptic_ZZ.n - 1) != 0) //extract correct y value
-        {
-            y=FCL_Elliptic_ZZ.p-y;
-        }        
+        if (r == 0 || r >= n || s == 0 || s >= n) {
+            return false;
+        }
+        /* Q is pushed via the contract at address Shamir8 assumed to be correct
+        if (!isOnCurve(Q[0], Q[1])) {
+            return false;
+        }*/
 
-    }*/
- 
+        uint256 sInv = FCL_Elliptic_ZZ.FCL_nModInv(s);
+
+        uint256 X;
+
+        //Shamir 8 dimensions
+        X = FCL_Elliptic_ZZ.ecZZ_mulmuladd_S8_extcode(mulmod(uint256(message), sInv, n), mulmod(r, sInv, n), Shamir8);
+
+        X= addmod(X, n-r,n );
+
+        return X == 0;
+    } //end  ecdsa_precomputed_verify()
+
+     function ecdsa_precomputed_verify(bytes32 message, uint256[2] calldata rs, address Shamir8)
+        internal view
+        returns (bool)
+    {
+        uint256 r = rs[0];
+        uint256 s = rs[1];
+        if (r == 0 || r >= n || s == 0 || s >= n) {
+            return false;
+        }
+        /* Q is pushed via the contract at address Shamir8 assumed to be correct
+        if (!isOnCurve(Q[0], Q[1])) {
+            return false;
+        }*/
+
+        uint256 sInv = FCL_Elliptic_ZZ.FCL_nModInv(s);
+
+        uint256 X;
+
+        //Shamir 8 dimensions
+        X = FCL_Elliptic_ZZ.ecZZ_mulmuladd_S8_extcode(mulmod(uint256(message), sInv, n), mulmod(r, sInv, n), Shamir8);
+
+        X= addmod(X, n-r,n );
+
+        return X == 0;
+    } //end  ecdsa_precomputed_verify()
+
 }
