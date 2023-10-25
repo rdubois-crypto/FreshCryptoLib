@@ -21,11 +21,15 @@ https://neonfaucet.org/
 ###############################################################
 
 Base: 
-ChainID:84531
-RPC: https://rpc.notadegen.com/base/goerli
+ChainID=84531
+GOERLIBASE_RPC=https://rpc.notadegen.com/base/goerli
+
 explorer:https://goerli.basescan.org/address/0xA099BA0dAe1f54f1Fd7238bd9d6885Af2427A28C
 bridge goerli:
 https://goerli-bridge.base.org/deposit
+https://bwarelabs.com/faucets/base-testnet
+
+
 
 ###############################################################
 GOERLI

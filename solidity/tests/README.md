@@ -28,7 +28,12 @@ This directory contain the logic to generate the precompiles.
 
 `test_ecrecover.sol`: generate vectors to assess sage implementation of ecrecover
 
-### WebAuthn_hardhat:
+
+### cast:
+
+Contains automation script to test deployed contracts using cast commands. 
+
+### hardhat:
 
 **!beware that hardhat is not maintained, forge is now the preferred environment.**
 

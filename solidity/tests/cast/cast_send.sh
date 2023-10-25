@@ -52,6 +52,7 @@ echo $(cast send $SIGNER --rpc-url https://rpc.goerli.linea.build  --create $BYT
 ADDRESS_PREC=$(awk -v col=6 '{print $col}' res.dat)
 echo "Deployed precomputation address:"$ADDRESS_PREC
 
+
 #verify using precomputations at address $ADDRESS_PREC
 VERIF2=$(cast call $FCL_ADDRESS "ecdsa_precomputed_verify(bytes32,uint256,uint256,address)" $MESSAGE $r $s $ADDRESS_PREC --rpc-url $RPC)
 
