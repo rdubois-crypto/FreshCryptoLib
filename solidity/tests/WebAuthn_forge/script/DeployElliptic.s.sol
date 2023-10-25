@@ -26,12 +26,12 @@ contract FCL_all_wrapper {
         return FCL_ecdsa_utils.ecdsa_verify(message, rs, Q);
     }
 
-    function ecdsa_precomputed_verify(bytes32 message, uint256[2] calldata rs, address Shamir8)
+    function ecdsa_precomputed_verify(bytes32 message, uint256 r, uint256 s, address Shamir8)
         external
         view
         returns (bool)
     {
-        return FCL_Elliptic_ZZ.ecdsa_precomputed_verify(message, rs, Shamir8);
+        return FCL_ecdsa.ecdsa_precomputed_verify(message, r, s, Shamir8);
     }
 
     function ecdsa_sign(bytes32 message, uint256 k, uint256 kpriv) external view returns (uint256 r, uint256 s) {
@@ -47,7 +47,7 @@ contract FCL_all_wrapper {
         (x, y) = FCL_ecdsa_utils.ecdsa_derivKpub(kpriv);
     }
 
-    function ecdsa_precalc_8dim(uint256 Qx, uint256 Qy) internal view returns (uint256[2][256] memory Prec) {
+    function ecdsa_precalc_8dim(uint256 Qx, uint256 Qy) external view returns (uint256[2][256] memory Prec) {
         return FCL_ecdsa_utils.Precalc_8dim(Qx, Qy);
     }
 }
@@ -84,12 +84,5 @@ contract Script_Deploy_FCL_all is BaseScript {
     ℹ️ CALL THE LIBRARY ONCE DEPLOYED:
     cast call <CONTRACT_ADDRESS> verify(bytes32,uint256,uint256,uint256,uint256)" <MESSAGE> <R> <S> <QX> <QY>
 
-    example:
-        cast call 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512 \
-        "ecdsa_verify(bytes32,uint256,uint256,uint256,uint256)" \
-        0xbb5a52f42f9c9261ed4361f59422a1e30036e7c32b270c8807a419feca605023 \
-        19738613187745101558623338726804762177711919211234071563652772152683725073944 \
-        34753961278895633991577816754222591531863837041401341770838584739693604822390 \
-        18614955573315897657680976650685450080931919913269223958732452353593824192568 \
-        90223116347859880166570198725387569567414254547569925327988539833150573990206
+  
 */

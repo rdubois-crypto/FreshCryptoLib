@@ -119,7 +119,7 @@ library FCL_WebAuthn {
             authenticatorData, authenticatorDataFlagMask, clientData, clientChallenge, clientChallengeDataOffset, rs
         );
 
-        bool result = FCL_Elliptic_ZZ.ecdsa_precomputed_verify(message, rs, dataPointer);
+        bool result = FCL_ecdsa.ecdsa_precomputed_verify(message, rs, dataPointer);
 
         return result;
     }

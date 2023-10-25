@@ -913,34 +913,6 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
      *     (see sage directory, WebAuthn_precompute.sage)
      */
 
-    function ecdsa_precomputed_verify(bytes32 message, uint256[2] calldata rs, address Shamir8)
-        internal view
-        returns (bool)
-    {
-        uint256 r = rs[0];
-        uint256 s = rs[1];
-        if (r == 0 || r >= n || s == 0 || s >= n) {
-            return false;
-        }
-        /* Q is pushed via the contract at address Shamir8 assumed to be correct
-        if (!isOnCurve(Q[0], Q[1])) {
-            return false;
-        }*/
-
-        uint256 sInv = FCL_nModInv(s);
-
-        uint256 X;
-
-        //Shamir 8 dimensions
-        X = ecZZ_mulmuladd_S8_extcode(mulmod(uint256(message), sInv, n), mulmod(r, sInv, n), Shamir8);
-
-        assembly {
-            X := addmod(X, sub(n, r), n)
-        }
-
-        return X == 0;
-    } //end  ecdsa_precomputed_verify()
-
     /**
      * @dev ECDSA verification using a precomputed table of multiples of P and Q appended at end of contract at address endcontract
      *     generation of contract bytecode for precomputations is done using sagemath code
