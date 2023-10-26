@@ -31,7 +31,10 @@ This directory contain the logic to generate the precompiles.
 
 ### cast:
 
-Contains automation script to test deployed contracts using cast commands. 
+Contains automation script to test deployed contracts using cast commands:
+* cast_call.sh : contains only 'cast call' commands (testing transactions are off chain)
+* cast_send.sh : contains 'cast send' commands, sending true transactions on chain
+
 
 ### hardhat:
 

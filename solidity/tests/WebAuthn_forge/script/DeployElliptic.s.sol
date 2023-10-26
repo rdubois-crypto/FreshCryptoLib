@@ -16,7 +16,7 @@ contract FCL_ecdsa_wrapper {
 contract FCL_all_wrapper {
     /* default is EIP7212 precompile as described in https://eips.ethereum.org/EIPS/eip-7212*/
     fallback(bytes calldata input) external returns (bytes memory) {
-        if ((input.length != 160) || (input.length != 192)) {
+        if ((input.length != 160) && (input.length != 180)) {
             return abi.encodePacked(uint256(0));
         }
 
@@ -31,8 +31,9 @@ contract FCL_all_wrapper {
         }
 
         /* with precomputations written at address prec (previously generated using ecdsa_precalc_8dim*/
-        if (input.length == 192) {
-            address prec = address(uint160(uint256(bytes32(input[160:192]))));
+        if (input.length == 180) {
+            //untested:TODO
+            address prec = address(uint160(uint256(bytes32(input[160:180]))));
             return abi.encodePacked(FCL_ecdsa.ecdsa_precomputed_verify(message, r, s, prec));
         }
     }
