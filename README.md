@@ -20,19 +20,12 @@ The implemented content is:
 <!--- FCL_ecdaa.sol: an EVM version of the ECDAA anonymous attestation for anonymous airdrops -->
 
 
-https://goerli-optimism.etherscan.io/address/0xed0d252a3a26fb0269333bd6cc720a8a68a68fcb#code
-https://sepolia.etherscan.io/address/0xEd0D252a3A26FB0269333BD6Cc720a8a68a68fcb#code
-https://goerli.basescan.org/address/0xed0d252a3a26fb0269333bd6cc720a8a68a68fcb#code
-https://explorer.goerli.linea.build/address/0xEd0D252a3A26FB0269333BD6Cc720a8a68a68fcb/contracts#address-tabs
-
-j'ai eu un caca à la vérification sur polycon. Linea malgré leur apikey dédié pas de verif non plus.
-
 | Commit # | Create2 | Mainnets | Testnets |
 |--------:|---------|:--:|:----|
 ||         |  |         |
 |[44](https://github.com/rdubois-crypto/FreshCryptoLib/pull/44)| 0xEd0D252a3A26FB0269333BD6Cc720a8a68a68fcb    | [Polygon](https://polygonscan.com/address/0xed0d252a3a26fb0269333bd6cc720a8a68a68fcb#code)  | [Optimism](https://goerli-optimism.etherscan.io/address/0xed0d252a3a26fb0269333bd6cc720a8a68a68fcb#code), [Sepolia](https://sepolia.etherscan.io/address/0xEd0D252a3A26FB0269333BD6Cc720a8a68a68fcb#code), [Linea](https://explorer.goerli.linea.build/address/0xEd0D252a3A26FB0269333BD6Cc720a8a68a68fcb/contracts#address-tabs)  |  
 
-(code is verified over optimism and sepolia only, one could check that bytecode is the same everywhere).
+(code is verified over optimism, base and sepolia only, one could check that bytecode is the same everywhere).
 
 ### Directory cairo0.9:
 
