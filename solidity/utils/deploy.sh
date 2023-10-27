@@ -77,7 +77,7 @@ done
 CHAIN_ID=$POLYGON_CHAINID
 RPC=$POLYGON_RPC
 
-ETHERSCAN_API_KEY=$API_KEY  forge script $SCRIPT_PATH$SCRIPT_FUNCTION  --broadcast --verify --chain-id $CHAIN_ID $SIGNER --rpc-url $RPC  --sender $SENDER 
+ETHERSCAN_API_KEY=$API_KEY  forge script $SCRIPT_PATH$SCRIPT_FUNCTION  --broadcast --verify --legacy --chain-id $CHAIN_ID $SIGNER --rpc-url $RPC  --sender $SENDER 
   
  	
 #cleaning deployment\

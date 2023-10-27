@@ -8,7 +8,13 @@ FCL_ADDRESS=0xEd0D252a3A26FB0269333BD6Cc720a8a68a68fcb   #This FCL available on 
 DAIMO_ADDRESS=0xc2b78104907F722DABAc4C69f826a522B2754De4 #Daimo is only testnet is basescan as of 25/10/23
 VYPER_ADDRESS=0xD99D0f622506C2521cceb80B78CAeBE1798C7Ed5 #Vyper is available over sepolia
  
- 
+#cast call  0xEd0D252a3A26FB0269333BD6Cc720a8a68a68fcb "ecdsa_GenKeyPair()" --rpc-url https://ethereum-sepolia.blockpi.network/v1/rpc/public
+#cast call  0xEd0D252a3A26FB0269333BD6Cc720a8a68a68fcb "ecdsa_GenKeyPair()" --rpc-url https://rpc.goerli.linea.build
+#cast call  0xEd0D252a3A26FB0269333BD6Cc720a8a68a68fcb "ecdsa_GenKeyPair()" --rpc-url https://goerli.base.org 
+#cast call  0xEd0D252a3A26FB0269333BD6Cc720a8a68a68fcb "ecdsa_GenKeyPair()" --rpc-url https://optimism-goerli.public.blastapi.io
+#cast call  0xEd0D252a3A26FB0269333BD6Cc720a8a68a68fcb "ecdsa_GenKeyPair()" --rpc-url https://polygon.llamarpc.com
+
+
  
 # pick a network and RPC
 for iteration in 1 2
