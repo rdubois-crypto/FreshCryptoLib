@@ -13,7 +13,8 @@ SIGNER="--ledger" #safe version, open Ethereum application on your ledger, allow
 #the public key related to your ledger/private key
 SENDER=0x936632cC3B9BC47ad23D41dC7cc200015c447f71
 #the script path to deploy
-SCRIPT_PATH=script/DeployElliptic.s.sol:Script_Deploy_FCL_all
+SCRIPT_PATH=script/DeployElliptic.s.sol
+SCRIPT_FUNCTION=:Script_Deploy_FCL_all
 
 #MAINNET
 POLYGON_CHAINID=137
@@ -32,6 +33,14 @@ BASE_TESTNET_RPC=https://goerli.base.org
 OP_TESNET_CHAINID=420
 OP_TESTNET_RPC=https://optimism-goerli.public.blastapi.io
 
+
+ALL_RPC=($SEPOLIA_RPC $LINEA_TESTNET_RPC $BASE_TESTNET_RPC $OP_TESTNET_RPC $POLYGON_RPC)
+
+ALL_TESTNETWORKS=("SEPOLIA" "LINEA TESTNET" "BASE TESTNET" "OP TESTNET" "POLYGON MAINNET")
+#ALL_NETWORKS=("POLYGON MAINNET")
+ALL_CHAINID=($SEPOLIA_CHAINID $LINEA_CHAINID $BASE_TESTNET_CHAINID $OP_TESNET_CHAINID $POLYGON_CHAINID)
+
+
 #the api key for block explorer verification 
 SEPOLIA_API_KEY=HURV4UYJZCCUTXEYM73M6J6CIJE1KN1W5X
 INFURA_API_KEY=0ba7c1c10fb849dbac880aca39a0fb32
@@ -40,16 +49,17 @@ BASE_API_KEY=$INFURA_API_KEY
 OP_API_KEY=FV931ZWRMJCQWPHSJQ3KMPHI3CH48AFA7R
 POLYGON_API_KEY=7SXPV7TTIZJXZ226UZDRYHXBV5R2AGTJYY
 
-ALL_RPC=($SEPOLIA_RPC $LINEA_TESTNET_RPC $BASE_TESTNET_RPC $OP_TESTNET_RPC $POLYGON_RPC)
-ALL_NETWORKS=("SEPOLIA" "LINEA TESTNET" "BASE TESTNET" "OP TESTNET" "POLYGON MAINNET")
-ALL_CHAINID=($SEPOLIA_CHAINID $LINEA_CHAINID $BASE_TESTNET_CHAINID $OP_TESNET_CHAINID $POLYGON_CHAINID)
 ALL_API_KEY=($SEPOLIA_API_KEY $LINEA_API_KEY $BASE_API_KEY $OP_API_KEY $POLYGON_API_KEY)
 
+LAST_PR=$(git log --merges --oneline |head -n 1)
 #copy FCL sources and script
 mkdir deploy; cd deploy; forge init --no-git ;cp ../utils/foundry.toml_deploy foundry.toml;\cp  -R ../src/ .; cp -R ../tests/WebAuthn_forge/script/ .; \
+echo "/*related PR:"$LAST_PR"*/" >> $SCRIPT_PATH
 
-#deploy and verify library on all networks
-for i in ${!ALL_NETWORKS[@]}; do
+echo "******************** BEGIN DEPLOYMENT OF PR:"$LAST_PR
+
+#deploy and verify library on all networks, polygon need --legacy
+for i in ${!ALL_TESTNETWORKS[@]}; do
   echo "Chain $i is ${ALL_NETWORKS[$i]} "
   echo "     ChainID: ${ALL_CHAINID[$i]}"
   CHAIN_ID="${ALL_CHAINID[$i]}"
@@ -57,22 +67,20 @@ for i in ${!ALL_NETWORKS[@]}; do
   echo "     RPC: ${ALL_RPC[$i]}" 
   RPC="${ALL_RPC[$i]}"
   API_KEY=${ALL_API_KEY[$i]}
-  ETHERSCAN_API_KEY=$API_KEY  forge script $SCRIPT_PATH  --broadcast --verify --chain-id $CHAIN_ID $SIGNER --rpc-url $RPC  --sender $SENDER 
+  
+  ETHERSCAN_API_KEY=$API_KEY  forge script $SCRIPT_PATH$SCRIPT_FUNCTION  --broadcast --verify --chain-id $CHAIN_ID $SIGNER --rpc-url $RPC  --sender $SENDER 
+  
 
 done
 
-	
+#special deployment for polygon
+CHAIN_ID=$POLYGON_CHAINID
+RPC=$POLYGON_RPC
 
-#rpc to use
-
-
-
-
-
-
-#copy FCL sources and script
-
+ETHERSCAN_API_KEY=$API_KEY  forge script $SCRIPT_PATH$SCRIPT_FUNCTION  --broadcast --verify --legacy --chain-id $CHAIN_ID $SIGNER --rpc-url $RPC  --sender $SENDER 
+  
+ 	
 #cleaning deployment\
-#cd ..;rm -Rf deploy/ 
+cd ..;rm -Rf deploy/ 
 
 

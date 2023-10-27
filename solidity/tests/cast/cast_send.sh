@@ -4,7 +4,7 @@ SIGNER="--ledger" #safe version, open Ethereum application on your ledger, allow
 
 #list of RPCs
 LINEA_TESTNET=https://rpc.goerli.linea.build
-FCL_ADDRESS=0xe55ccF9bf490a42AE6E31ab1A429c475c571a05d
+FCL_ADDRESS=0xEd0D252a3A26FB0269333BD6Cc720a8a68a68fcb
  
 # pick a network and RPC
 NETWORK="LINEA_TEST"

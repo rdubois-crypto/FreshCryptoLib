@@ -11,4 +11,7 @@ deploy:
 	./utils/deploy.sh
 #once deployed, test using cast
 cast_test:
-	cd tests/cast; 
+	 ./solidity/tests/cast/cast_call.sh 	
+cast_send:
+
+
