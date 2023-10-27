@@ -20,12 +20,12 @@ The implemented content is:
 <!--- FCL_ecdaa.sol: an EVM version of the ECDAA anonymous attestation for anonymous airdrops -->
 
 
-| Commit # | Create2 | Mainnets | Testnets |
+| PR # | Create2 | Mainnets | Testnets |
 |--------:|---------|:--:|:----|
 ||         |  |         |
-|[44](https://github.com/rdubois-crypto/FreshCryptoLib/pull/44)| 0xEd0D252a3A26FB0269333BD6Cc720a8a68a68fcb    | [Polygon](https://polygonscan.com/address/0xed0d252a3a26fb0269333bd6cc720a8a68a68fcb#code)  | [Optimism](https://goerli-optimism.etherscan.io/address/0xed0d252a3a26fb0269333bd6cc720a8a68a68fcb#code), [Sepolia](https://sepolia.etherscan.io/address/0xEd0D252a3A26FB0269333BD6Cc720a8a68a68fcb#code), [Linea](https://explorer.goerli.linea.build/address/0xEd0D252a3A26FB0269333BD6Cc720a8a68a68fcb/contracts#address-tabs)  |  
+|[46](https://github.com/rdubois-crypto/FreshCryptoLib/pull/46)| 0xE9399D1183a5cf9E14B120875A616b6E2bcB840a    | [Polygon](https://polygonscan.com/address/0xe9399d1183a5cf9e14b120875a616b6e2bcb840a#code)  | [Optimism](https://goerli-optimism.etherscan.io/address/0xe9399d1183a5cf9e14b120875a616b6e2bcb840a#code), [Sepolia](https://sepolia.etherscan.io/address/0xe9399d1183a5cf9e14b120875a616b6e2bcb840a#code), [Linea](https://explorer.goerli.linea.build/address/0xE9399D1183a5cf9E14B120875A616b6E2bcB840a/contracts#address-tabs)  |  
 
-(code is verified over optimism, base and sepolia only, one could check that bytecode is the same everywhere).
+(code is verified except for linea, one could check that bytecode is identical).
 
 ### Directory cairo0.9:
 
