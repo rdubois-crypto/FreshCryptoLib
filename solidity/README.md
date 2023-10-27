@@ -59,7 +59,8 @@ All utils (Signature, Keygen, derivation, Precomputations), provided for testing
 
 
 
-#### Verify a message
+#### Example of use
+The following cast commands will perform the ecdsa verification
 ```
 cast call 0xe9399d1183a5cf9e14b120875a616b6e2bcb840a "ecdsa_verify(bytes32,uint256,uint256,uint256,uint256)" 0xbb5a52f42f9c9261ed4361f59422a1e30036e7c32b270c8807a419feca605023 0x741dd5bda817d95e4626537320e5d55179983028b2f82c99d500c5ee8624e3c4 0x974efc58adfdad357aa487b13f3c58272d20327820a078e930c5f2ccc63a8f2b 0x5ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c  0x8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d5032 --rpc-url https://ethereum-sepolia.blockpi.network/v1/rpc/public
 ```
@@ -67,5 +68,5 @@ cast call 0xe9399d1183a5cf9e14b120875a616b6e2bcb840a "ecdsa_verify(bytes32,uint2
 
 A full example can easily be tweaked to perform offchain verification, or send on chain transactions using the solidity/cast directory scripts.
 
-return true
+
 
