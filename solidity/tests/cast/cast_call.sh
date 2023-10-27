@@ -4,7 +4,7 @@ SEPOLIA_TESTNET_RPC=https://ethereum-sepolia.blockpi.network/v1/rpc/public
 BASESCAN_TESTNET=https://goerli.base.org 
 
 
-FCL_ADDRESS=0xe55ccF9bf490a42AE6E31ab1A429c475c571a05d   #This FCL available on Sepolia, basescan and linea testnets
+FCL_ADDRESS=0xEd0D252a3A26FB0269333BD6Cc720a8a68a68fcb   #This FCL available on Polygon, optimism, Sepolia, basescan and linea testnets
 DAIMO_ADDRESS=0xc2b78104907F722DABAc4C69f826a522B2754De4 #Daimo is only testnet is basescan as of 25/10/23
 VYPER_ADDRESS=0xD99D0f622506C2521cceb80B78CAeBE1798C7Ed5 #Vyper is available over sepolia
  
@@ -43,9 +43,14 @@ VERIF=$(cast call $FCL_ADDRESS "ecdsa_verify(bytes32, uint256, uint256, uint256,
 
 echo "*** verif with FCL:"$VERIF" with RPC="$RPC
 
+
+EIP7212_INPUT=$MESSAGE$r$s$Qx$Qy
+echo "EIP7212 input:"$EIP7212_INPUT
+VERIF2=$(cast call $FCL_ADDRESS $EIP7212_INPUT --rpc-url $RPC)
+echo "*** verif with FCL (precompile):"$VERIF2" with RPC="$RPC
+
 #testing Vyper
 RPC=$SEPOLIA_TESTNET_RPC
-EIP7212_INPUT=$MESSAGE$r$s$Qx$Qy
 
 echo "EIP7212 input:"$EIP7212_INPUT
 VERIF2=$(cast call $VYPER_ADDRESS $EIP7212_INPUT --rpc-url $RPC)

@@ -1,2 +1,4 @@
 /solidity/.make.functions.sh
 **/broadcast/*
+/res.dat
+/solidity/utils/dark_deploy.sh
