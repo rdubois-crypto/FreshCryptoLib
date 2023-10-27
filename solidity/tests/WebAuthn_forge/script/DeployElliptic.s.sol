@@ -68,7 +68,7 @@ contract FCL_all_wrapper {
     }
 
     function ecdsa_GenKeyPair() external view returns (uint256 kpriv, uint256 x, uint256 y) {
-        kpriv = block.prevrandao^0xcacacacacaca;//avoid null key for chain not implementing prevrandao
+        kpriv = block.prevrandao ^ 0xcacacacacaca; //avoid null key for chain not implementing prevrandao
         (x, y) = FCL_ecdsa_utils.ecdsa_derivKpub(kpriv);
     }
 
