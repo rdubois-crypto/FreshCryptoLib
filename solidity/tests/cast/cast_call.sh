@@ -4,7 +4,7 @@ SEPOLIA_TESTNET_RPC=https://ethereum-sepolia.blockpi.network/v1/rpc/public
 BASESCAN_TESTNET=https://goerli.base.org 
 
 
-FCL_ADDRESS=0xEd0D252a3A26FB0269333BD6Cc720a8a68a68fcb   #This FCL available on Polygon, optimism, Sepolia, basescan and linea testnets
+FCL_ADDRESS=0xE9399D1183a5cf9E14B120875A616b6E2bcB840a   #This FCL available on Polygon, optimism, Sepolia, basescan and linea testnets
 DAIMO_ADDRESS=0xc2b78104907F722DABAc4C69f826a522B2754De4 #Daimo is only testnet is basescan as of 25/10/23
 VYPER_ADDRESS=0xD99D0f622506C2521cceb80B78CAeBE1798C7Ed5 #Vyper is available over sepolia
  
