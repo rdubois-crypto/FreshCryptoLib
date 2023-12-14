@@ -40,11 +40,11 @@ _G_HASH = _BITCOIN_HASH
 _G_CURVE, _G_POINT = FCL_ec_Init_Curve(sec256k_p, sec256k_a, sec256k_b, sec256k_gx, sec256k_gy, sec256k_n);
 _G_ORDER = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141;
 
-#set global variables to P256 settings
-_G_CURVE, _G_POINT = FCL_ec_Init_Curve(sec256p_p, sec256p_a, sec256p_b, sec256p_gx, sec256p_gy, sec256p_n);
-_G_ORDER=sec256p_n;
 
 
+#set global variables to stark settings
+_G_CURVE, _G_POINT = FCL_ec_Init_Curve(stark_p, stark_a, stark_b, stark_gx, stark_gy, stark_n);
+_G_ORDER=stark_n;
 
 #set global variables to ethereum settings
 #_G_HASH = _ETHER_HASH
@@ -55,9 +55,9 @@ Fq=GF(_G_ORDER);
 Fp=_G_POINT[0].parent();
 
 
-#set global variables to stark settings
-_G_CURVE, _G_POINT = FCL_ec_Init_Curve(stark_p, stark_a, stark_b, stark_gx, stark_gy, stark_n);
-_G_ORDER=stark_n;
+#set global variables to P256 settings
+_G_CURVE, _G_POINT = FCL_ec_Init_Curve(sec256p_p, sec256p_a, sec256p_b, sec256p_gx, sec256p_gy, sec256p_n);
+_G_ORDER=sec256p_n;
 
 
 def FCL_Hash2sec256k1(h):
