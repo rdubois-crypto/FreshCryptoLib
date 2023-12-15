@@ -119,7 +119,6 @@ def Musig2_Sig1Agg(vec_Ri, nb_users, _MU):
 		for j in range(0,_MU):#sum the contribution to previous ones
 			Aggregated_Ri[j]+=vec_Ri[i][j];	
 	return Aggregated_Ri;
-	
 
 def Musig2_Sig2Agg(vec_s, curve_order, nb_users):
 	Fq=GF(curve_order);

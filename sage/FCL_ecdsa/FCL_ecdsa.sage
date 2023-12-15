@@ -39,16 +39,36 @@ _G_BYTESIZE =32;
 _G_HASH = _BITCOIN_HASH
 _G_CURVE, _G_POINT = FCL_ec_Init_Curve(sec256k_p, sec256k_a, sec256k_b, sec256k_gx, sec256k_gy, sec256k_n);
 _G_ORDER = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141;
+
+
+
+#set global variables to stark settings
+_G_CURVE, _G_POINT = FCL_ec_Init_Curve(stark_p, stark_a, stark_b, stark_gx, stark_gy, stark_n);
+_G_ORDER=stark_n;
+
 #set global variables to ethereum settings
 #_G_HASH = _ETHER_HASH
 _G_CURVE, _G_POINT = FCL_ec_Init_Curve(sec256k_p, sec256k_a, sec256k_b, sec256k_gx, sec256k_gy, sec256k_n);
 _G_ORDER = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141;
+_G_ALPHA= 3; #3 is a non square for this prime field
+Fq=GF(_G_ORDER);
+Fp=_G_POINT[0].parent();
+
+
 #set global variables to P256 settings
 _G_CURVE, _G_POINT = FCL_ec_Init_Curve(sec256p_p, sec256p_a, sec256p_b, sec256p_gx, sec256p_gy, sec256p_n);
 _G_ORDER=sec256p_n;
 
-Fq=GF(_G_ORDER);
 
+def FCL_Hash2sec256k1(h):
+ Fp=GF(sec256k_p);
+ y2=Fp(h^3+sec256k_b);
+ if is_square(y2==false):
+ 	h=3*(h+sec256k_b);
+ 	print("swap");	
+ 	y2=h^3+sec256k_b;
+ 	print("square:",is_square(y2));
+ return (h, y2);
 
 def FCL_ecdsa_keygen(random_k):
  pk=random_k*_G_POINT;
@@ -144,10 +164,12 @@ def test_consistency():
     print("Recovery failed !!"); 
     return False;
  
- print("\n Verification and Recovery OK");
+   print("\n Verification and Recovery OK");
  return True;
 
-
+#https://starkscan.co/contract/0x053a2e69119c26977102dae51ba3e87e01e2c43161615aa5af73dd4483dbd73c
+#https://starkscan.co/contract/0x053a2e69119c26977102dae51ba3e87e01e2c43161615aa5af73dd4483dbd73c#read-write-contract0x31d4839cf06868be8d891e486af2765f7e67acd8babaa087bc2d3b8ed9cc046
+#FCL_ecdsa_verify(_G_CURVE, _G_POINT, 0x05f32d2947ac403194b1b788a5828f05b5ef89a577f72f71c33171c75900b8de, 0x31d4839cf06868be8d891e486af2765f7e67acd8babaa087bc2d3b8ed9cc046, 
 
 
 
