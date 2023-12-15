@@ -86,14 +86,14 @@ contract FCL_all_wrapper {
 contract MyScript is BaseScript {
     function run() external broadcast returns (address addressOfLibrary) {
         // deploy the library contract and return the address
-        addressOfLibrary = address(new FCL_ecdsa_wrapper{salt:0}());
+        addressOfLibrary = address(new FCL_ecdsa_wrapper{salt: 0}());
     }
 }
 
 contract Script_Deploy_FCL_all is BaseScript {
     function run() external broadcast returns (address addressOfLibrary) {
         // deploy the library contract and return the address
-        addressOfLibrary = address(new FCL_all_wrapper{salt:0}());
+        addressOfLibrary = address(new FCL_all_wrapper{salt: 0}());
     }
 }
 
