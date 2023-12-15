@@ -367,18 +367,14 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
                 } {}
                 zz := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1))
 
-                if eq(zz, 1) {
-                    X := gx
-                    Y := gy
-                }
-                if eq(zz, 2) {
-                    X := Q0
-                    Y := Q1
-                }
-                if eq(zz, 3) {
-                    X := H0
-                    Y := H1
-                }
+                X := add(add(
+                    mul(eq(zz, 1), gx),
+                    mul(eq(zz, 2), Q0)),
+                    mul(eq(zz, 3), H0))
+                Y := add(add(
+                    mul(eq(zz, 1), gy),
+                    mul(eq(zz, 2), Q1)),
+                    mul(eq(zz, 3), H1))
 
                 index := sub(index, 1)
                 zz := 1
@@ -402,23 +398,21 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
                         //value of dibit
                         T4 := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1))
 
-                        if iszero(T4) {
+                        T1 := add(add(
+                            mul(eq(T4, 1), gx),
+                            mul(eq(T4, 2), Q0)),
+                            mul(eq(T4, 3), H0))
+                        T2 := add(add(
+                            mul(eq(T4, 1), gy),
+                            mul(eq(T4, 2), Q1)),
+                            mul(eq(T4, 3), H1))
+
+                        if iszero(T2) {
                             Y := sub(p, Y) //restore the -Y inversion
                             continue
-                        } // if T4!=0
+                        } // if T2!=0
 
-                        if eq(T4, 1) {
-                            T1 := gx
-                            T2 := gy
-                        }
-                        if eq(T4, 2) {
-                            T1 := Q0
-                            T2 := Q1
-                        }
-                        if eq(T4, 3) {
-                            T1 := H0
-                            T2 := H1
-                        }
+                        // inlined EcZZ_AddN
                         if iszero(zz) {
                             X := T1
                             Y := T2
@@ -426,7 +420,6 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
                             zzz := 1
                             continue
                         }
-                        // inlined EcZZ_AddN
 
                         //T3:=sub(p, Y)
                         //T3:=Y

@@ -21,6 +21,7 @@ pragma solidity >=0.8.19 <0.9.0;
 import "forge-std/Test.sol";
 import "@solidity/FCL_elliptic.sol";
 import "@solidity/FCL_ecdsa.sol";
+import "@solidity/FCL_ecdsa_utils.sol";
 
 //testing edge case as suggested by Mikhail in commit 5d3c3f77f0d296f095bb071e7df5278a1c0cc1be
 contract edgemultTest is Test {
@@ -58,16 +59,28 @@ function test_edgeMul() public returns (bool)
 
  resX=FCL_Elliptic_ZZ.ecZZ_mulmuladd_S_asm(vec2[0], vec2[1], vec2[2], vec2[3]);
  console.log("resX=%x",resX);
- 
+
  assertEq(93995665850302450053183256960521438033484268364047930968443817833761593125805, resX);
- 
- 
- 
 }
 
+    // Tests an edge case in Shamir-Straus where G + Q = H = 0
+    function test_GplusQIsZero() external {
+        (uint256 Qx, uint256 Qy) = FCL_ecdsa_utils.ecdsa_derivKpub(FCL_Elliptic_ZZ.n - 1);
 
+        (uint256 Hx, uint256 Hy) = FCL_Elliptic_ZZ.ecAff_add(FCL_Elliptic_ZZ.gx, FCL_Elliptic_ZZ.gy, Qx, Qy);
+        assertEq(Hx, 0);
+        assertEq(Hy, 0);
 
+        uint256 u = 3;
+        uint256 v = 1;
 
+        uint256 x = FCL_Elliptic_ZZ.ecZZ_mulmuladd_S_asm(Qx, Qy, u, v);
 
-
+        // We have uG + vQ = 3G + Q = 2G + (G + Q) = 2G + 0 = 2G
+        (uint256 twoGx, ) = FCL_Elliptic_ZZ.ecAff_add(
+            FCL_Elliptic_ZZ.gx, FCL_Elliptic_ZZ.gy,
+            FCL_Elliptic_ZZ.gx, FCL_Elliptic_ZZ.gy
+        );
+        assertEq(x, twoGx);
+    }
 }
