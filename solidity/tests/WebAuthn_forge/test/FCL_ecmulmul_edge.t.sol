@@ -21,15 +21,24 @@ pragma solidity >=0.8.19 <0.9.0;
 import "forge-std/Test.sol";
 import "@solidity/FCL_elliptic.sol";
 import "@solidity/FCL_ecdsa.sol";
+import "@solidity/FCL_ecdsa_utils.sol";
 
 //testing edge case as suggested by Mikhail in commit 5d3c3f77f0d296f095bb071e7df5278a1c0cc1be
 contract edgemultTest is Test {
+    //naive mul for low weight coeff
+    function ecAff_naivemul(uint256 a, uint256 x, uint256 y) private view returns (uint256 ax, uint256 ay) {
+        while (a > 0) {
+            (ax, ay) = FCL_Elliptic_ZZ.ecAff_add(ax, ay, x, y);
+            a = a - 1;
+        }
+    }
+
     /* vector from http://point-at-infinity.org/ecc/nisttv
     //k = 115792089210356248762697446949407573529996955224135760342422259061068512044367
     //x = 7CF27B188D034F7E8A52380304B51AC3C08969E277F21B35A60B48FC47669978
     //y = F888AAEE24712FC0D6C26539608BCF244582521AC3167DD661FB4862DD878C2E*/
     //edge case for Shamir
-    function test_edgeMul() public returns (bool) {
+    function test_EdgeMul_InlinedDbl() public returns (bool) {
         uint256[3] memory vec = [
             115792089210356248762697446949407573529996955224135760342422259061068512044367,
             0x7CF27B188D034F7E8A52380304B51AC3C08969E277F21B35A60B48FC47669978,
@@ -59,5 +68,29 @@ contract edgemultTest is Test {
         console.log("resX=%x", resX);
 
         assertEq(93995665850302450053183256960521438033484268364047930968443817833761593125805, resX);
+    }
+
+    //edge case: where Q=n-1, making H precomputed value neutral
+    function test_EdgeCase_keqnm1() external {
+        uint256 s = FCL_Elliptic_ZZ.n - 1;
+        (uint256 Qx, uint256 Qy) = FCL_ecdsa_utils.ecdsa_derivKpub(s);
+        console.log("Qx = %d", Qx);
+        console.log("Qy = %d", Qy);
+
+        uint256 u = 3;
+        uint256 v = 1;
+
+        uint256 r1 = FCL_Elliptic_ZZ.ecZZ_mulmuladd_S_asm(Qx, Qy, u, v);
+        console.log("r1 = %d", r1);
+
+        (uint256 uGx, uint256 uGy) = ecAff_naivemul(u, FCL_Elliptic_ZZ.gx, FCL_Elliptic_ZZ.gy);
+        (uint256 vQx, uint256 vQy) = ecAff_naivemul(v, Qx, Qy);
+        (uint256 r2,) = FCL_Elliptic_ZZ.ecAff_add(uGx, uGy, vQx, vQy);
+        console.log("r2 = %d", r2);
+
+        (uint256 twoGx,) = ecAff_naivemul(2, FCL_Elliptic_ZZ.gx, FCL_Elliptic_ZZ.gy);
+        console.log("2Gx = %d", twoGx);
+
+        assertEq(r1, r2);
     }
 }
