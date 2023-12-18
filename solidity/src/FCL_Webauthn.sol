@@ -29,7 +29,6 @@ import {FCL_ecdsa_utils} from "./FCL_ecdsa_utils.sol";
 library FCL_WebAuthn {
     error InvalidAuthenticatorData();
     error InvalidClientData();
-    error InvalidSignature();
 
     function WebAuthn_format(
         bytes calldata authenticatorData,
