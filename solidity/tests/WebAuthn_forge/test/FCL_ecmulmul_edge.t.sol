@@ -25,7 +25,6 @@ import "@solidity/FCL_ecdsa_utils.sol";
 
 //testing edge case as suggested by Mikhail in commit 5d3c3f77f0d296f095bb071e7df5278a1c0cc1be
 contract edgemultTest is Test {
-
     //naive mul for low weight coeff
     function ecAff_naivemul(uint256 a, uint256 x, uint256 y) private view returns (uint256 ax, uint256 ay) {
         while (a > 0) {
@@ -88,13 +87,10 @@ contract edgemultTest is Test {
         (uint256 vQx, uint256 vQy) = ecAff_naivemul(v, Qx, Qy);
         (uint256 r2,) = FCL_Elliptic_ZZ.ecAff_add(uGx, uGy, vQx, vQy);
         console.log("r2 = %d", r2);
-        
-        (uint256 twoGx, ) = ecAff_naivemul(2, FCL_Elliptic_ZZ.gx, FCL_Elliptic_ZZ.gy);
+
+        (uint256 twoGx,) = ecAff_naivemul(2, FCL_Elliptic_ZZ.gx, FCL_Elliptic_ZZ.gy);
         console.log("2Gx = %d", twoGx);
 
         assertEq(r1, r2);
     }
-
-
-
 }
