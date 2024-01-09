@@ -28,6 +28,7 @@ library sha512 {
     struct SHA512_CTX {
         uint64[8] state;
         uint256 usedspace64;
+        uint256 bitcount;
         uint64[SHA512_BLOCK_LENGTH64] buffer;
     }
 

@@ -26,7 +26,6 @@ import {Base64Url} from "@solidity/utils/Base64Url.sol";
  *  The rsMock is the r and s values of the signature. Note that the signature provided above is the Base64URL encoding of the DER encoding of the signature.
  *  The QMock is the x and y values of the public key of the key pair used to sign the data. This is generated during the registration process
  */
-
 contract FCL_Webauthn_Base64Url is Test {
     Helper public helper;
     WebAuthn_base64URL public webauthn;
