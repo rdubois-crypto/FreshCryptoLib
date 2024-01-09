@@ -83,7 +83,8 @@ The following repos have been used in benchmarks:
 * Daimo, ethereum payments : https://github.com/daimo-eth/p256-verifier/blob/master/src/P256Verifier.sol
 * Safe : https://github.com/safe-global/safe-modules/tree/master/4337/contracts/test/FCL
 * Wallet Abstraction, EthGlobal NY hackathon finalist : https://github.com/qd-qd/wallet-abstraction
-  
+* Wax : Wallet Account Experiments, PSE team (EF funded) https://github.com/getwax/wax/commit/fd246685f67ebb56f5ebb82cb48df56088e28c7b  
+
 Do not hesitate to reach us to be listed.
 ## License 
 License: This software is licensed under MIT License (see LICENSE FILE at root directory of project).
