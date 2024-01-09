@@ -161,11 +161,11 @@ contract Sha512Test is Test {
     function test_SHA512_ed25519_3() public {
         uint256[2] memory res;
         //Rs, A, msg
-        ctx.buffer[0] = 0x6291d657deec2402;//Rs
+        ctx.buffer[0] = 0x6291d657deec2402; //Rs
         ctx.buffer[1] = 0x4827e69c3abe01a3;
-        ctx.buffer[2] = 0x0ce548a284743a44;//
+        ctx.buffer[2] = 0x0ce548a284743a44; //
         ctx.buffer[3] = 0x5e3680d7db5ac3ac;
-        ctx.buffer[4] = 0xfc51cd8e6218a1a3;//pubY
+        ctx.buffer[4] = 0xfc51cd8e6218a1a3; //pubY
         ctx.buffer[5] = 0x8da47ed00230f058;
         ctx.buffer[6] = 0x0816ed13ba3303ac;
         ctx.buffer[7] = 0x5deb911548908025;
