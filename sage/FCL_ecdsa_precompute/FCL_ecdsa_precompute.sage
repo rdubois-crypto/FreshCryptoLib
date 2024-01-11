@@ -36,6 +36,12 @@ sec256p_n =0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551;
 #//Init    
 secp256r1, G = Init_Curve(sec256p_p, sec256p_a, sec256p_b, sec256p_gx, sec256p_gy, sec256p_n);
 
+#chain="";
+#for i in [0..255]:
+#   px=print_setlength( (_G_POINT*i)[0], 64);
+#   py=print_setlength( (_G_POINT*i)[1], 64);
+#   print("\n -- \n px=", px, "\n py=",py );
+#   chain=chain+px+py;
 
 #//example public point from webauthn.js
 Q=secp256r1([C0,C1]);
