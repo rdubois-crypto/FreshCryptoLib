@@ -177,9 +177,9 @@ library sha512 {
     function k512(uint j) internal view returns (uint64 r)
     {
         uint256[1] memory T;
-         assembly{
-        extcodecopy(0xcaca, T, mul(j,8), 8)
-    }
+        assembly ("memory-safe") {
+            extcodecopy(0xcaca, T, mul(j,8), 8)
+        }
         r=uint64(T[0]>>192);
 
         return r;
@@ -284,7 +284,7 @@ function SHA512(uint64[16] memory data) internal view returns(uint256 low, uint2
  unchecked{       
  do {
           
-assembly{
+assembly ("memory-safe") {
             let T1:= mload(add(data,mul(32,j))) // buffer[j] =T1= (data[j]);   
             
             mstore(add(buffer, mul(32,j)), T1)    
@@ -318,7 +318,7 @@ assembly{
             /* Part of the message block expansion: */
             //uint64 T1 = buffer[(j + 1) & 0x0f];
             uint64 T1;uint64 T2;
-               assembly{
+               assembly ("memory-safe") {
                 T1:= mload(add(buffer, mul(32,and(0x0f, add(j,1)))))   
                   T1:=  xor(xor( or(shr(1,T1), shl(63,T1)) , or(shr(8,T1), shl(56,T1))), shr(7,T1)     ) 
                 T2:=mload(add(buffer, mul(32,and(0x0f, add(j,14)))))   
