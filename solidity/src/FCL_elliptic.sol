@@ -363,7 +363,7 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
             {
                 scalar_u=addmod(scalar_u, n-scalar_v, n);
                 scalar_v=0;
-
+                if (scalar_u == 0 && scalar_v == 0) return 0;
             }
             assembly {
                 for { let T4 := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1)) } eq(T4, 0) {
