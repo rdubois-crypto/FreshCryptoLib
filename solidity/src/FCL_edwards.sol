@@ -77,7 +77,7 @@ library Edwards {
         returns (uint256 x3, uint256 y3, uint256 z3, uint256 t3)
     {
         unchecked {
-            assembly {
+            assembly ("memory-safe") {
                 x3 := addmod(y1, sub(p, x1), p) //   = (Y1-X1)
                 t3 := addmod(y2, sub(p, x2), p) //     (Y2-X2)
 
@@ -106,7 +106,7 @@ library Edwards {
         returns (uint256 x3, uint256 y3, uint256 z3, uint256 t3)
     {
         unchecked {
-            assembly {
+            assembly ("memory-safe") {
                 x3 := addmod(y1, sub(p, x1), p) //   = (Y1-X1)
                 t3 := addmod(y2, sub(p, x2), p) //     (Y2-X2)
 
@@ -135,7 +135,7 @@ library Edwards {
         returns (uint256 x3, uint256 y3, uint256 z3, uint256 t3)
     {
         unchecked {
-            assembly {
+            assembly ("memory-safe") {
                 x3 := mulmod(x1, x1, p) //A = X1^2
                 t3 := mulmod(y1, y1, p) //B = Y1^2
                 let P6 := addmod(x3, t3, p) //H=B+A
@@ -186,7 +186,7 @@ library Edwards {
 
             (T[0], T[1]) = ed_AddAff(gx, gy, Q0, Q1);
 
-            assembly {
+            assembly ("memory-safe") {
                 for { let T4 := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1)) } eq(T4, 0) {
                     index := sub(index, 1)
                     T4 := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1))

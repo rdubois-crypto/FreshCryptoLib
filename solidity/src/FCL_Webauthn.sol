@@ -51,7 +51,7 @@ library FCL_WebAuthn {
             bytes(challengeEncoded).length
         );
 
-            assembly {
+            assembly ("memory-safe") {
                 calldatacopy(
                     add(challengeExtracted, 32),
                     add(clientData.offset, clientChallengeDataOffset),
@@ -60,7 +60,7 @@ library FCL_WebAuthn {
             }
 
             bytes32 moreData; //=keccak256(abi.encodePacked(challengeExtracted));
-            assembly {
+            assembly ("memory-safe") {
                 moreData := keccak256(add(challengeExtracted, 32), mload(challengeExtracted))
             }
 
@@ -72,12 +72,12 @@ library FCL_WebAuthn {
         // Verify the signature over sha256(authenticatorData || sha256(clientData))
         bytes memory verifyData = new bytes(authenticatorData.length + 32);
 
-        assembly {
+        assembly ("memory-safe") {
             calldatacopy(add(verifyData, 32), authenticatorData.offset, authenticatorData.length)
         }
 
         bytes32 more = sha256(clientData);
-        assembly {
+        assembly ("memory-safe") {
             mstore(add(verifyData, add(authenticatorData.length, 32)), more)
         }
 
