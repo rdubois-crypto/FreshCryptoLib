@@ -50,6 +50,24 @@ contract ArithmeticTest is Test {
     uint256 constant _NUM_TEST_ECMULMULADD = 1000;
     uint256 constant _NUM_TEST_DBL = 100;
 
+    function test_ecAff_isOnCurve_returnsFalse_whenX0() public {
+        assertFalse(FCL_Elliptic_ZZ.ecAff_isOnCurve(0, gy));
+    }
+
+    function test_ecAff_isOnCurve_returnsFalse_whenY0() public {
+        assertFalse(FCL_Elliptic_ZZ.ecAff_isOnCurve(gx, 0));
+    }
+
+    function test_ecAff_isOnCurve_returnsFalse_whenXGreaterThanEqualP(uint x) public {
+        vm.assume(x >= p);
+        assertFalse(FCL_Elliptic_ZZ.ecAff_isOnCurve(x, gy));
+    }
+
+    function test_ecAff_isOnCurve_returnsFalse_whenYGreaterThanEqualP(uint y) public {
+        vm.assume(y >= p);
+        assertFalse(FCL_Elliptic_ZZ.ecAff_isOnCurve(gx, y));
+    }
+
     function test_Fuzz_InVmodn(uint256 i_u256_a) public {
         vm.assume(i_u256_a < FCL_Elliptic_ZZ.n);
         vm.assume(i_u256_a != 0);
