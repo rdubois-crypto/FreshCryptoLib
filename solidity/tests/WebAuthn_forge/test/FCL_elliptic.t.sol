@@ -58,12 +58,12 @@ contract ArithmeticTest is Test {
         assertFalse(FCL_Elliptic_ZZ.ecAff_isOnCurve(gx, 0));
     }
 
-    function test_ecAff_isOnCurve_returnsFalse_whenXGreaterThanEqualP(uint x) public {
+    function test_ecAff_isOnCurve_returnsFalse_whenXGreaterThanEqualP(uint256 x) public {
         vm.assume(x >= p);
         assertFalse(FCL_Elliptic_ZZ.ecAff_isOnCurve(x, gy));
     }
 
-    function test_ecAff_isOnCurve_returnsFalse_whenYGreaterThanEqualP(uint y) public {
+    function test_ecAff_isOnCurve_returnsFalse_whenYGreaterThanEqualP(uint256 y) public {
         vm.assume(y >= p);
         assertFalse(FCL_Elliptic_ZZ.ecAff_isOnCurve(gx, y));
     }
