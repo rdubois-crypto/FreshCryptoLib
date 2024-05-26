@@ -81,6 +81,7 @@ The following repos have been used in benchmarks:
 
 * Academic paper: https://eprint.iacr.org/2023/939 for EthCC2023
 * Alembic : https://github.com/alembic-tech/p256-signer/blob/main/contracts/FCL/FCL_elliptic.sol
+* Base Smart Wallet: fast onboarding using FCL: https://www.smart-wallet.xyz/, deployed at 0x0BA5ED0c6AA8c49038F819E587E2633c4A9F428a (Base main and Sepolia)
 * Braavos https://github.com/myBraavos/efficient-secp256r1/blob/develop/src/secp256r1/ec_mulmuladd.cairo
 * Cartridge https://github.com/cartridge-gg/cairo-secp256r1/pull/3
 * EIP665 PR#7515 :https://github.com/ethereum/EIPs/pull/7515
