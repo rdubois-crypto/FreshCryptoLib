@@ -5,7 +5,11 @@ The Fresh Crypto Lib is a set of functions for blockchain systems such as Wallet
 *** __15/05/24 : Deprecated__
 
 *** __This library is an experimental prequel of SCL. SCL proposes more generic implementation with RIP7696 for lesser cost (beating record set by FCL) and is currently under audit.
-https://github.com/get-smooth/crypto-lib__
+https://github.com/get-smooth/crypto-lib__.
+
+*** __new (27/05/24): SCL now support both Ed25519 and P256 using RIP7696__.
+
+
 
 *** We warmly thanks all contributors of FCL, they will be added as contributor to SCL.
 
