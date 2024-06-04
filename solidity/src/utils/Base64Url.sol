@@ -21,7 +21,7 @@ library Base64Url {
         string memory result = new string(4 * ((data.length + 2) / 3));
 
         // @solidity memory-safe-assembly
-        assembly {
+        assembly ("memory-safe") {
             let tablePtr := add(table, 1)
             let resultPtr := add(result, 32)
 

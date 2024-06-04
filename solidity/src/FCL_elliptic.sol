@@ -53,7 +53,7 @@ library FCL_Elliptic_ZZ {
      * /* inversion mod n via a^(n-2), use of precompiled using little Fermat theorem
      */
     function FCL_nModInv(uint256 u) internal view returns (uint256 result) {
-        assembly {
+        assembly ("memory-safe") {
             let pointer := mload(0x40)
             // Define length of base, exponent and modulus. 0x20 == 32 bytes
             mstore(pointer, 0x20)
@@ -74,7 +74,7 @@ library FCL_Elliptic_ZZ {
      */
 
     function FCL_pModInv(uint256 u) internal view returns (uint256 result) {
-        assembly {
+        assembly ("memory-safe") {
             let pointer := mload(0x40)
             // Define length of base, exponent and modulus. 0x20 == 32 bytes
             mstore(pointer, 0x20)
@@ -224,7 +224,7 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
         returns (uint256 P0, uint256 P1, uint256 P2, uint256 P3)
     {
         unchecked {
-            assembly {
+            assembly ("memory-safe") {
                 P0 := mulmod(2, y, p) //U = 2*Y1
                 P2 := mulmod(P0, P0, p) // V=U^2
                 P3 := mulmod(x, P2, p) // S = X1*V
@@ -255,7 +255,7 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
                 return (x2, y2, 1, 1);
             }
 
-            assembly {
+            assembly ("memory-safe") {
                 y1 := sub(p, y1)
                 y2 := addmod(mulmod(y2, zzz1, p), y1, p)
                 x2 := addmod(mulmod(x2, zz1, p), sub(p, x1), p)
@@ -365,7 +365,7 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
                 scalar_v=0;
                 if (scalar_u == 0 && scalar_v == 0) return 0;
             }
-            assembly {
+            assembly ("memory-safe") {
                 for { let T4 := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1)) } eq(T4, 0) {
                     index := sub(index, 1)
                     T4 := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1))
@@ -521,7 +521,7 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
 
             (H[0], H[1]) = ecAff_add(gx, gy, Q0, Q1); //will not work if Q=P, obvious forbidden private key
 
-            assembly {
+            assembly ("memory-safe") {
                 for { let T4 := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1)) } eq(T4, 0) {
                     index := sub(index, 1)
                     T4 := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1))
@@ -679,7 +679,7 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
                             + 2 * ((scalar_u >> (zz - 128)) & 1) + ((scalar_u >> (zz - 192)) & 1)
                     );
             }
-            assembly {
+            assembly ("memory-safe") {
                 extcodecopy(dataPointer, T, mload(T), 64)
                 let index := sub(zz, 1)
                 X := mload(T)
@@ -824,7 +824,7 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
                             + 2 * ((scalar_u >> (zz - 128)) & 1) + ((scalar_u >> (zz - 192)) & 1)
                     );
             }
-            assembly {
+            assembly ("memory-safe") {
                 codecopy(T, add(mload(T), dataPointer), 64)
                 X := mload(T)
                 let Y := mload(add(T, 32))
@@ -938,7 +938,7 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
         //Shamir 8 dimensions
         X = ecZZ_mulmuladd_S8_hackmem(mulmod(uint256(message), sInv, n), mulmod(r, sInv, n), endcontract);
 
-        assembly {
+        assembly ("memory-safe") {
             X := addmod(X, sub(n, r), n)
         }
         return X == 0;
