@@ -9,7 +9,7 @@ https://github.com/get-smooth/crypto-lib__.
 
 *** __new (27/05/24): SCL now supports both Ed25519 and P256 using RIP7696__.
 
-
+*** __new (06/08/24): SCL first audit completed, second VERIDISE audit being reviewed__ (FCL has no audit).
 
 *** We warmly thanks all contributors of FCL, they will be added as contributor to SCL.
 
