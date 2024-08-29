@@ -93,6 +93,7 @@ The following repos have been used in benchmarks:
 * Forum DAO,  :https://github.com/forumdaos/forum-contracts/tree/main/src/libraries
 * Daimo, ethereum payments : https://github.com/daimo-eth/p256-verifier/blob/master/src/P256Verifier.sol
 * Safe : https://github.com/safe-global/safe-modules/tree/master/4337/contracts/test/FCL
+* SoulWallet : https://github.com/SoulWallet/soul-wallet-contract/blob/a0146910dfbc46afeba809b26f256129d37e3301/contracts/libraries/WebAuthn.sol#L69
 * Wallet Abstraction, EthGlobal NY hackathon finalist : https://github.com/qd-qd/wallet-abstraction
 * Wax : Wallet Account Experiments, PSE team (EF funded) https://github.com/getwax/wax/commit/fd246685f67ebb56f5ebb82cb48df56088e28c7b  
 
