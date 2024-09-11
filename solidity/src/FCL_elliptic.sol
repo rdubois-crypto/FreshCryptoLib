@@ -366,11 +366,10 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
                 if (scalar_u == 0 && scalar_v == 0) return 0;
             }
             assembly {
-                for { let T4 := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1)) } eq(T4, 0) {
+                for { zz := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1)) } iszero(zz) {
                     index := sub(index, 1)
-                    T4 := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1))
+                    zz := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1))
                 } {}
-                zz := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1))
 
                 if eq(zz, 1) {
                     X := gx
@@ -522,11 +521,10 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
             (H[0], H[1]) = ecAff_add(gx, gy, Q0, Q1); //will not work if Q=P, obvious forbidden private key
 
             assembly {
-                for { let T4 := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1)) } eq(T4, 0) {
+                for { zz := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1)) } iszero(zz) {
                     index := sub(index, 1)
-                    T4 := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1))
+                    zz := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1))
                 } {}
-                zz := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1))
 
                 if eq(zz, 1) {
                     X := gx
