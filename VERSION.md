@@ -1,5 +1,12 @@
 # Versions
 
+## 0.1.1 (2026-11-17)
+
+- README.md, solidity/README.md, solidity/src/README.md: new libraries, gas measured under Osaka and Prague
+  (EIP-7883 triples the modexp price in Osaka), how to run the tests without sagemath.
+- ecdsa_precomputed_hackmem with a 16kb table: 74 468 -> 61 962 gas under Osaka, 69 028 -> 56 522 under Prague.
+- test/gen/.gitignore for node_modules and python caches.
+
 ## 0.1.0 (2026-11-17)
 
 ### solidity/src/FCL_elliptic.sol (P-256, same API)

@@ -11,12 +11,15 @@ https://github.com/get-smooth/crypto-lib__.
 
 *** __new (06/08/24): SCL first audit completed, second VERIDISE audit being reviewed__ (FCL has no audit).
 
+*** __new (17/11/26): FCL_elliptic.sol is about 26 % cheaper for P256 verification with the same API, and BabyJubJub (circomlib) EdDSA verification is added. See solidity/src/README.md__.
+
 *** We warmly thanks all contributors of FCL, they will be added as contributor to SCL.
 
 ## Content
 
 The implemented content is:
 - sec256r1 optimizations for EVM chains and Starknet
+- BabyJubJub (circomlib) EdDSA verification for EVM chains
 - an ecdaa implementation using blockchain primitives
 - a Starknet dedicated musig2 implementation
 
@@ -24,7 +27,10 @@ The implemented content is:
 ### Directory solidity:
 
 * FCL_ecdsa.sol: an EVM optimized implementation of ecdsa over sec256r1(P256), using language hacks and specificities, as described in paper https://eprint.iacr.org/2023/939.pdf.
+* FCL_elliptic.sol: the XYZZ engine behind FCL_ecdsa.sol, uG+vQ with a joint 2-bit window and a batch normalized table.
 * FCL_eddsa.sol   : an EVM optimized implementation of ed25519, using same paper tricks.
+* FCL_babyjubjub.sol: circomlib EdDSA verification over BabyJubJub, through the isomorphism to a short Weierstrass curve with a=-3 (same idea as Wei25519 in SCL), reusing the FCL_elliptic.sol engine.
+* FCL_babyjubjub_edwards.sol: the same verification on the a=-1 twisted Edwards model, with complete formulas.
 * FCL_sha512.sol : implementation of the SHA512 primitive (single bloc implementation)
 * FLC_Webauthn.sol: implementation of the WebAuthn2/FIDO2 authentication over ECDSA with P256
 <!--- FCL_ecdaa.sol: an EVM version of the ECDAA anonymous attestation for anonymous airdrops -->
@@ -80,6 +86,7 @@ The following repos have been used in benchmarks:
 #### Testing 
 
 * Invariant test vectors are extracted from the wycheproof project : https://github.com/google/wycheproof
+* BabyJubJub vectors are produced with the circomlibjs signers (Poseidon, MiMC7, MiMCSponge, Pedersen): https://github.com/iden3/circomlibjs
 
 ### FCL in the wild
 

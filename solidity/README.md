@@ -7,7 +7,10 @@ This directory contains implementation in solidity.
 ## Content
 
 * FCL_ecdsa.sol: an EVM optimized implementation of ecdsa over sec256r1(P256), using language hacks and specificities, as described in paper https://eprint.iacr.org/2023/939.pdf.
+* FCL_elliptic.sol: the XYZZ engine behind FCL_ecdsa.sol and FCL_Webauthn.sol.
 * FCL_eddsa.sol   : an EVM optimized implementation of ed25519, using same paper tricks.
+* FCL_babyjubjub.sol: circomlib EdDSA verification over BabyJubJub through the a=-3 short Weierstrass isomorphism.
+* FCL_babyjubjub_edwards.sol: the same verification on the a=-1 twisted Edwards model.
 * FCL_sha512.sol : implementation of the SHA512 primitive (single bloc implementation)
 * FLC_Webauthn.sol: implementation of the WebAuthn2/FIDO2 authentication over ECDSA with P256
 <!--- FCL_ecdaa.sol: an EVM version of the ECDAA anonymous attestation for anonymous airdrops -->
@@ -17,6 +20,12 @@ This directory contains implementation in solidity.
 To compile the sources, go to tests/WebAuthn_forge, then run
 
 >make test
+
+`test_batch_ecmulmuladd` calls sagemath through ffi. Without sage, run
+
+>forge test --no-match-test test_batch_ecmulmuladd -vv
+
+The vectors and the generated BabyJubJub libraries can be rebuilt with the scripts of tests/WebAuthn_forge/test/gen (see the README there).
 
 CI's are implemented, PR will be successfull if linting and all tests are OK. There are usefull commands in the makefile, such as 
 
