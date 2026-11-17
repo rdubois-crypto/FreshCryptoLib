@@ -1,0 +1,8 @@
+{
+  "name": "fcl-vector-gen",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "circomlibjs": "0.1.7"
+  }
+}

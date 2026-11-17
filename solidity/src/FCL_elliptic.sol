@@ -13,6 +13,9 @@
 ///*
 ///* DESCRIPTION: modified XYZZ system coordinates for EVM elliptic point multiplication
 ///*  optimization
+///*  uG+vQ: joint 2-bit window (15 points iG+jQ, batch normalized with one inversion),
+///*  halved doubling (11 mulmod), mixed addition on a sign alternating accumulator (no sub),
+///*  8-dim Shamir variants: scalars transposed in nibbles once, one table offset per round.
 ///*
 //**************************************************************************************/
 //* WARNING: this code SHALL not be used for non prime order curves for security reasons.
@@ -48,6 +51,16 @@ library FCL_Elliptic_ZZ {
     //arbitrary constant to express no quadratic residuosity
     uint256 constant _NOTSQUARE=0xFFFFFFFF00000002000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF;
     uint256 constant _NOTONCURVE=0xFFFFFFFF00000003000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF;
+
+    // 3/2 mod p, used by the halved doubling (U=Y instead of U=2Y)
+    uint256 constant _C3H = 0x7fffffff80000000800000000000000000000000800000000000000000000001;
+    // 2G and 3G, constant part of the 2-bit joint window table
+    uint256 constant _G2X = 0x7cf27b188d034f7e8a52380304b51ac3c08969e277f21b35a60b48fc47669978;
+    uint256 constant _G2Y = 0x07775510db8ed040293d9ac69f7430dbba7dade63ce982299e04b79d227873d1;
+    uint256 constant _G3X = 0x5ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c;
+    uint256 constant _G3Y = 0x8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d5032;
+    // table index (i+4j) of the 11 points computed in XYZZ: 2Q,3Q,Q+G,Q+2G,Q+3G,2Q+G,..,3Q+3G
+    uint256 constant _DMAP = 0x080c050607090a0b0d0e0f000000000000000000000000000000000000000000;
 
     /**
      * /* inversion mod n via a^(n-2), use of precompiled using little Fermat theorem
@@ -339,8 +352,318 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
     }
 
     /**
+     * @dev Detects keys Q = +/-c.G with c in {1, 2, 3, 1/2, 3/2, 1/3, 2/3} (mod n).
+     *      For those keys some entries iG+jQ of the 2-bit joint window table are the point at infinity
+     *      or require a doubling, so the multiplication is rewritten as (u + c.v).G.
+     *      Returns the multiplier c (mod n), or 0 when Q is not such a key.
+     */
+    function ecZZ_smallMultipleOfG(uint256 Q0, uint256 Q1) internal pure returns (uint256 c) {
+        assembly ("memory-safe") {
+            let y
+            switch Q0
+            case 0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296 {
+                c := 1
+                y := 0x4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5
+            }
+            case 0x7cf27b188d034f7e8a52380304b51ac3c08969e277f21b35a60b48fc47669978 {
+                c := 2
+                y := 0x07775510db8ed040293d9ac69f7430dbba7dade63ce982299e04b79d227873d1
+            }
+            case 0x5ecbe4d1a6330a44c8f7ef951d4bf165e6c6b721efada985fb41661bc6e7fd6c {
+                c := 3
+                y := 0x8734640c4998ff7e374b06ce1a64a2ecd82ab036384fb83d9a79b127a27d5032
+            }
+            case 0x2afa386b3f2bdcdb83f4d83f8fa3874d7b74dcb454bd644fdd6bf3d1f2da8db6 {
+                c := 0x7fffffff800000007fffffffffffffffde737d56d38bcf4279dce5617e3192a9
+                y := 0x8de7b41d3557a9cc9d4ac90ef7ad299a51759b030e1472b36b952a7686908d63
+            }
+            case 0xd897744db0ca3e5a506e1b02b731d784541db35865c2debc1dad0e1a757d18fc {
+                c := 0x7fffffff800000007fffffffffffffffde737d56d38bcf4279dce5617e3192aa
+                y := 0x31dbef292eeb2b81d165130d97b1cb644673439fad03103c722441787749e444
+            }
+            case 0x517d3f033d9b7d1994d200de245f8952bf5ac043d4014ca9af9ec20fee5119c8 {
+                c := 0xaaaaaaaa00000000aaaaaaaaaaaaaaaa7def51c91a0fbf034d26872ca84218e1
+                y := 0x7f60b6f5d7769fe2872c0c1f7f63193bcef9fc2a853f6518257d015e3baf805c
+            }
+            case 0x69b9b213061d41b3d9ac285f203e898e6257c079ba2dd20137ad032b155c6c12 {
+                c := 0x555555550000000055555555555555553ef7a8e48d07df81a693439654210c71
+                y := 0x0d6678ca01e385621ae907c5d7bd47b5f4be12a8ec26037836d5fd46e8d4d5de
+            }
+            if c { if iszero(eq(Q1, y)) { c := sub(n, c) } }
+        }
+    }
+
+    /**
+     * @dev Core of uG+vQ: joint 2-bit window (Shamir/Strauss), table of the 15 points iG+jQ,
+     *      normalized to affine with a single modular inversion (Montgomery batch trick).
+     *      Returns the result in XYZZ coordinates (ZZ==0 iff point at infinity, then X==0).
+     *      Table entry k (k = i + 4j) is stored at T + 128k as [-x, y, -y, x].
+     *      Q = (0,0) is read as the point at infinity, any 256-bit scalars are accepted.
+     */
+    function ecZZ_mulmuladd_core(uint256 Q0, uint256 Q1, uint256 scalar_u, uint256 scalar_v)
+        internal
+        view
+        returns (uint256 X, uint256 Y, uint256 ZZ, uint256 ZZZ)
+    {
+        unchecked {
+            if (Q0 == 0 && Q1 == 0) scalar_v = 0;
+            if (scalar_v != 0) {
+                uint256 c = ecZZ_smallMultipleOfG(Q0, Q1);
+                if (c != 0) {
+                    scalar_u = addmod(scalar_u, mulmod(c, scalar_v, n), n);
+                    scalar_v = 0;
+                }
+            }
+            if (scalar_u == 0 && scalar_v == 0) return (0, 0, 0, 0);
+        }
+        assembly ("memory-safe") {
+            /* I. Precomputations */
+            function st4(ptr, x, y) {
+                mstore(ptr, sub(p, x))
+                mstore(add(ptr, 0x20), y)
+                mstore(add(ptr, 0x40), sub(p, y))
+                mstore(add(ptr, 0x60), x)
+            }
+            function stZ(ptr, x, y, zz, zzz) {
+                mstore(ptr, x)
+                mstore(add(ptr, 0x20), y)
+                mstore(add(ptr, 0x40), zz)
+                mstore(add(ptr, 0x60), zzz)
+            }
+            //generic doubling, output 2P (not -2P)
+            function dblStd(x, y, zz, zzz) -> X3, Y3, ZZ3, ZZZ3 {
+                let U := addmod(y, y, p)
+                let V := mulmod(U, U, p)
+                let W := mulmod(U, V, p)
+                let S := mulmod(x, V, p)
+                let M := mulmod(3, mulmod(addmod(x, sub(p, zz), p), addmod(x, zz, p), p), p)
+                X3 := addmod(mulmod(M, M, p), mulmod(minus_2, S, p), p)
+                Y3 := addmod(mulmod(M, addmod(S, sub(p, X3), p), p), sub(p, mulmod(W, y, p)), p)
+                ZZ3 := mulmod(V, zz, p)
+                ZZZ3 := mulmod(W, zzz, p)
+            }
+            //P1 (XYZZ) + P2 (affine), P1 != +/-P2, P1 != O guaranteed by the small multiple filter
+            function addStd(x1, y1, zz1, zzz1, x2, y2) -> X3, Y3, ZZ3, ZZZ3 {
+                let P := addmod(mulmod(x2, zz1, p), sub(p, x1), p)
+                let R := addmod(mulmod(y2, zzz1, p), sub(p, y1), p)
+                let PP := mulmod(P, P, p)
+                let PPP := mulmod(P, PP, p)
+                let Qq := mulmod(x1, PP, p)
+                X3 := addmod(addmod(mulmod(R, R, p), sub(p, PPP), p), mulmod(minus_2, Qq, p), p)
+                Y3 := addmod(mulmod(R, addmod(Qq, sub(p, X3), p), p), sub(p, mulmod(y1, PPP, p)), p)
+                ZZ3 := mulmod(zz1, PP, p)
+                ZZZ3 := mulmod(zzz1, PPP, p)
+            }
+
+            //halved doubling, output -2P (FCL negated-Y convention), rare path only
+            function dblNeg(x, y, zz, zzz) -> X3, Y3, ZZ3, ZZZ3 {
+                let M := mulmod(mulmod(addmod(x, sub(p, zz), p), addmod(x, zz, p), p), _C3H, p)
+                let V := mulmod(y, y, p)
+                ZZ3 := mulmod(V, zz, p)
+                let S := mulmod(x, V, p)
+                V := mulmod(y, V, p)
+                ZZZ3 := mulmod(V, zzz, p)
+                X3 := addmod(mulmod(M, M, p), mulmod(minus_2, S, p), p)
+                Y3 := addmod(mulmod(V, y, p), mulmod(M, addmod(X3, sub(p, S), p), p), p)
+            }
+            function addSt(src, dst, x2, y2) {
+                let ta, tb, tc, td :=
+                    addStd(mload(src), mload(add(src, 0x20)), mload(add(src, 0x40)), mload(add(src, 0x60)), x2, y2)
+                stZ(dst, ta, tb, tc, td)
+            }
+
+            //table entries depending on Q: Q, 2Q, 3Q, jQ+iG, computed in XYZZ then batch normalized
+            function buildQ(T, qx, qy) {
+                st4(add(T, 0x200), qx, qy)
+                // 11 points in XYZZ: 2Q, 3Q, Q+iG, 2Q+iG, 3Q+iG (i=1..3), table index in _DMAP
+                let S0 := add(T, 0x800)
+                {
+                    let ta, tb, tc, td := dblStd(qx, qy, 1, 1)
+                    stZ(S0, ta, tb, tc, td)
+                    ta, tb, tc, td := addStd(qx, qy, 1, 1, gx, gy)
+                    stZ(add(S0, 0x100), ta, tb, tc, td)
+                    ta, tb, tc, td := addStd(qx, qy, 1, 1, _G2X, _G2Y)
+                    stZ(add(S0, 0x180), ta, tb, tc, td)
+                    ta, tb, tc, td := addStd(qx, qy, 1, 1, _G3X, _G3Y)
+                    stZ(add(S0, 0x200), ta, tb, tc, td)
+                }
+                addSt(S0, add(S0, 0x80), qx, qy)
+                addSt(S0, add(S0, 0x280), gx, gy)
+                addSt(S0, add(S0, 0x300), _G2X, _G2Y)
+                addSt(S0, add(S0, 0x380), _G3X, _G3Y)
+                addSt(add(S0, 0x80), add(S0, 0x400), gx, gy)
+                addSt(add(S0, 0x80), add(S0, 0x480), _G2X, _G2Y)
+                addSt(add(S0, 0x80), add(S0, 0x500), _G3X, _G3Y)
+
+                // Montgomery batch inversion of the 11 ZZZ
+                let PF := add(S0, 0x580)
+                let ta := 1
+                for { let k := 0 } lt(k, 0x580) { k := add(k, 0x80) } {
+                    ta := mulmod(ta, mload(add(S0, add(k, 0x60))), p)
+                    mstore(add(PF, shr(2, k)), ta)
+                }
+                {
+                    let M0 := add(PF, 0x160)
+                    mstore(M0, 0x20)
+                    mstore(add(M0, 0x20), 0x20)
+                    mstore(add(M0, 0x40), 0x20)
+                    mstore(add(M0, 0x60), ta)
+                    mstore(add(M0, 0x80), minus_2)
+                    mstore(add(M0, 0xa0), p)
+                    if iszero(staticcall(gas(), 0x05, M0, 0xc0, M0, 0x20)) { revert(0, 0) }
+                    ta := mload(M0) //1/prod(ZZZ)
+                }
+                for { let k := 0x500 } lt(k, 0x580) { k := sub(k, 0x80) } {
+                    let pt := add(S0, k)
+                    let tb := ta //1/ZZZ_k
+                    if k { tb := mulmod(ta, mload(add(PF, sub(shr(2, k), 0x20))), p) }
+                    ta := mulmod(ta, mload(add(pt, 0x60)), p)
+                    let tc := mulmod(mload(add(pt, 0x40)), tb, p) //ZZ/ZZZ = 1/Z
+                    st4(
+                        add(T, shl(7, byte(shr(7, k), _DMAP))),
+                        mulmod(mload(pt), mulmod(tc, tc, p), p),
+                        mulmod(mload(add(pt, 0x20)), tb, p)
+                    )
+                }
+            }
+
+            let T := mload(0x40)
+            st4(add(T, 0x80), gx, gy)
+            st4(add(T, 0x100), _G2X, _G2Y)
+            st4(add(T, 0x180), _G3X, _G3Y)
+
+            if scalar_v { buildQ(T, Q0, Q1) }
+
+            /* II. Main loop, 4 bits (2 of u, 2 of v) per iteration, accumulator sign alternates:
+                   first half adds -T[d] to -(4A), second half adds T[d] to (4A) */
+            Q1 := 252
+            for {} iszero(or(shr(Q1, scalar_u), shr(Q1, scalar_v))) { Q1 := sub(Q1, 4) } {}
+            Q0 := T
+            X := 0
+            Y := 0
+            ZZ := 0
+            ZZZ := 0
+            for {} lt(Q1, 256) { Q1 := sub(Q1, 4) } {
+                {
+                    let M := mulmod(mulmod(addmod(X, sub(p, ZZ), p), addmod(X, ZZ, p), p), _C3H, p)
+                    let V := mulmod(Y, Y, p)
+                    ZZZ := mulmod(mulmod(Y, V, p), ZZZ, p)
+                    ZZ := mulmod(V, ZZ, p)
+                    let S := mulmod(X, V, p)
+                    X := addmod(mulmod(M, M, p), mulmod(minus_2, S, p), p)
+                    Y := addmod(mulmod(V, V, p), mulmod(M, addmod(X, sub(p, S), p), p), p)
+                }
+                {
+                    let M := mulmod(mulmod(addmod(X, sub(p, ZZ), p), addmod(X, ZZ, p), p), _C3H, p)
+                    let V := mulmod(Y, Y, p)
+                    ZZZ := mulmod(mulmod(Y, V, p), ZZZ, p)
+                    ZZ := mulmod(V, ZZ, p)
+                    let S := mulmod(X, V, p)
+                    X := addmod(mulmod(M, M, p), mulmod(minus_2, S, p), p)
+                    Y := addmod(mulmod(V, V, p), mulmod(M, addmod(X, sub(p, S), p), p), p)
+                }
+                {
+                    let e :=
+                        or(and(shl(5, shr(Q1, scalar_u)), 0x180), and(shl(7, shr(Q1, scalar_v)), 0x600))
+                    switch e
+                    case 0 { Y := sub(p, Y) }
+                    default {
+                        e := add(Q0, e)
+                        let Pn := addmod(mulmod(mload(e), ZZ, p), X, p)
+                        let R := addmod(mulmod(mload(add(e, 0x40)), ZZZ, p), Y, p)
+                        switch Pn
+                        case 0 {
+                            switch ZZ
+                            case 0 {
+                                X := mload(add(e, 0x60))
+                                Y := mload(add(e, 0x40))
+                                ZZ := 1
+                                ZZZ := 1
+                            }
+                            default {
+                                switch R
+                                case 0 { X, Y, ZZ, ZZZ := dblNeg(X, Y, ZZ, ZZZ) }
+                                default {
+                                    X := 0
+                                    ZZ := 0
+                                    ZZZ := 0
+                                }
+                            }
+                        }
+                        default {
+                            let PP := mulmod(Pn, Pn, p)
+                            Pn := mulmod(Pn, PP, p)
+                            ZZ := mulmod(ZZ, PP, p)
+                            ZZZ := mulmod(ZZZ, Pn, p)
+                            PP := mulmod(X, PP, p)
+                            X := addmod(addmod(mulmod(R, R, p), Pn, p), mulmod(minus_2, PP, p), p)
+                            Y := addmod(mulmod(R, addmod(X, sub(p, PP), p), p), mulmod(Y, Pn, p), p)
+                        }
+                    }
+                }
+                {
+                    let M := mulmod(mulmod(addmod(X, sub(p, ZZ), p), addmod(X, ZZ, p), p), _C3H, p)
+                    let V := mulmod(Y, Y, p)
+                    ZZZ := mulmod(mulmod(Y, V, p), ZZZ, p)
+                    ZZ := mulmod(V, ZZ, p)
+                    let S := mulmod(X, V, p)
+                    X := addmod(mulmod(M, M, p), mulmod(minus_2, S, p), p)
+                    Y := addmod(mulmod(V, V, p), mulmod(M, addmod(X, sub(p, S), p), p), p)
+                }
+                {
+                    let M := mulmod(mulmod(addmod(X, sub(p, ZZ), p), addmod(X, ZZ, p), p), _C3H, p)
+                    let V := mulmod(Y, Y, p)
+                    ZZZ := mulmod(mulmod(Y, V, p), ZZZ, p)
+                    ZZ := mulmod(V, ZZ, p)
+                    let S := mulmod(X, V, p)
+                    X := addmod(mulmod(M, M, p), mulmod(minus_2, S, p), p)
+                    Y := addmod(mulmod(V, V, p), mulmod(M, addmod(X, sub(p, S), p), p), p)
+                }
+                {
+                    let e := or(and(shl(7, shr(Q1, scalar_u)), 0x180), and(shl(9, shr(Q1, scalar_v)), 0x600))
+                    switch e
+                    case 0 { Y := sub(p, Y) }
+                    default {
+                        e := add(Q0, e)
+                        let Pn := addmod(mulmod(mload(e), ZZ, p), X, p)
+                        let R := addmod(mulmod(mload(add(e, 0x20)), ZZZ, p), Y, p)
+                        switch Pn
+                        case 0 {
+                            switch ZZ
+                            case 0 {
+                                X := mload(add(e, 0x60))
+                                Y := mload(add(e, 0x20))
+                                ZZ := 1
+                                ZZZ := 1
+                            }
+                            default {
+                                switch R
+                                case 0 { X, Y, ZZ, ZZZ := dblNeg(X, Y, ZZ, ZZZ) }
+                                default {
+                                    X := 0
+                                    ZZ := 0
+                                    ZZZ := 0
+                                }
+                            }
+                        }
+                        default {
+                            let PP := mulmod(Pn, Pn, p)
+                            Pn := mulmod(Pn, PP, p)
+                            ZZ := mulmod(ZZ, PP, p)
+                            ZZZ := mulmod(ZZZ, Pn, p)
+                            PP := mulmod(X, PP, p)
+                            X := addmod(addmod(mulmod(R, R, p), Pn, p), mulmod(minus_2, PP, p), p)
+                            Y := addmod(mulmod(R, addmod(X, sub(p, PP), p), p), mulmod(Y, Pn, p), p)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * @dev Computation of uG+vQ using Strauss-Shamir's trick, G basepoint, Q public key
-     *       Returns only x for ECDSA use            
+     *       Returns only x for ECDSA use
      *      */
     function ecZZ_mulmuladd_S_asm(
         uint256 Q0,
@@ -348,161 +671,24 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
         uint256 scalar_u,
         uint256 scalar_v
     ) internal view returns (uint256 X) {
-        uint256 zz;
-        uint256 zzz;
-        uint256 Y;
-        uint256 index = 255;
-        uint256 H0;
-        uint256 H1;
-
-        unchecked {
-            if (scalar_u == 0 && scalar_v == 0) return 0;
-
-            (H0, H1) = ecAff_add(gx, gy, Q0, Q1); 
-            if((H0==0)&&(H1==0))//handling Q=-G
-            {
-                scalar_u=addmod(scalar_u, n-scalar_v, n);
-                scalar_v=0;
-                if (scalar_u == 0 && scalar_v == 0) return 0;
-            }
-            assembly {
-                for { let T4 := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1)) } eq(T4, 0) {
-                    index := sub(index, 1)
-                    T4 := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1))
-                } {}
-                zz := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1))
-
-                if eq(zz, 1) {
-                    X := gx
-                    Y := gy
-                }
-                if eq(zz, 2) {
-                    X := Q0
-                    Y := Q1
-                }
-                if eq(zz, 3) {
-                    X := H0
-                    Y := H1
-                }
-
-                index := sub(index, 1)
-                zz := 1
-                zzz := 1
-
-                for {} gt(minus_1, index) { index := sub(index, 1) } {
-                    // inlined EcZZ_Dbl
-                    let T1 := mulmod(2, Y, p) //U = 2*Y1, y free
-                    let T2 := mulmod(T1, T1, p) // V=U^2
-                    let T3 := mulmod(X, T2, p) // S = X1*V
-                    T1 := mulmod(T1, T2, p) // W=UV
-                    let T4 := mulmod(3, mulmod(addmod(X, sub(p, zz), p), addmod(X, zz, p), p), p) //M=3*(X1-ZZ1)*(X1+ZZ1)
-                    zzz := mulmod(T1, zzz, p) //zzz3=W*zzz1
-                    zz := mulmod(T2, zz, p) //zz3=V*ZZ1, V free
-
-                    X := addmod(mulmod(T4, T4, p), mulmod(minus_2, T3, p), p) //X3=M^2-2S
-                    T2 := mulmod(T4, addmod(X, sub(p, T3), p), p) //-M(S-X3)=M(X3-S)
-                    Y := addmod(mulmod(T1, Y, p), T2, p) //-Y3= W*Y1-M(S-X3), we replace Y by -Y to avoid a sub in ecAdd
-
-                    {
-                        //value of dibit
-                        T4 := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1))
-
-                        if iszero(T4) {
-                            Y := sub(p, Y) //restore the -Y inversion
-                            continue
-                        } // if T4!=0
-
-                        if eq(T4, 1) {
-                            T1 := gx
-                            T2 := gy
-                        }
-                        if eq(T4, 2) {
-                            T1 := Q0
-                            T2 := Q1
-                        }
-                        if eq(T4, 3) {
-                            T1 := H0
-                            T2 := H1
-                        }
-                        if iszero(zz) {
-                            X := T1
-                            Y := T2
-                            zz := 1
-                            zzz := 1
-                            continue
-                        }
-                        // inlined EcZZ_AddN
-
-                        //T3:=sub(p, Y)
-                        //T3:=Y
-                        let y2 := addmod(mulmod(T2, zzz, p), Y, p) //R
-                        T2 := addmod(mulmod(T1, zz, p), sub(p, X), p) //P
-
-                        //special extremely rare case accumulator where EcAdd is replaced by EcDbl, no need to optimize this
-                        //todo : construct edge vector case
-                        if iszero(y2) {
-                            if iszero(T2) {
-                                T1 := mulmod(minus_2, Y, p) //U = 2*Y1, y free
-                                T2 := mulmod(T1, T1, p) // V=U^2
-                                T3 := mulmod(X, T2, p) // S = X1*V
-
-                                T1 := mulmod(T1, T2, p) // W=UV
-                                y2 := mulmod(addmod(X, zz, p), addmod(X, sub(p, zz), p), p) //(X-ZZ)(X+ZZ)
-                                T4 := mulmod(3, y2, p) //M=3*(X-ZZ)(X+ZZ)
-
-                                zzz := mulmod(T1, zzz, p) //zzz3=W*zzz1
-                                zz := mulmod(T2, zz, p) //zz3=V*ZZ1, V free
-
-                                X := addmod(mulmod(T4, T4, p), mulmod(minus_2, T3, p), p) //X3=M^2-2S
-                                T2 := mulmod(T4, addmod(T3, sub(p, X), p), p) //M(S-X3)
-
-                                Y := addmod(T2, mulmod(T1, Y, p), p) //Y3= M(S-X3)-W*Y1
-
-                                continue
-                            }
-                        }
-
-                        T4 := mulmod(T2, T2, p) //PP
-                        let TT1 := mulmod(T4, T2, p) //PPP, this one could be spared, but adding this register spare gas
-                        zz := mulmod(zz, T4, p)
-                        zzz := mulmod(zzz, TT1, p) //zz3=V*ZZ1
-                        let TT2 := mulmod(X, T4, p)
-                        T4 := addmod(addmod(mulmod(y2, y2, p), sub(p, TT1), p), mulmod(minus_2, TT2, p), p)
-                        Y := addmod(mulmod(addmod(TT2, sub(p, T4), p), y2, p), mulmod(Y, TT1, p), p)
-
-                        X := T4
-                    }
-                } //end loop
-                let T := mload(0x40)
-                mstore(add(T, 0x60), zz)
-                //(X,Y)=ecZZ_SetAff(X,Y,zz, zzz);
-                //T[0] = inverseModp_Hard(T[0], p); //1/zzz, inline modular inversion using precompile:
-                // Define length of base, exponent and modulus. 0x20 == 32 bytes
-                mstore(T, 0x20)
-                mstore(add(T, 0x20), 0x20)
-                mstore(add(T, 0x40), 0x20)
-                // Define variables base, exponent and modulus
-                //mstore(add(pointer, 0x60), u)
-                mstore(add(T, 0x80), minus_2)
-                mstore(add(T, 0xa0), p)
-
-                // Call the precompiled contract 0x05 = ModExp
-                if iszero(staticcall(not(0), 0x05, T, 0xc0, T, 0x20)) { revert(0, 0) }
-
-                //Y:=mulmod(Y,zzz,p)//Y/zzz
-                //zz :=mulmod(zz, mload(T),p) //1/z
-                //zz:= mulmod(zz,zz,p) //1/zz
-                X := mulmod(X, mload(T), p) //X/zz
-            } //end assembly
-        } //end unchecked
-
-        return X;
+        uint256 ZZ;
+        (X,, ZZ,) = ecZZ_mulmuladd_core(Q0, Q1, scalar_u, scalar_v);
+        assembly ("memory-safe") {
+            let T := mload(0x40)
+            mstore(T, 0x20)
+            mstore(add(T, 0x20), 0x20)
+            mstore(add(T, 0x40), 0x20)
+            mstore(add(T, 0x60), ZZ)
+            mstore(add(T, 0x80), minus_2)
+            mstore(add(T, 0xa0), p)
+            if iszero(staticcall(gas(), 0x05, T, 0xc0, T, 0x20)) { revert(0, 0) }
+            X := mulmod(X, mload(T), p) //X/zz
+        }
     }
-
 
     /**
      * @dev Computation of uG+vQ using Strauss-Shamir's trick, G basepoint, Q public key
-     *       Returns affine representation of point (normalized)       
+     *       Returns affine representation of point (normalized), (0,0) for the point at infinity
      *      */
     function ecZZ_mulmuladd(
         uint256 Q0,
@@ -510,148 +696,46 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
         uint256 scalar_u,
         uint256 scalar_v
     ) internal view returns (uint256 X, uint256 Y) {
-        uint256 zz;
-        uint256 zzz;
-        uint256 index = 255;
-        uint256[6] memory T;
-        uint256[2] memory H;
- 
-        unchecked {
-            if (scalar_u == 0 && scalar_v == 0) return (0,0);
+        uint256 ZZ;
+        uint256 ZZZ;
+        (X, Y, ZZ, ZZZ) = ecZZ_mulmuladd_core(Q0, Q1, scalar_u, scalar_v);
+        assembly ("memory-safe") {
+            let T := mload(0x40)
+            mstore(T, 0x20)
+            mstore(add(T, 0x20), 0x20)
+            mstore(add(T, 0x40), 0x20)
+            mstore(add(T, 0x60), ZZZ)
+            mstore(add(T, 0x80), minus_2)
+            mstore(add(T, 0xa0), p)
+            if iszero(staticcall(gas(), 0x05, T, 0xc0, T, 0x20)) { revert(0, 0) }
+            ZZZ := mload(T)
+            Y := mulmod(Y, ZZZ, p) //Y/zzz
+            ZZ := mulmod(ZZ, ZZZ, p) //1/z
+            X := mulmod(X, mulmod(ZZ, ZZ, p), p) //X/zz
+        }
+    }
 
-            (H[0], H[1]) = ecAff_add(gx, gy, Q0, Q1); //will not work if Q=P, obvious forbidden private key
-
-            assembly {
-                for { let T4 := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1)) } eq(T4, 0) {
-                    index := sub(index, 1)
-                    T4 := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1))
-                } {}
-                zz := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1))
-
-                if eq(zz, 1) {
-                    X := gx
-                    Y := gy
-                }
-                if eq(zz, 2) {
-                    X := Q0
-                    Y := Q1
-                }
-                if eq(zz, 3) {
-                    Y := mload(add(H,32))
-                    X := mload(H)
-                }
-
-                index := sub(index, 1)
-                zz := 1
-                zzz := 1
-
-                for {} gt(minus_1, index) { index := sub(index, 1) } {
-                    // inlined EcZZ_Dbl
-                    let T1 := mulmod(2, Y, p) //U = 2*Y1, y free
-                    let T2 := mulmod(T1, T1, p) // V=U^2
-                    let T3 := mulmod(X, T2, p) // S = X1*V
-                    T1 := mulmod(T1, T2, p) // W=UV
-                    let T4 := mulmod(3, mulmod(addmod(X, sub(p, zz), p), addmod(X, zz, p), p), p) //M=3*(X1-ZZ1)*(X1+ZZ1)
-                    zzz := mulmod(T1, zzz, p) //zzz3=W*zzz1
-                    zz := mulmod(T2, zz, p) //zz3=V*ZZ1, V free
-
-                    X := addmod(mulmod(T4, T4, p), mulmod(minus_2, T3, p), p) //X3=M^2-2S
-                    T2 := mulmod(T4, addmod(X, sub(p, T3), p), p) //-M(S-X3)=M(X3-S)
-                    Y := addmod(mulmod(T1, Y, p), T2, p) //-Y3= W*Y1-M(S-X3), we replace Y by -Y to avoid a sub in ecAdd
-
-                    {
-                        //value of dibit
-                        T4 := add(shl(1, and(shr(index, scalar_v), 1)), and(shr(index, scalar_u), 1))
-
-                        if iszero(T4) {
-                            Y := sub(p, Y) //restore the -Y inversion
-                            continue
-                        } // if T4!=0
-
-                        if eq(T4, 1) {
-                            T1 := gx
-                            T2 := gy
-                        }
-                        if eq(T4, 2) {
-                            T1 := Q0
-                            T2 := Q1
-                        }
-                        if eq(T4, 3) {
-                            T1 := mload(H)
-                            T2 := mload(add(H,32))
-                        }
-                        if iszero(zz) {
-                            X := T1
-                            Y := T2
-                            zz := 1
-                            zzz := 1
-                            continue
-                        }
-                        // inlined EcZZ_AddN
-
-                        //T3:=sub(p, Y)
-                        //T3:=Y
-                        let y2 := addmod(mulmod(T2, zzz, p), Y, p) //R
-                        T2 := addmod(mulmod(T1, zz, p), sub(p, X), p) //P
-
-                        //special extremely rare case accumulator where EcAdd is replaced by EcDbl, no need to optimize this
-                        //todo : construct edge vector case
-                        if iszero(y2) {
-                            if iszero(T2) {
-                                T1 := mulmod(minus_2, Y, p) //U = 2*Y1, y free
-                                T2 := mulmod(T1, T1, p) // V=U^2
-                                T3 := mulmod(X, T2, p) // S = X1*V
-
-                                T1 := mulmod(T1, T2, p) // W=UV
-                                y2 := mulmod(addmod(X, zz, p), addmod(X, sub(p, zz), p), p) //(X-ZZ)(X+ZZ)
-                                T4 := mulmod(3, y2, p) //M=3*(X-ZZ)(X+ZZ)
-
-                                zzz := mulmod(T1, zzz, p) //zzz3=W*zzz1
-                                zz := mulmod(T2, zz, p) //zz3=V*ZZ1, V free
-
-                                X := addmod(mulmod(T4, T4, p), mulmod(minus_2, T3, p), p) //X3=M^2-2S
-                                T2 := mulmod(T4, addmod(T3, sub(p, X), p), p) //M(S-X3)
-
-                                Y := addmod(T2, mulmod(T1, Y, p), p) //Y3= M(S-X3)-W*Y1
-
-                                continue
-                            }
-                        }
-
-                        T4 := mulmod(T2, T2, p) //PP
-                        let TT1 := mulmod(T4, T2, p) //PPP, this one could be spared, but adding this register spare gas
-                        zz := mulmod(zz, T4, p)
-                        zzz := mulmod(zzz, TT1, p) //zz3=V*ZZ1
-                        let TT2 := mulmod(X, T4, p)
-                        T4 := addmod(addmod(mulmod(y2, y2, p), sub(p, TT1), p), mulmod(minus_2, TT2, p), p)
-                        Y := addmod(mulmod(addmod(TT2, sub(p, T4), p), y2, p), mulmod(Y, TT1, p), p)
-
-                        X := T4
-                    }
-                } //end loop
-                mstore(add(T, 0x60), zzz)
-                //(X,Y)=ecZZ_SetAff(X,Y,zz, zzz);
-                //T[0] = inverseModp_Hard(T[0], p); //1/zzz, inline modular inversion using precompile:
-                // Define length of base, exponent and modulus. 0x20 == 32 bytes
-                mstore(T, 0x20)
-                mstore(add(T, 0x20), 0x20)
-                mstore(add(T, 0x40), 0x20)
-                // Define variables base, exponent and modulus
-                //mstore(add(pointer, 0x60), u)
-                mstore(add(T, 0x80), minus_2)
-                mstore(add(T, 0xa0), p)
-
-                // Call the precompiled contract 0x05 = ModExp
-                if iszero(staticcall(not(0), 0x05, T, 0xc0, T, 0x20)) { revert(0, 0) }
-
-                Y:=mulmod(Y,mload(T),p)//Y/zzz
-                zz :=mulmod(zz, mload(T),p) //1/z
-                zz:= mulmod(zz,zz,p) //1/zz
-                X := mulmod(X, zz, p) //X/zz
-            } //end assembly
-        } //end unchecked
-
-        return (X,Y);
+    /**
+     * @dev Transposes the 4 limbs of 64 bits of a scalar into 64 nibbles:
+     *      nibble j = (bit 192+j, bit 128+j, bit 64+j, bit j), i.e. the 4 bits used together by the 8-dim Shamir trick
+     */
+    function ecZZ_transpose4x64(uint256 s) internal pure returns (uint256 t) {
+        assembly ("memory-safe") {
+            function spread(x) -> r {
+                r := and(or(x, shl(96, x)), 0xffffffff000000000000000000000000ffffffff)
+                r := and(or(r, shl(48, r)), 0xffff000000000000ffff000000000000ffff000000000000ffff)
+                r := and(or(r, shl(24, r)), 0xff000000ff000000ff000000ff000000ff000000ff000000ff000000ff)
+                r := and(or(r, shl(12, r)), 0xf000f000f000f000f000f000f000f000f000f000f000f000f000f000f000f)
+                r := and(or(r, shl(6, r)), 0x303030303030303030303030303030303030303030303030303030303030303)
+                r := and(or(r, shl(3, r)), 0x1111111111111111111111111111111111111111111111111111111111111111)
+            }
+            let m := 0xffffffffffffffff
+            t :=
+                or(
+                    or(spread(and(s, m)), shl(1, spread(and(shr(64, s), m)))),
+                    or(shl(2, spread(and(shr(128, s), m))), shl(3, spread(shr(192, s))))
+                )
+        }
     }
 
     //8 dimensions Shamir's trick, using precomputations stored in Shamir8,  stored as Bytecode of an external
@@ -659,252 +743,183 @@ function SqrtMod(uint256 self) internal view returns (uint256 result){
     //(thx to Lakhdar https://github.com/Kelvyne for EVM storage explanations and tricks)
     // the external tool to generate tables from public key is in the /sage directory
     function ecZZ_mulmuladd_S8_extcode(uint256 scalar_u, uint256 scalar_v, address dataPointer)
-        internal view
+        internal
+        view
         returns (uint256 X /*, uint Y*/ )
     {
-        unchecked {
-            uint256 zz; // third and  coordinates of the point
-
-            uint256[6] memory T;
-            zz = 256; //start index
-
-            while (T[0] == 0) {
-                zz = zz - 1;
-                //tbd case of msb octobit is null
-                T[0] = 64
-                    * (
-                        128 * ((scalar_v >> zz) & 1) + 64 * ((scalar_v >> (zz - 64)) & 1)
-                            + 32 * ((scalar_v >> (zz - 128)) & 1) + 16 * ((scalar_v >> (zz - 192)) & 1)
-                            + 8 * ((scalar_u >> zz) & 1) + 4 * ((scalar_u >> (zz - 64)) & 1)
-                            + 2 * ((scalar_u >> (zz - 128)) & 1) + ((scalar_u >> (zz - 192)) & 1)
-                    );
+        scalar_u = ecZZ_transpose4x64(scalar_u);
+        scalar_v = ecZZ_transpose4x64(scalar_v);
+        assembly ("memory-safe") {
+            //halved doubling, output -2P (FCL negated-Y convention), rare path only
+            function dblNeg(x, y, zz, zzz) -> X3, Y3, ZZ3, ZZZ3 {
+                let M := mulmod(mulmod(addmod(x, sub(p, zz), p), addmod(x, zz, p), p), _C3H, p)
+                let V := mulmod(y, y, p)
+                ZZZ3 := mulmod(mulmod(y, V, p), zzz, p)
+                ZZ3 := mulmod(V, zz, p)
+                let S := mulmod(x, V, p)
+                X3 := addmod(mulmod(M, M, p), mulmod(minus_2, S, p), p)
+                Y3 := addmod(mulmod(V, V, p), mulmod(M, addmod(X3, sub(p, S), p), p), p)
             }
-            assembly {
-                extcodecopy(dataPointer, T, mload(T), 64)
-                let index := sub(zz, 1)
-                X := mload(T)
-                let Y := mload(add(T, 32))
-                let zzz := 1
-                zz := 1
-
-                //loop over 1/4 of scalars thx to Shamir's trick over 8 points
-                for {} gt(index, 191) { index := add(index, 191) } {
-                    //inline Double
+            if or(scalar_u, scalar_v) {
+                let k := 252
+                for {} iszero(or(shr(k, scalar_u), shr(k, scalar_v))) { k := sub(k, 4) } {}
+                extcodecopy(
+                    dataPointer, 0, or(and(shl(6, shr(k, scalar_u)), 0x3c0), and(shl(10, shr(k, scalar_v)), 0x3c00)), 64
+                )
+                X := mload(0)
+                let Y := mload(0x20)
+                let ZZ := 1
+                let ZZZ := 1
+                for { k := sub(k, 4) } lt(k, 256) { k := sub(k, 4) } {
                     {
-                        let TT1 := mulmod(2, Y, p) //U = 2*Y1, y free
-                        let T2 := mulmod(TT1, TT1, p) // V=U^2
-                        let T3 := mulmod(X, T2, p) // S = X1*V
-                        let T1 := mulmod(TT1, T2, p) // W=UV
-                        let T4 := mulmod(3, mulmod(addmod(X, sub(p, zz), p), addmod(X, zz, p), p), p) //M=3*(X1-ZZ1)*(X1+ZZ1)
-                        zzz := mulmod(T1, zzz, p) //zzz3=W*zzz1
-                        zz := mulmod(T2, zz, p) //zz3=V*ZZ1, V free
-
-                        X := addmod(mulmod(T4, T4, p), mulmod(minus_2, T3, p), p) //X3=M^2-2S
-                        //T2:=mulmod(T4,addmod(T3, sub(p, X),p),p)//M(S-X3)
-                        let T5 := mulmod(T4, addmod(X, sub(p, T3), p), p) //-M(S-X3)=M(X3-S)
-
-                        //Y:= addmod(T2, sub(p, mulmod(T1, Y ,p)),p  )//Y3= M(S-X3)-W*Y1
-                        Y := addmod(mulmod(T1, Y, p), T5, p) //-Y3= W*Y1-M(S-X3), we replace Y by -Y to avoid a sub in ecAdd
-
-                        /* compute element to access in precomputed table */
+                        let M := mulmod(mulmod(addmod(X, sub(p, ZZ), p), addmod(X, ZZ, p), p), _C3H, p)
+                        let V := mulmod(Y, Y, p)
+                        ZZZ := mulmod(mulmod(Y, V, p), ZZZ, p)
+                        ZZ := mulmod(V, ZZ, p)
+                        let S := mulmod(X, V, p)
+                        X := addmod(mulmod(M, M, p), mulmod(minus_2, S, p), p)
+                        Y := addmod(mulmod(V, V, p), mulmod(M, addmod(X, sub(p, S), p), p), p)
                     }
-                    {
-                        let T4 := add(shl(13, and(shr(index, scalar_v), 1)), shl(9, and(shr(index, scalar_u), 1)))
-                        let index2 := sub(index, 64)
-                        let T3 :=
-                            add(T4, add(shl(12, and(shr(index2, scalar_v), 1)), shl(8, and(shr(index2, scalar_u), 1))))
-                        let index3 := sub(index2, 64)
-                        let T2 :=
-                            add(T3, add(shl(11, and(shr(index3, scalar_v), 1)), shl(7, and(shr(index3, scalar_u), 1))))
-                        index := sub(index3, 64)
-                        let T1 :=
-                            add(T2, add(shl(10, and(shr(index, scalar_v), 1)), shl(6, and(shr(index, scalar_u), 1))))
-
-                        //tbd: check validity of formulae with (0,1) to remove conditional jump
-                        if iszero(T1) {
-                            Y := sub(p, Y)
-
-                            continue
-                        }
-                        extcodecopy(dataPointer, T, T1, 64)
-                    }
-
-                    {
-                        /* Access to precomputed table using extcodecopy hack */
-
-                        // inlined EcZZ_AddN
-                        if iszero(zz) {
-                            X := mload(T)
-                            Y := mload(add(T, 32))
-                            zz := 1
-                            zzz := 1
-
-                            continue
-                        }
-
-                        let y2 := addmod(mulmod(mload(add(T, 32)), zzz, p), Y, p)
-                        let T2 := addmod(mulmod(mload(T), zz, p), sub(p, X), p)
-
-                        //special case ecAdd(P,P)=EcDbl
-                        if iszero(y2) {
-                            if iszero(T2) {
-                                let T1 := mulmod(minus_2, Y, p) //U = 2*Y1, y free
-                                T2 := mulmod(T1, T1, p) // V=U^2
-                                let T3 := mulmod(X, T2, p) // S = X1*V
-
-                                T1 := mulmod(T1, T2, p) // W=UV
-                                y2 := mulmod(addmod(X, zz, p), addmod(X, sub(p, zz), p), p) //(X-ZZ)(X+ZZ)
-                                let T4 := mulmod(3, y2, p) //M=3*(X-ZZ)(X+ZZ)
-
-                                zzz := mulmod(T1, zzz, p) //zzz3=W*zzz1
-                                zz := mulmod(T2, zz, p) //zz3=V*ZZ1, V free
-
-                                X := addmod(mulmod(T4, T4, p), mulmod(minus_2, T3, p), p) //X3=M^2-2S
-                                T2 := mulmod(T4, addmod(T3, sub(p, X), p), p) //M(S-X3)
-
-                                Y := addmod(T2, mulmod(T1, Y, p), p) //Y3= M(S-X3)-W*Y1
-
-                                continue
+                    let e := or(and(shl(6, shr(k, scalar_u)), 0x3c0), and(shl(10, shr(k, scalar_v)), 0x3c00))
+                    switch e
+                    case 0 { Y := sub(p, Y) }
+                    default {
+                        extcodecopy(dataPointer, 0, e, 64)
+                        let Pn := addmod(X, sub(p, mulmod(mload(0), ZZ, p)), p)
+                        let R := addmod(mulmod(mload(0x20), ZZZ, p), Y, p)
+                        switch Pn
+                        case 0 {
+                            switch ZZ
+                            case 0 {
+                                X := mload(0)
+                                Y := mload(0x20)
+                                ZZ := 1
+                                ZZZ := 1
+                            }
+                            default {
+                                switch R
+                                case 0 { X, Y, ZZ, ZZZ := dblNeg(X, Y, ZZ, ZZZ) }
+                                default {
+                                    X := 0
+                                    ZZ := 0
+                                    ZZZ := 0
+                                }
                             }
                         }
-
-                        let T4 := mulmod(T2, T2, p)
-                        let T1 := mulmod(T4, T2, p) //
-                        zz := mulmod(zz, T4, p)
-                        //zzz3=V*ZZ1
-                        zzz := mulmod(zzz, T1, p) // W=UV/
-                        let zz1 := mulmod(X, T4, p)
-                        X := addmod(addmod(mulmod(y2, y2, p), sub(p, T1), p), mulmod(minus_2, zz1, p), p)
-                        Y := addmod(mulmod(addmod(zz1, sub(p, X), p), y2, p), mulmod(Y, T1, p), p)
+                        default {
+                            let PP := mulmod(Pn, Pn, p)
+                            Pn := mulmod(Pn, PP, p)
+                            ZZ := mulmod(ZZ, PP, p)
+                            ZZZ := mulmod(ZZZ, Pn, p)
+                            PP := mulmod(X, PP, p)
+                            X := addmod(addmod(mulmod(R, R, p), Pn, p), mulmod(minus_2, PP, p), p)
+                            Y := addmod(mulmod(R, addmod(X, sub(p, PP), p), p), mulmod(Y, Pn, p), p)
+                        }
                     }
-                } //end loop
-                mstore(add(T, 0x60), zz)
-
-                //(X,Y)=ecZZ_SetAff(X,Y,zz, zzz);
-                //T[0] = inverseModp_Hard(T[0], p); //1/zzz, inline modular inversion using precompile:
-                // Define length of base, exponent and modulus. 0x20 == 32 bytes
+                }
+                let T := mload(0x40)
                 mstore(T, 0x20)
                 mstore(add(T, 0x20), 0x20)
                 mstore(add(T, 0x40), 0x20)
-                // Define variables base, exponent and modulus
-                //mstore(add(pointer, 0x60), u)
+                mstore(add(T, 0x60), ZZ)
                 mstore(add(T, 0x80), minus_2)
                 mstore(add(T, 0xa0), p)
-
-                // Call the precompiled contract 0x05 = ModExp
-                if iszero(staticcall(not(0), 0x05, T, 0xc0, T, 0x20)) { revert(0, 0) }
-
-                zz := mload(T)
-                X := mulmod(X, zz, p) //X/zz
+                if iszero(staticcall(gas(), 0x05, T, 0xc0, T, 0x20)) { revert(0, 0) }
+                X := mulmod(X, mload(T), p) //X/zz
             }
-        } //end unchecked
+        }
     }
-
-   
 
     // improving the extcodecopy trick : append array at end of contract
     function ecZZ_mulmuladd_S8_hackmem(uint256 scalar_u, uint256 scalar_v, uint256 dataPointer)
-        internal view
+        internal
+        view
         returns (uint256 X /*, uint Y*/ )
     {
-        uint256 zz; // third and  coordinates of the point
-
-        uint256[6] memory T;
-        zz = 256; //start index
-
-        unchecked {
-            while (T[0] == 0) {
-                zz = zz - 1;
-                //tbd case of msb octobit is null
-                T[0] = 64
-                    * (
-                        128 * ((scalar_v >> zz) & 1) + 64 * ((scalar_v >> (zz - 64)) & 1)
-                            + 32 * ((scalar_v >> (zz - 128)) & 1) + 16 * ((scalar_v >> (zz - 192)) & 1)
-                            + 8 * ((scalar_u >> zz) & 1) + 4 * ((scalar_u >> (zz - 64)) & 1)
-                            + 2 * ((scalar_u >> (zz - 128)) & 1) + ((scalar_u >> (zz - 192)) & 1)
-                    );
+        scalar_u = ecZZ_transpose4x64(scalar_u);
+        scalar_v = ecZZ_transpose4x64(scalar_v);
+        assembly ("memory-safe") {
+            //halved doubling, output -2P (FCL negated-Y convention), rare path only
+            function dblNeg(x, y, zz, zzz) -> X3, Y3, ZZ3, ZZZ3 {
+                let M := mulmod(mulmod(addmod(x, sub(p, zz), p), addmod(x, zz, p), p), _C3H, p)
+                let V := mulmod(y, y, p)
+                ZZZ3 := mulmod(mulmod(y, V, p), zzz, p)
+                ZZ3 := mulmod(V, zz, p)
+                let S := mulmod(x, V, p)
+                X3 := addmod(mulmod(M, M, p), mulmod(minus_2, S, p), p)
+                Y3 := addmod(mulmod(V, V, p), mulmod(M, addmod(X3, sub(p, S), p), p), p)
             }
-            assembly {
-                codecopy(T, add(mload(T), dataPointer), 64)
-                X := mload(T)
-                let Y := mload(add(T, 32))
-                let zzz := 1
-                zz := 1
-
-                //loop over 1/4 of scalars thx to Shamir's trick over 8 points
-                for { let index := 254 } gt(index, 191) { index := add(index, 191) } {
-                    let T1 := mulmod(2, Y, p) //U = 2*Y1, y free
-                    let T2 := mulmod(T1, T1, p) // V=U^2
-                    let T3 := mulmod(X, T2, p) // S = X1*V
-                    T1 := mulmod(T1, T2, p) // W=UV
-                    let T4 := mulmod(3, mulmod(addmod(X, sub(p, zz), p), addmod(X, zz, p), p), p) //M=3*(X1-ZZ1)*(X1+ZZ1)
-                    zzz := mulmod(T1, zzz, p) //zzz3=W*zzz1
-                    zz := mulmod(T2, zz, p) //zz3=V*ZZ1, V free
-
-                    X := addmod(mulmod(T4, T4, p), mulmod(minus_2, T3, p), p) //X3=M^2-2S
-                    //T2:=mulmod(T4,addmod(T3, sub(p, X),p),p)//M(S-X3)
-                    T2 := mulmod(T4, addmod(X, sub(p, T3), p), p) //-M(S-X3)=M(X3-S)
-
-                    //Y:= addmod(T2, sub(p, mulmod(T1, Y ,p)),p  )//Y3= M(S-X3)-W*Y1
-                    Y := addmod(mulmod(T1, Y, p), T2, p) //-Y3= W*Y1-M(S-X3), we replace Y by -Y to avoid a sub in ecAdd
-
-                    /* compute element to access in precomputed table */
-                    T4 := add(shl(13, and(shr(index, scalar_v), 1)), shl(9, and(shr(index, scalar_u), 1)))
-                    index := sub(index, 64)
-                    T4 := add(T4, add(shl(12, and(shr(index, scalar_v), 1)), shl(8, and(shr(index, scalar_u), 1))))
-                    index := sub(index, 64)
-                    T4 := add(T4, add(shl(11, and(shr(index, scalar_v), 1)), shl(7, and(shr(index, scalar_u), 1))))
-                    index := sub(index, 64)
-                    T4 := add(T4, add(shl(10, and(shr(index, scalar_v), 1)), shl(6, and(shr(index, scalar_u), 1))))
-                    //index:=add(index,192), restore index, interleaved with loop
-
-                    //tbd: check validity of formulae with (0,1) to remove conditional jump
-                    if iszero(T4) {
-                        Y := sub(p, Y)
-
-                        continue
-                    }
+            if or(scalar_u, scalar_v) {
+                let k := 252
+                for {} iszero(or(shr(k, scalar_u), shr(k, scalar_v))) { k := sub(k, 4) } {}
+                codecopy(
+                    0,
+                    add(dataPointer, or(and(shl(6, shr(k, scalar_u)), 0x3c0), and(shl(10, shr(k, scalar_v)), 0x3c00))),
+                    64
+                )
+                X := mload(0)
+                let Y := mload(0x20)
+                let ZZ := 1
+                let ZZZ := 1
+                for { k := sub(k, 4) } lt(k, 256) { k := sub(k, 4) } {
                     {
-                        /* Access to precomputed table using extcodecopy hack */
-                        codecopy(T, add(T4, dataPointer), 64)
-
-                        // inlined EcZZ_AddN
-
-                        let y2 := addmod(mulmod(mload(add(T, 32)), zzz, p), Y, p)
-                        T2 := addmod(mulmod(mload(T), zz, p), sub(p, X), p)
-                        T4 := mulmod(T2, T2, p)
-                        T1 := mulmod(T4, T2, p)
-                        T2 := mulmod(zz, T4, p) // W=UV
-                        zzz := mulmod(zzz, T1, p) //zz3=V*ZZ1
-                        let zz1 := mulmod(X, T4, p)
-                        T4 := addmod(addmod(mulmod(y2, y2, p), sub(p, T1), p), mulmod(minus_2, zz1, p), p)
-                        Y := addmod(mulmod(addmod(zz1, sub(p, T4), p), y2, p), mulmod(Y, T1, p), p)
-                        zz := T2
-                        X := T4
+                        let M := mulmod(mulmod(addmod(X, sub(p, ZZ), p), addmod(X, ZZ, p), p), _C3H, p)
+                        let V := mulmod(Y, Y, p)
+                        ZZZ := mulmod(mulmod(Y, V, p), ZZZ, p)
+                        ZZ := mulmod(V, ZZ, p)
+                        let S := mulmod(X, V, p)
+                        X := addmod(mulmod(M, M, p), mulmod(minus_2, S, p), p)
+                        Y := addmod(mulmod(V, V, p), mulmod(M, addmod(X, sub(p, S), p), p), p)
                     }
-                } //end loop
-                mstore(add(T, 0x60), zz)
-
-                //(X,Y)=ecZZ_SetAff(X,Y,zz, zzz);
-                //T[0] = inverseModp_Hard(T[0], p); //1/zzz, inline modular inversion using precompile:
-                // Define length of base, exponent and modulus. 0x20 == 32 bytes
+                    let e := or(and(shl(6, shr(k, scalar_u)), 0x3c0), and(shl(10, shr(k, scalar_v)), 0x3c00))
+                    switch e
+                    case 0 { Y := sub(p, Y) }
+                    default {
+                        codecopy(0, add(dataPointer, e), 64)
+                        let Pn := addmod(X, sub(p, mulmod(mload(0), ZZ, p)), p)
+                        let R := addmod(mulmod(mload(0x20), ZZZ, p), Y, p)
+                        switch Pn
+                        case 0 {
+                            switch ZZ
+                            case 0 {
+                                X := mload(0)
+                                Y := mload(0x20)
+                                ZZ := 1
+                                ZZZ := 1
+                            }
+                            default {
+                                switch R
+                                case 0 { X, Y, ZZ, ZZZ := dblNeg(X, Y, ZZ, ZZZ) }
+                                default {
+                                    X := 0
+                                    ZZ := 0
+                                    ZZZ := 0
+                                }
+                            }
+                        }
+                        default {
+                            let PP := mulmod(Pn, Pn, p)
+                            Pn := mulmod(Pn, PP, p)
+                            ZZ := mulmod(ZZ, PP, p)
+                            ZZZ := mulmod(ZZZ, Pn, p)
+                            PP := mulmod(X, PP, p)
+                            X := addmod(addmod(mulmod(R, R, p), Pn, p), mulmod(minus_2, PP, p), p)
+                            Y := addmod(mulmod(R, addmod(X, sub(p, PP), p), p), mulmod(Y, Pn, p), p)
+                        }
+                    }
+                }
+                let T := mload(0x40)
                 mstore(T, 0x20)
                 mstore(add(T, 0x20), 0x20)
                 mstore(add(T, 0x40), 0x20)
-                // Define variables base, exponent and modulus
-                //mstore(add(pointer, 0x60), u)
+                mstore(add(T, 0x60), ZZ)
                 mstore(add(T, 0x80), minus_2)
                 mstore(add(T, 0xa0), p)
-
-                // Call the precompiled contract 0x05 = ModExp
-                if iszero(staticcall(not(0), 0x05, T, 0xc0, T, 0x20)) { revert(0, 0) }
-
-                zz := mload(T)
-                X := mulmod(X, zz, p) //X/zz
+                if iszero(staticcall(gas(), 0x05, T, 0xc0, T, 0x20)) { revert(0, 0) }
+                X := mulmod(X, mload(T), p) //X/zz
             }
-        } //end unchecked
+        }
     }
-
 
     /**
      * @dev ECDSA verification using a precomputed table of multiples of P and Q stored in contract at address Shamir8
